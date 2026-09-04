@@ -5,4 +5,5 @@ export interface Establishment {
   name: string;
   type: EstablishmentType;
   address: string | null;
+  logo: string | null;
 }

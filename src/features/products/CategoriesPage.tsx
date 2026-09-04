@@ -4,9 +4,13 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
 import { fetchCategories, createCategory, updateCategory, deleteCategory } from './api';
 import { Category } from './types';
+import { useConfirm } from '@/lib/confirm';
+import { useToast } from '@/lib/toast';
 
 export default function CategoriesPage() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newName, setNewName] = useState('');
@@ -38,6 +42,7 @@ export default function CategoriesPage() {
     if (!newName.trim()) return;
     setError(null);
     await createCategory(newName.trim(), establishmentId);
+    toast.success('Catégorie créée');
     setNewName('');
     load();
   };
@@ -50,21 +55,30 @@ export default function CategoriesPage() {
   const saveEdit = async () => {
     if (!editingId || !editingName.trim()) return;
     await updateCategory(editingId, editingName.trim());
+    toast.success('Catégorie modifiée');
     setEditingId(null);
     load();
   };
 
   const handleDelete = async (c: Category) => {
-    if (!confirm(`Supprimer la catégorie "${c.name}" ?`)) return;
+    const ok = await confirm({
+      title: 'Supprimer la catégorie',
+      message: `Supprimer la catégorie "${c.name}" ?`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     setError(null);
     try {
       await deleteCategory(c.id);
+      toast.success('Catégorie supprimée');
       load();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de la suppression';
       setError(message);
+      toast.error(message);
     }
   };
 

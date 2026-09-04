@@ -14,16 +14,24 @@ const formatFcfa = (value: number) => `${Math.round(value).toLocaleString('fr-FR
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 const thisMonthIso = () => new Date().toISOString().slice(0, 7);
+const thisYear = () => String(new Date().getFullYear());
 
 export default function ReportsPage() {
-  const [period, setPeriod] = useState<'day' | 'month'>('day');
+  const [period, setPeriod] = useState<'day' | 'month' | 'year' | 'range'>('day');
   const [date, setDate] = useState(todayIso());
   const [month, setMonth] = useState(thisMonthIso());
+  const [year, setYear] = useState(thisYear());
+  const [startDate, setStartDate] = useState(todayIso());
+  const [endDate, setEndDate] = useState(todayIso());
   const [report, setReport] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const buildParams = (): Record<string, string> =>
-    period === 'day' ? { date } : { period: 'month', date: month };
+  const buildParams = (): Record<string, string> => {
+    if (period === 'day') return { date };
+    if (period === 'month') return { period: 'month', date: month };
+    if (period === 'year') return { period: 'year', date: year };
+    return { startDate, endDate };
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -31,7 +39,7 @@ export default function ReportsPage() {
       .then(setReport)
       .finally(() => setIsLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, date, month]);
+  }, [period, date, month, year, startDate, endDate]);
 
   return (
     <div>
@@ -55,21 +63,65 @@ export default function ReportsPage() {
             >
               Mensuel
             </button>
+            <button
+              onClick={() => setPeriod('year')}
+              className={`rounded px-3 py-1 text-xs font-medium ${
+                period === 'year' ? 'bg-slate-900 text-white' : 'text-slate-600'
+              }`}
+            >
+              Annuel
+            </button>
+            <button
+              onClick={() => setPeriod('range')}
+              className={`rounded px-3 py-1 text-xs font-medium ${
+                period === 'range' ? 'bg-slate-900 text-white' : 'text-slate-600'
+              }`}
+            >
+              Plage
+            </button>
           </div>
-          {period === 'day' ? (
+          {period === 'day' && (
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             />
-          ) : (
+          )}
+          {period === 'month' && (
             <input
               type="month"
               value={month}
               onChange={(e) => setMonth(e.target.value)}
               className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             />
+          )}
+          {period === 'year' && (
+            <input
+              type="number"
+              min="2020"
+              max="2100"
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              className="w-24 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            />
+          )}
+          {period === 'range' && (
+            <div className="flex items-center gap-1">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              />
+              <span className="text-sm text-slate-400">→</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+              />
+            </div>
           )}
         </div>
       </div>
@@ -99,7 +151,6 @@ export default function ReportsPage() {
             <KpiCard label="Bénéfice" value={formatFcfa(report.profit)} />
             <KpiCard label="Panier moyen" value={formatFcfa(report.averageBasket)} />
             <KpiCard label="Coût des marchandises" value={formatFcfa(report.merchandiseCost)} />
-            <KpiCard label="Dépenses" value={formatFcfa(report.expenses)} />
             <KpiCard label="Marge" value={`${report.margin.toFixed(1)} %`} />
             <KpiCard label="Clients (estimation)" value={String(report.clientCount)} />
           </div>

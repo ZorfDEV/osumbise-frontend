@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createEntry, createLoss, createAdjustment } from './api';
 import { Product } from '@/features/products/types';
+import { useToast } from '@/lib/toast';
 
 type Mode = 'ENTREE' | 'PERTE' | 'CASSE' | 'AJUSTEMENT';
 
@@ -19,6 +20,7 @@ const MODE_LABELS: Record<Mode, string> = {
 };
 
 export default function StockMovementForm({ mode, products, onDone, onCancel }: Props) {
+  const toast = useToast();
   const [productId, setProductId] = useState('');
   const [quantity, setQuantity] = useState<number>(0);
   const [reason, setReason] = useState('');
@@ -43,12 +45,14 @@ export default function StockMovementForm({ mode, products, onDone, onCancel }: 
           reason: reason || undefined,
         });
       }
+      toast.success(`${MODE_LABELS[mode]} enregistrée`);
       onDone();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur';
       setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

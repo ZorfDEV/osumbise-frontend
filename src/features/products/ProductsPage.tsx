@@ -5,6 +5,7 @@ import { api } from '@/lib/axios';
 import { fetchCategories, createCategory, fetchProducts, createProduct } from './api';
 import { Category, Product, Unit } from './types';
 import ProductForm from './ProductForm';
+import { useToast } from '@/lib/toast';
 
 const UNIT_LABELS: Record<Unit, string> = {
   UNIT: 'unité',
@@ -17,6 +18,7 @@ const UNIT_LABELS: Record<Unit, string> = {
 
 export default function ProductsPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export default function ProductsPage() {
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
     await createCategory(newCategoryName.trim(), establishmentId);
+    toast.success('Catégorie créée');
     setNewCategoryName('');
     load();
   };
@@ -80,6 +83,7 @@ export default function ProductsPage() {
             submitLabel="Créer le produit"
             onSubmit={async (data) => {
               await createProduct({ ...data, establishmentId });
+              toast.success('Produit créé');
               setShowForm(false);
               load();
             }}
@@ -160,6 +164,7 @@ export default function ProductsPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
+                <th className="px-4 py-2" />
                 <th className="px-4 py-2 font-medium">Nom</th>
                 <th className="px-4 py-2 font-medium">Catégorie</th>
                 <th className="px-4 py-2 font-medium">Prix</th>
@@ -170,6 +175,19 @@ export default function ProductsPage() {
             <tbody className="divide-y divide-slate-100">
               {filtered.map((p) => (
                 <tr key={p.id}>
+                  <td className="px-4 py-2">
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="h-8 w-8 rounded-md object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-100 text-xs font-semibold text-slate-300">
+                        {p.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2">
                     <Link
                       to={`/products/${p.id}`}
@@ -203,7 +221,7 @@ export default function ProductsPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
                     Aucun produit
                   </td>
                 </tr>

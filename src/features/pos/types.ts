@@ -12,6 +12,7 @@ export interface Product {
   sellingPrice: string;
   categoryId: string;
   isActive: boolean;
+  image: string | null;
 }
 
 export type TableStatus = 'FREE' | 'OCCUPIED' | 'PENDING_ORDER' | 'BILL_REQUESTED';
@@ -49,6 +50,15 @@ export interface OrderItem {
   product: { name: string };
 }
 
+export type PaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT';
+
+export interface Payment {
+  id: string;
+  method: PaymentMethod;
+  amount: string;
+  createdAt: string;
+}
+
 export interface Order {
   id: string;
   status: OrderStatus;
@@ -59,4 +69,9 @@ export interface Order {
   tax: string;
   total: string;
   items: OrderItem[];
+  payments?: Payment[];
+  user?: { name: string };
+  establishment?: { name: string; address: string | null; logo: string | null };
+  createdAt?: string;
+  updatedAt?: string;
 }

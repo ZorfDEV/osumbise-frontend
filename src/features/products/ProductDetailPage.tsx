@@ -11,9 +11,11 @@ import {
 } from './api';
 import { ProductDetail, Product, Category } from './types';
 import ProductForm from './ProductForm';
+import { useToast } from '@/lib/toast';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const toast = useToast();
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -40,6 +42,7 @@ export default function ProductDetailPage() {
   const handleToggleActive = async () => {
     if (!id) return;
     await updateProduct(id, { isActive: !product.isActive });
+    toast.success(product.isActive ? 'Produit désactivé' : 'Produit réactivé');
     reload();
   };
 
@@ -48,6 +51,7 @@ export default function ProductDetailPage() {
     setError(null);
     try {
       await addRecipeItem(id, newIngredientId, newQuantity);
+      toast.success('Ingrédient ajouté à la recette');
       setNewIngredientId('');
       setNewQuantity(1);
       reload();
@@ -56,7 +60,24 @@ export default function ProductDetailPage() {
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de l\u2019ajout';
       setError(message);
+      toast.error(message);
     }
+  };
+
+  const handleUpdateIngredientQuantity = (itemId: string, value: number) => {
+    if (!id || value <= 0) return;
+    updateRecipeItem(id, itemId, value).then(() => {
+      toast.success('Quantité mise à jour');
+      reload();
+    });
+  };
+
+  const handleRemoveIngredient = (itemId: string) => {
+    if (!id) return;
+    removeRecipeItem(id, itemId).then(() => {
+      toast.success('Ingrédient retiré de la recette');
+      reload();
+    });
   };
 
   const ingredientOptions = allProducts.filter((p) => p.id !== product.id);
@@ -79,11 +100,13 @@ export default function ProductDetailPage() {
               cost: Number(product.cost),
               unit: product.unit,
               stockMin: Number(product.stockMin),
+              image: product.image ?? '',
             }}
             submitLabel="Enregistrer"
             onSubmit={async (data) => {
               if (!id) return;
               await updateProduct(id, data);
+              toast.success('Produit mis à jour');
               setIsEditing(false);
               reload();
             }}
@@ -151,17 +174,12 @@ export default function ProductDetailPage() {
                     <input
                       type="number"
                       defaultValue={Number(item.quantity)}
-                      onBlur={(e) => {
-                        const value = Number(e.target.value);
-                        if (value > 0 && id) {
-                          updateRecipeItem(id, item.id, value).then(reload);
-                        }
-                      }}
+                      onBlur={(e) => handleUpdateIngredientQuantity(item.id, Number(e.target.value))}
                       className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
                     />
                     <span className="text-xs text-slate-500">{item.ingredientProduct.unit}</span>
                     <button
-                      onClick={() => id && removeRecipeItem(id, item.id).then(reload)}
+                      onClick={() => handleRemoveIngredient(item.id)}
                       aria-label="Retirer cet ingrédient"
                       className="text-slate-400 hover:text-red-600"
                     >

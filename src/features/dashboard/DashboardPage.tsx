@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [hourly, setHourly] = useState<HourlySales | null>(null);
   const [staff, setStaff] = useState<StaffPerformance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([fetchDashboardSummary(), fetchHourlySales(), fetchStaffPerformance()])
@@ -26,6 +27,12 @@ export default function DashboardPage() {
         setSummary(s);
         setHourly(h);
         setStaff(st);
+      })
+      .catch((err) => {
+        const message =
+          (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+          'Erreur inconnue';
+        setError(message);
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -35,7 +42,11 @@ export default function DashboardPage() {
   }
 
   if (!summary) {
-    return <p className="text-sm text-red-600">Impossible de charger le tableau de bord.</p>;
+    return (
+      <p className="text-sm text-red-600">
+        Impossible de charger le tableau de bord{error ? ` : ${error}` : ''}.
+      </p>
+    );
   }
 
   return (

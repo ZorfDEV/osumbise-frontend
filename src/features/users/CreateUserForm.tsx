@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { api } from '@/lib/axios';
 import { createUser } from './api';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useToast } from '@/lib/toast';
 
 const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Administrateur',
@@ -30,6 +31,7 @@ interface Props {
 
 export default function CreateUserForm({ onCreated }: Props) {
   const { user: currentUser } = useAuth();
+  const toast = useToast();
   const [establishments, setEstablishments] = useState<{ id: string; name: string }[]>([]);
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -50,12 +52,14 @@ export default function CreateUserForm({ onCreated }: Props) {
     setServerError(null);
     try {
       await createUser(data);
+      toast.success('Utilisateur créé');
       onCreated();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de la création';
       setServerError(message);
+      toast.error(message);
     }
   };
 

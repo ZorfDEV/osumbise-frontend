@@ -28,3 +28,7 @@ export const updateUser = async (id: string, payload: UpdateUserPayload): Promis
   const res = await api.patch(`/users/${id}`, payload);
   return res.data.user;
 };
+
+export const resetUserPassword = async (id: string, newPassword: string): Promise<void> => {
+  await api.post(`/users/${id}/reset-password`, { newPassword });
+};

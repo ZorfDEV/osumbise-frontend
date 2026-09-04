@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, Banknote, Smartphone, CreditCard } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchCategories, fetchProducts } from './api';
 import {
   loadOrder,
@@ -11,7 +11,6 @@ import {
 import { getCachedCategories, getCachedProducts } from '@/lib/offlineCache';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { useConfirm } from '@/lib/confirm';
-import { useToast } from '@/lib/toast';
 import { Order, Category, Product, OrderStatus } from './types';
 import PaymentModal from './PaymentModal';
 
@@ -39,14 +38,10 @@ const NEXT_ACTION: Partial<Record<OrderStatus, { label: string; next: OrderStatu
 
 const EDITABLE_STATUSES: OrderStatus[] = ['BROUILLON', 'EN_ATTENTE'];
 
-const QUICK_PAYMENT_METHODS: {
-  value: 'CASH' | 'MOBILE_MONEY' | 'CARD';
-  label: string;
-  icon: typeof Banknote;
-}[] = [
-  { value: 'CASH', label: 'Espèces', icon: Banknote },
-  { value: 'MOBILE_MONEY', label: 'Mobile', icon: Smartphone },
-  { value: 'CARD', label: 'Carte', icon: CreditCard },
+const QUICK_PAYMENT_METHODS: { value: 'CASH' | 'MOBILE_MONEY' | 'CARD'; label: string; icon: string }[] = [
+  { value: 'CASH', label: 'Espèces', icon: '💵' },
+  { value: 'MOBILE_MONEY', label: 'Mobile', icon: '📱' },
+  { value: 'CARD', label: 'Carte', icon: '💳' },
 ];
 
 const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;
@@ -69,7 +64,6 @@ export default function PosOrderPage() {
   const navigate = useNavigate();
   const isOnline = useOnlineStatus();
   const confirm = useConfirm();
-  const toast = useToast();
   const categoryScrollRef = useRef<HTMLDivElement>(null);
 
   const [order, setOrder] = useState<Order | null>(null);
@@ -139,7 +133,6 @@ export default function PosOrderPage() {
       reloadOrder();
     } catch {
       setError('Impossible d’ajouter ce produit');
-      toast.error('Impossible d’ajouter ce produit');
     }
   };
 
@@ -167,7 +160,6 @@ export default function PosOrderPage() {
     });
     if (!ok) return;
     await advanceOrderStatus(orderId, 'ANNULEE');
-    toast.info('Commande annulée');
     navigate('/tables');
   };
 
@@ -194,36 +186,14 @@ export default function PosOrderPage() {
   }, {});
 
   return (
-    <div className="flex flex-col gap-3">
-      {error && <p className="text-sm text-red-600">{error}</p>}
+    <div className="flex items-center">
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       {!isEditable && (
-        <p className="rounded-md bg-slate-100 px-3 py-2 text-xs text-slate-500">
+        <p className="mb-3 rounded-md bg-slate-100 px-3 py-2 text-xs text-slate-500">
           Cette commande n’est plus modifiable à ce stade ({STATUS_LABELS[order.status]}).
         </p>
       )}
-
-      {/* Bascule Produits/Commande — mobile et tablette uniquement, la grille
-          passe à 3 colonnes côte à côte seulement à partir de lg: */}
-      <div className="flex justify-end gap-1 rounded-md border border-slate-300 p-1 lg:hidden">
-        <button
-          onClick={() => setView('products')}
-          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-            view === 'products' ? 'bg-slate-900 text-white' : 'text-slate-600'
-          }`}
-        >
-          Produits
-        </button>
-        <button
-          onClick={() => setView('cart')}
-          className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-            view === 'cart' ? 'bg-slate-900 text-white' : 'text-slate-600'
-          }`}
-        >
-          Commande
-        </button>
-      </div>
-
-        <div className='grid grid-cols-1 gap-4 lg:grid-cols-3'>
+        <div className='grid grid-cols-3 gap-4'>
       <div className="col-span-2 gap-4 reach cath prod">
         <div className="flex flex-col gap-4">
                 {/* Panneau produits */}
@@ -370,21 +340,16 @@ export default function PosOrderPage() {
             {/* Panneau commandes */}
         <div className={`${view === 'cart' ? 'block' : 'hidden'} lg:block`}>
           <div className="flex h-full flex-col rounded-xl border border-slate-200 bg-white">
-            <div className="flex items-start justify-between border-b border-slate-100 p-4">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Commande
-                </p>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {order.table ? `Table ${order.table.label}` : 'Comptoir'}
-                </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Statut : {STATUS_LABELS[order.status]}
-                </p>
-              </div>
-              <span className="shrink-0 text-[11px] font-medium text-slate-400">
-                {itemCount} article{itemCount !== 1 ? 's' : ''}
-              </span>
+            <div className="border-b border-slate-100 p-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                Commande
+              </p>
+              <h2 className="text-lg font-semibold text-slate-900">
+                {order.table ? `Table ${order.table.label}` : 'Comptoir'}
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Statut : {STATUS_LABELS[order.status]}
+              </p>
             </div>
 
             <div className="flex-1 divide-y divide-slate-100 overflow-y-auto">
@@ -459,7 +424,7 @@ export default function PosOrderPage() {
                           onClick={() => openPayment(m.value)}
                           className="flex flex-1 flex-col items-center gap-1 rounded-lg border border-slate-200 py-2 text-xs font-medium text-slate-600 transition hover:border-slate-400"
                         >
-                          <m.icon size={18} strokeWidth={1.75} />
+                          <span className="text-base leading-none">{m.icon}</span>
                           {m.label}
                         </button>
                       ))}
@@ -502,19 +467,19 @@ export default function PosOrderPage() {
         </div>
          </div>
       </div>
-     {isPaying && (
-             <PaymentModal
-               orderId={order.id}
-               total={total}
-               defaultMethod={defaultPaymentMethod}
-               onClose={() => setIsPaying(false)}
-               onPaid={() => {
-                 setIsPaying(false);
-                 toast.success('Paiement encaissé avec succès');
-                 navigate(`/pos/${order.id}/receipt`);
-               }}
-             />
-           )}
+      {isPaying && (
+              <PaymentModal
+                orderId={order.id}
+                total={total}
+                defaultMethod={defaultPaymentMethod}
+                onClose={() => setIsPaying(false)}
+                onPaid={() => {
+                  setIsPaying(false);
+                  navigate('/tables');
+                }}
+              />
+            )}
     </div>
   );
 }
+

@@ -7,4 +7,7 @@ export interface AuthUser {
   role: Role;
   organizationId: string;
   establishmentId: string | null;
+  // null pour un OWNER sans établissement fixe — voir la note dans TopBar.tsx
+  establishment: { name: string; logo: string | null } | null;
+  organization: { name: string };
 }

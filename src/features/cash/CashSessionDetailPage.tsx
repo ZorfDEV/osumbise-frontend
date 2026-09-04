@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchCashSession, closeCashSession, createCashMovement } from './api';
 import { CashSession, CashMovementType } from './types';
+import { useConfirm } from '@/lib/confirm';
+import { useToast } from '@/lib/toast';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   SALE_CASH: 'Vente espèces',
@@ -16,6 +18,8 @@ const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;
 
 export default function CashSessionDetailPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [session, setSession] = useState<CashSession | null>(null);
   const [movementType, setMovementType] = useState<'EXPENSE' | 'REFUND' | 'ADJUSTMENT'>(
     'EXPENSE'
@@ -51,19 +55,27 @@ export default function CashSessionDetailPage() {
       });
       setAmount(0);
       setNote('');
+      toast.success('Mouvement enregistré');
       reload();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur';
       setError(message);
+      toast.error(message);
     }
   };
 
   const handleClose = async () => {
     if (!sessionId) return;
-    if (!confirm('Confirmer la fermeture de la caisse ?')) return;
+    const ok = await confirm({
+      title: 'Fermer la caisse',
+      message: 'Confirmer la fermeture de la caisse ?',
+      confirmLabel: 'Fermer',
+    });
+    if (!ok) return;
     await closeCashSession(sessionId, actualBalance);
+    toast.success('Caisse fermée');
     reload();
   };
 

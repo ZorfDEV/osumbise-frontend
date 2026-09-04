@@ -4,9 +4,13 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
 import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from './api';
 import { Supplier } from './types';
+import { useConfirm } from '@/lib/confirm';
+import { useToast } from '@/lib/toast';
 
 export default function SuppliersPage() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -50,6 +54,7 @@ export default function SuppliersPage() {
       address: address || undefined,
       establishmentId,
     });
+    toast.success('Fournisseur créé');
     setName('');
     setPhone('');
     setEmail('');
@@ -74,21 +79,30 @@ export default function SuppliersPage() {
       email: editEmail || undefined,
       address: editAddress || undefined,
     });
+    toast.success('Fournisseur modifié');
     setEditingId(null);
     load();
   };
 
   const handleDelete = async (s: Supplier) => {
-    if (!confirm(`Supprimer le fournisseur "${s.name}" ?`)) return;
+    const ok = await confirm({
+      title: 'Supprimer le fournisseur',
+      message: `Supprimer le fournisseur "${s.name}" ?`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     setError(null);
     try {
       await deleteSupplier(s.id);
+      toast.success('Fournisseur supprimé');
       load();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de la suppression';
       setError(message);
+      toast.error(message);
     }
   };
 

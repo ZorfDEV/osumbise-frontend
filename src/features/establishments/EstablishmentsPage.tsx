@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/features/auth/AuthContext';
 import { fetchEstablishments, createEstablishment, updateEstablishment } from './api';
 import { Establishment, EstablishmentType } from './types';
+import { useToast } from '@/lib/toast';
 
 const TYPE_LABELS: Record<EstablishmentType, string> = {
   BAR: 'Bar',
@@ -9,16 +11,20 @@ const TYPE_LABELS: Record<EstablishmentType, string> = {
 };
 
 export default function EstablishmentsPage() {
+  const { refreshProfile } = useAuth();
+  const toast = useToast();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState<EstablishmentType>('BAR');
   const [address, setAddress] = useState('');
+  const [logo, setLogo] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState<EstablishmentType>('BAR');
   const [editAddress, setEditAddress] = useState('');
+  const [editLogo, setEditLogo] = useState('');
 
   const load = () => {
     setIsLoading(true);
@@ -33,9 +39,16 @@ export default function EstablishmentsPage() {
 
   const handleCreate = async () => {
     if (!name.trim()) return;
-    await createEstablishment({ name: name.trim(), type, address: address.trim() || undefined });
+    await createEstablishment({
+      name: name.trim(),
+      type,
+      address: address.trim() || undefined,
+      logo: logo.trim() || undefined,
+    });
+    toast.success('Établissement créé');
     setName('');
     setAddress('');
+    setLogo('');
     setType('BAR');
     setShowForm(false);
     load();
@@ -46,6 +59,7 @@ export default function EstablishmentsPage() {
     setEditName(e.name);
     setEditType(e.type);
     setEditAddress(e.address ?? '');
+    setEditLogo(e.logo ?? '');
   };
 
   const saveEdit = async () => {
@@ -54,9 +68,14 @@ export default function EstablishmentsPage() {
       name: editName.trim(),
       type: editType,
       address: editAddress.trim() || undefined,
+      logo: editLogo.trim() || undefined,
     });
+    toast.success('Établissement modifié');
     setEditingId(null);
     load();
+    // Le nom/logo affiché dans la Topbar vient de /auth/me — on le rafraîchit
+    // pour que le changement soit visible immédiatement, sans recharger la page
+    refreshProfile();
   };
 
   return (
@@ -104,6 +123,21 @@ export default function EstablishmentsPage() {
             />
           </div>
           <div className="sm:col-span-3">
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Logo (URL, optionnel)
+            </label>
+            <input
+              type="url"
+              value={logo}
+              onChange={(e) => setLogo(e.target.value)}
+              placeholder="https://..."
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-slate-400">
+              Affiché dans l’en-tête de l’application et sur les factures imprimées.
+            </p>
+          </div>
+          <div className="sm:col-span-3">
             <button
               onClick={handleCreate}
               className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
@@ -142,6 +176,13 @@ export default function EstablishmentsPage() {
                     placeholder="Adresse"
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                   />
+                  <input
+                    type="url"
+                    value={editLogo}
+                    onChange={(ev) => setEditLogo(ev.target.value)}
+                    placeholder="URL du logo"
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-3"
+                  />
                   <div className="flex gap-3 sm:col-span-3">
                     <button
                       onClick={saveEdit}
@@ -159,12 +200,21 @@ export default function EstablishmentsPage() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-slate-900">{e.name}</p>
-                    <p className="text-xs text-slate-500">
-                      {TYPE_LABELS[e.type]}
-                      {e.address ? ` — ${e.address}` : ''}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {e.logo ? (
+                      <img src={e.logo} alt={e.name} className="h-9 w-9 rounded object-cover" />
+                    ) : (
+                      <div className="flex h-9 w-9 items-center justify-center rounded bg-slate-100 text-sm font-semibold text-slate-400">
+                        {e.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium text-slate-900">{e.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {TYPE_LABELS[e.type]}
+                        {e.address ? ` — ${e.address}` : ''}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => startEdit(e)}

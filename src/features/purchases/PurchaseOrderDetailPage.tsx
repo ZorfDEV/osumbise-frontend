@@ -10,6 +10,8 @@ import {
 import { fetchProducts } from '@/features/products/api';
 import { PurchaseOrder, PurchaseOrderStatus } from './types';
 import { Product } from '@/features/products/types';
+import { useConfirm } from '@/lib/confirm';
+import { useToast } from '@/lib/toast';
 
 const STATUS_LABELS: Record<PurchaseOrderStatus, string> = {
   BROUILLON: 'Brouillon',
@@ -22,6 +24,8 @@ const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;
 
 export default function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [po, setPo] = useState<PurchaseOrder | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [productId, setProductId] = useState('');
@@ -50,6 +54,7 @@ export default function PurchaseOrderDetailPage() {
     setError(null);
     try {
       await addPurchaseItem(id, { productId, quantity, unitPrice });
+      toast.success('Article ajouté');
       setProductId('');
       setQuantity(1);
       setUnitPrice(0);
@@ -59,40 +64,57 @@ export default function PurchaseOrderDetailPage() {
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur';
       setError(message);
+      toast.error(message);
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     if (!id) return;
     await removePurchaseItem(id, itemId);
+    toast.success('Article retiré');
     reload();
   };
 
   const handleSend = async () => {
     if (!id) return;
     await updatePurchaseOrderStatus(id, 'COMMANDE');
+    toast.success('Commande envoyée au fournisseur');
     reload();
   };
 
   const handleCancel = async () => {
     if (!id) return;
-    if (!confirm('Annuler cette commande ?')) return;
+    const ok = await confirm({
+      title: 'Annuler la commande',
+      message: 'Annuler cette commande ?',
+      confirmLabel: 'Annuler la commande',
+      danger: true,
+    });
+    if (!ok) return;
     await updatePurchaseOrderStatus(id, 'ANNULE');
+    toast.info('Commande annulée');
     reload();
   };
 
   const handleReceive = async () => {
     if (!id) return;
-    if (!confirm('Confirmer la réception ? Le stock de chaque article sera incrémenté.')) return;
+    const ok = await confirm({
+      title: 'Confirmer la réception',
+      message: 'Confirmer la réception ? Le stock de chaque article sera incrémenté.',
+      confirmLabel: 'Confirmer la réception',
+    });
+    if (!ok) return;
     setError(null);
     try {
       await receivePurchaseOrder(id);
+      toast.success('Réception confirmée — stock mis à jour');
       reload();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur';
       setError(message);
+      toast.error(message);
     }
   };
 

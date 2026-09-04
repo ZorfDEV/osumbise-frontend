@@ -1,3 +1,38 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Masque la scrollbar visuellement (le défilement au doigt/trackpad reste
+   actif) — utilisé pour le carrousel de catégories du POS */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Sans marge de page, la plupart des navigateurs (Chrome/Edge en tête)
+   suppriment l'en-tête/pied de page automatiques (date, titre, URL, n° de
+   page) faute d'espace pour les dessiner — la facture est censée en tenir
+   compte elle-même via son propre padding interne à l'impression. */
+@media print {
+  @page {
+    margin: 0;
+  }
+}
+
+/* Entrée douce des notifications toast */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-toast-in {
+  animation: toast-in 0.22s ease-out;
+}

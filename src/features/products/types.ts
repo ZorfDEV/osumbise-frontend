@@ -17,6 +17,7 @@ export interface Product {
   isActive: boolean;
   categoryId: string;
   category?: { name: string };
+  image: string | null;
 }
 
 export interface RecipeItem {

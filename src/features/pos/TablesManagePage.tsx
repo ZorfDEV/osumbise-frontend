@@ -4,9 +4,13 @@ import { api } from '@/lib/axios';
 import { useAuth } from '@/features/auth/AuthContext';
 import { fetchTables, createTable, updateTable, deleteTable } from './api';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
+import { useConfirm } from '@/lib/confirm';
+import { useToast } from '@/lib/toast';
 
 export default function TablesManagePage() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+  const toast = useToast();
   const [tables, setTables] = useState<DiningTable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newLabel, setNewLabel] = useState('');
@@ -47,12 +51,14 @@ export default function TablesManagePage() {
       });
       setNewLabel('');
       setNewZone('');
+      toast.success('Table créée');
       load();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de la création';
       setError(message);
+      toast.error(message);
     }
   };
 
@@ -65,21 +71,30 @@ export default function TablesManagePage() {
   const saveEdit = async () => {
     if (!editingId || !editLabel.trim()) return;
     await updateTable(editingId, { label: editLabel.trim(), zone: editZone.trim() || undefined });
+    toast.success('Table modifiée');
     setEditingId(null);
     load();
   };
 
   const handleDelete = async (t: DiningTable) => {
-    if (!confirm(`Supprimer la table "${t.label}" ?`)) return;
+    const ok = await confirm({
+      title: 'Supprimer la table',
+      message: `Supprimer la table "${t.label}" ?`,
+      confirmLabel: 'Supprimer',
+      danger: true,
+    });
+    if (!ok) return;
     setError(null);
     try {
       await deleteTable(t.id);
+      toast.success('Table supprimée');
       load();
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de la suppression';
       setError(message);
+      toast.error(message);
     }
   };
 

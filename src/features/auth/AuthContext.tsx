@@ -8,6 +8,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,8 +42,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     disconnectSocket();
   };
 
+  // Appelé après une modification du profil (nom/email) depuis /settings,
+  // pour que la sidebar/topbar reflètent le changement immédiatement
+  const refreshProfile = async () => {
+    const res = await api.get('/auth/me');
+    setUser(res.data.user);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

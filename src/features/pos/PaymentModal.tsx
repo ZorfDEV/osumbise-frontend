@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/axios';
+import { useToast } from '@/lib/toast';
 import { payOrder, PaymentLine } from './api';
 
 interface CashRegisterWithSession {
@@ -10,6 +11,7 @@ interface CashRegisterWithSession {
 interface Props {
   orderId: string;
   total: number;
+  defaultMethod?: PaymentLine['method'];
   onClose: () => void;
   onPaid: () => void;
 }
@@ -22,8 +24,11 @@ const METHODS: { value: PaymentLine['method']; label: string }[] = [
   { value: 'CREDIT', label: 'Crédit' },
 ];
 
-export default function PaymentModal({ orderId, total, onClose, onPaid }: Props) {
-  const [lines, setLines] = useState<PaymentLine[]>([{ method: 'CASH', amount: total }]);
+export default function PaymentModal({ orderId, total, defaultMethod, onClose, onPaid }: Props) {
+  const toast = useToast();
+  const [lines, setLines] = useState<PaymentLine[]>([
+    { method: defaultMethod ?? 'CASH', amount: total },
+  ]);
   const [cashSessionId, setCashSessionId] = useState<string | undefined>();
   const [hasOpenSession, setHasOpenSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +76,7 @@ export default function PaymentModal({ orderId, total, onClose, onPaid }: Props)
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
         'Erreur lors de l’encaissement';
       setError(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

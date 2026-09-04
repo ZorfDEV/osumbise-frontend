@@ -10,6 +10,7 @@ export interface EstablishmentPayload {
   name: string;
   type: string;
   address?: string;
+  logo?: string;
 }
 
 export const createEstablishment = async (
