@@ -238,7 +238,7 @@ export default function LandingPage() {
               Le point de vente pensé pour les{' '}
               <RotatingWord
                 words={['bars', 'restaurants', 'hôtels', 'épiceries', 'grossistes']}
-                className="bg-gradient-to-r from-action to-primary-500 bg-clip-text text-transparent"
+                wordClassName="bg-gradient-to-r from-action to-primary-500 bg-clip-text text-transparent dark:from-primary-300 dark:to-primary-500"
               />
             </h1>
             <p

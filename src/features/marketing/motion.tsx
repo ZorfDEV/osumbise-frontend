@@ -155,22 +155,39 @@ export function useAnimatedNumber(target: number, duration = 500) {
   return value;
 }
 
-// Mot qui change en glissant (ex. bars → restaurants → hôtels)
-export function RotatingWord({ words, interval = 2200, className = '' }: { words: string[]; interval?: number; className?: string }) {
+// Mot qui change en glissant (ex. bars → restaurants → hôtels).
+// `wordClassName` s'applique à CHAQUE mot : un dégradé (bg-clip-text) posé
+// sur le conteneur ne s'affiche pas sur des enfants transformés — les mots
+// deviendraient transparents, donc invisibles.
+export function RotatingWord({
+  words,
+  interval = 2200,
+  className = '',
+  wordClassName = '',
+}: {
+  words: string[];
+  interval?: number;
+  className?: string;
+  wordClassName?: string;
+}) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    if (prefersReducedMotion()) return;
+    if (prefersReducedMotion() || words.length < 2) return;
     const id = window.setInterval(() => setIndex((i) => (i + 1) % words.length), interval);
     return () => window.clearInterval(id);
   }, [words.length, interval]);
 
   // Le mot le plus long réserve la largeur : le titre ne "saute" pas
   const longest = words.reduce((a, b) => (b.length > a.length ? b : a), '');
+  const previous = (index - 1 + words.length) % words.length;
 
   return (
-    <span className={`relative inline-grid align-bottom ${className}`}>
-      <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+    // overflow-hidden masque les mots qui entrent/sortent ; le léger padding
+    // vertical (compensé par une marge négative) évite de couper les
+    // jambages (g, p) et les accents.
+    <span className={`relative -my-[0.15em] inline-grid overflow-hidden py-[0.15em] align-bottom ${className}`}>
+      <span aria-hidden="true" className={`invisible col-start-1 row-start-1 ${wordClassName}`}>
         {longest}
       </span>
       <span className="sr-only">{words.join(', ')}</span>
@@ -178,8 +195,12 @@ export function RotatingWord({ words, interval = 2200, className = '' }: { words
         <span
           key={w}
           aria-hidden="true"
-          className={`col-start-1 row-start-1 transition-all duration-500 ease-out ${
-            i === index ? 'translate-y-0 opacity-100' : i === (index - 1 + words.length) % words.length ? '-translate-y-full opacity-0' : 'translate-y-full opacity-0'
+          className={`col-start-1 row-start-1 transition-[transform,opacity] duration-500 ease-out ${wordClassName} ${
+            i === index
+              ? 'translate-y-0 opacity-100'
+              : i === previous
+                ? '-translate-y-full opacity-0'
+                : 'translate-y-full opacity-0'
           }`}
         >
           {w}
