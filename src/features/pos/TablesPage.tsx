@@ -7,12 +7,15 @@ import { fetchTables, fetchOrders } from './api';
 import { createOrder, findLocalActiveOrderForTable } from './offlineApi';
 import { getCachedTables } from '@/lib/offlineCache';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
+import { CardGridSkeleton } from '@/components/ui/skeleton';
+import { LayoutGrid } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
 
 const STATUS_STYLES: Record<DiningTable['status'], string> = {
-  FREE: 'bg-green-100 border-green-300 text-green-800',
-  OCCUPIED: 'bg-red-100 border-red-300 text-red-800',
-  PENDING_ORDER: 'bg-amber-100 border-amber-300 text-amber-800',
-  BILL_REQUESTED: 'bg-blue-100 border-blue-300 text-blue-800',
+  FREE: 'bg-success-soft border-success/30 text-success-dark',
+  OCCUPIED: 'bg-danger-soft border-danger/30 text-danger-dark',
+  PENDING_ORDER: 'bg-warning-soft border-warning/30 text-warning-dark',
+  BILL_REQUESTED: 'bg-info-soft border-info/30 text-info-dark',
 };
 
 const ACTIVE_STATUSES = ['BROUILLON', 'EN_ATTENTE', 'EN_PREPARATION', 'PRETE', 'SERVIE'];
@@ -96,17 +99,17 @@ export default function TablesPage() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Tables</h1>
+        <h1 className="text-2xl font-semibold text-heading">Tables</h1>
         <div className="flex gap-2">
           <Link
             to="/tables/manage"
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="btn btn-secondary"
           >
             Gérer les tables
           </Link>
           <button
             onClick={handleCounterSale}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn btn-primary"
           >
             Vente au comptoir
           </button>
@@ -114,7 +117,7 @@ export default function TablesPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <CardGridSkeleton />
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           {tables.map((table) => (
@@ -128,9 +131,9 @@ export default function TablesPage() {
             </button>
           ))}
           {tables.length === 0 && (
-            <p className="col-span-full text-sm text-slate-400">
-              Aucune table configurée pour le moment
-            </p>
+            <div className="col-span-full">
+              <EmptyState icon={LayoutGrid} title="Aucune table configurée" description="Configurez vos tables pour prendre les commandes en salle, ou faites une vente au comptoir." action={{ label: 'Configurer les tables', to: '/tables/manage' }} />
+            </div>
           )}
         </div>
       )}

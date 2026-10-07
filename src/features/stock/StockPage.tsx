@@ -4,6 +4,16 @@ import { fetchProducts } from '@/features/products/api';
 import { StockMovement, StockAlert, MovementType } from './types';
 import { Product } from '@/features/products/types';
 import StockMovementForm from './StockMovementForm';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { Archive } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
+import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
+
+type MovementSort = 'recent' | 'oldest';
+const MOVEMENT_SORTS: { value: MovementSort; label: string }[] = [
+  { value: 'recent', label: 'Plus récents' },
+  { value: 'oldest', label: 'Plus anciens' },
+];
 
 const MOVEMENT_LABELS: Record<MovementType, string> = {
   ENTREE: 'Entrée',
@@ -14,11 +24,11 @@ const MOVEMENT_LABELS: Record<MovementType, string> = {
 };
 
 const MOVEMENT_STYLES: Record<MovementType, string> = {
-  ENTREE: 'text-green-700 bg-green-100',
+  ENTREE: 'text-success-dark bg-success-soft',
   SORTIE_VENTE: 'text-slate-700 bg-slate-100',
-  PERTE: 'text-red-700 bg-red-100',
-  CASSE: 'text-red-700 bg-red-100',
-  AJUSTEMENT: 'text-amber-700 bg-amber-100',
+  PERTE: 'text-danger-dark bg-danger-soft',
+  CASSE: 'text-danger-dark bg-danger-soft',
+  AJUSTEMENT: 'text-warning-dark bg-warning-soft',
 };
 
 type FormMode = 'ENTREE' | 'PERTE' | 'CASSE' | 'AJUSTEMENT';
@@ -29,6 +39,19 @@ export default function StockPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeForm, setActiveForm] = useState<FormMode | null>(null);
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<MovementType | 'ALL'>('ALL');
+  const [sort, setSort] = useState<MovementSort>('recent');
+
+  const q = normalizeText(query);
+  const visibleMovements = movements
+    .filter((m) => typeFilter === 'ALL' || m.type === typeFilter)
+    .filter((m) => !q || normalizeText(m.product.name).includes(q) || (!!m.reason && normalizeText(m.reason).includes(q)))
+    .sort((a, b) => {
+      const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return sort === 'oldest' ? diff : -diff;
+    });
+  const isFiltering = !!q || typeFilter !== 'ALL';
 
   const load = () => {
     setIsLoading(true);
@@ -48,29 +71,29 @@ export default function StockPage() {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Stock</h1>
+        <h1 className="text-2xl font-semibold text-heading">Stock</h1>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setActiveForm('ENTREE')}
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn btn-primary px-3"
           >
             + Entrée
           </button>
           <button
             onClick={() => setActiveForm('PERTE')}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="btn btn-secondary px-3"
           >
             Perte
           </button>
           <button
             onClick={() => setActiveForm('CASSE')}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="btn btn-secondary px-3"
           >
             Casse
           </button>
           <button
             onClick={() => setActiveForm('AJUSTEMENT')}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="btn btn-secondary px-3"
           >
             Ajustement
           </button>
@@ -90,17 +113,17 @@ export default function StockPage() {
       )}
 
       {alerts.length > 0 && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <h2 className="mb-2 text-sm font-semibold text-amber-800">Alertes de stock</h2>
+        <div className="mb-6 rounded-lg border border-warning/30 bg-warning-soft p-4">
+          <h2 className="mb-2 text-sm font-semibold text-warning-dark">Alertes de stock</h2>
           <ul className="space-y-1 text-sm">
             {alerts.map((a) => (
               <li key={a.id} className="flex items-center justify-between">
-                <span className="text-amber-900">{a.name}</span>
+                <span className="text-warning-dark">{a.name}</span>
                 <span
                   className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                     a.severity === 'RUPTURE'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-amber-100 text-amber-700'
+                      ? 'bg-danger-soft text-danger-dark'
+                      : 'bg-warning-soft text-warning-dark'
                   }`}
                 >
                   {a.severity === 'RUPTURE' ? 'Rupture' : 'Stock faible'} —{' '}
@@ -112,11 +135,41 @@ export default function StockPage() {
         </div>
       )}
 
+      {!isLoading && movements.length > 0 && (
+        <ListToolbar
+          id="stock"
+          query={query}
+          onQueryChange={setQuery}
+          placeholder="Rechercher un produit ou un motif"
+          sort={sort}
+          onSortChange={setSort}
+          sortOptions={MOVEMENT_SORTS}
+          resultCount={isFiltering ? visibleMovements.length : undefined}
+        >
+          <label htmlFor="stock-type" className="sr-only">
+            Type de mouvement
+          </label>
+          <select
+            id="stock-type"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as MovementType | 'ALL')}
+            className="input w-auto"
+          >
+            <option value="ALL">Tous les types</option>
+            {(Object.keys(MOVEMENT_LABELS) as MovementType[]).map((t) => (
+              <option key={t} value={t}>
+                {MOVEMENT_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        </ListToolbar>
+      )}
+
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+          <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Date</th>
@@ -129,34 +182,49 @@ export default function StockPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {movements.map((m) => (
+              {visibleMovements.map((m) => (
                 <tr key={m.id}>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td data-label="Date" className="px-4 py-2 text-slate-600">
                     {new Date(m.createdAt).toLocaleString('fr-FR', {
                       dateStyle: 'short',
                       timeStyle: 'short',
                     })}
                   </td>
-                  <td className="px-4 py-2 text-slate-900">{m.product.name}</td>
-                  <td className="px-4 py-2">
+                  <td data-label="Produit" className="px-4 py-2 text-slate-900">{m.product.name}</td>
+                  <td data-label="Type" className="px-4 py-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${MOVEMENT_STYLES[m.type]}`}
                     >
                       {MOVEMENT_LABELS[m.type]}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td data-label="Quantité" className="px-4 py-2 text-slate-600">
                     {Number(m.quantity)} {m.product.unit}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{Number(m.stockAfter)}</td>
-                  <td className="px-4 py-2 text-slate-500">{m.reason ?? '—'}</td>
-                  <td className="px-4 py-2 text-slate-500">{m.user?.name ?? '—'}</td>
+                  <td data-label="Stock après" className="px-4 py-2 text-slate-600">{Number(m.stockAfter)}</td>
+                  <td data-label="Motif" className="px-4 py-2 text-slate-500">{m.reason ?? '—'}</td>
+                  <td data-label="Par" className="px-4 py-2 text-slate-500">{m.user?.name ?? '—'}</td>
                 </tr>
               ))}
-              {movements.length === 0 && (
+              {visibleMovements.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-slate-400">
-                    Aucun mouvement
+                  <td colSpan={7}>
+                    {movements.length === 0 ? (
+                      <EmptyState compact icon={Archive} title="Aucun mouvement de stock" description="Les entrées, pertes et ajustements enregistrés apparaîtront ici." />
+                    ) : (
+                      <EmptyState
+                        compact
+                        icon={Archive}
+                        title="Aucun mouvement ne correspond à ces filtres"
+                        action={{
+                          label: 'Réinitialiser les filtres',
+                          onClick: () => {
+                            setQuery('');
+                            setTypeFilter('ALL');
+                          },
+                        }}
+                      />
+                    )}
                   </td>
                 </tr>
               )}

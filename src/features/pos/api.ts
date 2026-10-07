@@ -52,9 +52,17 @@ export const fetchOrder = async (id: string): Promise<Order> => {
 
 export const createOrder = async (payload: {
   tableId?: string;
+  customerId?: string;
   establishmentId?: string;
 }): Promise<Order> => {
   const res = await api.post('/orders', payload);
+  return res.data.order;
+};
+
+// Rattache (ou retire, avec null) un client enregistré à une commande —
+// nécessaire pour une vente à crédit (module Grossiste)
+export const setOrderCustomer = async (orderId: string, customerId: string | null) => {
+  const res = await api.patch(`/orders/${orderId}/customer`, { customerId });
   return res.data.order;
 };
 

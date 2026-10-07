@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { loadOrder } from './offlineApi';
 import { Order, PaymentMethod } from './types';
+import { PageSkeleton } from '@/components/ui/skeleton';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -24,7 +25,7 @@ export default function ReceiptPage() {
   }, [orderId]);
 
   if (!order) {
-    return <p className="text-sm text-slate-500">Chargement...</p>;
+    return <PageSkeleton />;
   }
 
   const isPaid = order.status === 'PAYEE' || order.status === 'FERMEE';
@@ -54,7 +55,7 @@ export default function ReceiptPage() {
         </Link>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary flex"
         >
           <Printer size={16} />
           Imprimer la facture
@@ -62,7 +63,7 @@ export default function ReceiptPage() {
       </div>
 
       {/* Zone imprimable — largeur resserrée façon reçu de caisse */}
-      <div className="mx-auto max-w-sm rounded-lg border border-slate-200 bg-white p-6 font-mono text-sm text-slate-800 shadow-sm print:max-w-none print:border-0 print:p-10 print:shadow-none">
+      <div className="mx-auto max-w-sm rounded-lg border border-slate-200 bg-surface p-6 font-mono text-sm text-slate-800 shadow-sm print:max-w-none print:border-0 print:p-10 print:shadow-none">
         <div className="mb-4 text-center">
           {order.establishment?.logo && (
             <img
@@ -135,7 +136,7 @@ export default function ReceiptPage() {
           </div>
         )}
 
-        <p className="mt-4 text-center text-xs text-slate-400">Merci de votre visite !</p>
+        <p className="mt-4 text-center text-xs text-slate-500">Merci de votre visite !</p>
       </div>
     </div>
   );

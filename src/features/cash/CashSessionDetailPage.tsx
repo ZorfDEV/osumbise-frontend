@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { fetchCashSession, closeCashSession, createCashMovement } from './api';
 import { CashSession, CashMovementType } from './types';
 import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
+import { PageSkeleton } from '@/components/ui/skeleton';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   SALE_CASH: 'Vente espèces',
@@ -39,7 +41,7 @@ export default function CashSessionDetailPage() {
   }, [reload]);
 
   if (!session) {
-    return <p className="text-sm text-slate-500">Chargement...</p>;
+    return <PageSkeleton />;
   }
 
   const isOpen = !session.closedAt;
@@ -81,11 +83,9 @@ export default function CashSessionDetailPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link to="/cash" className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-900">
-        ← Retour aux caisses
-      </Link>
+      <Breadcrumbs items={[{ label: 'Sessions de caisse', to: '/cash' }, { label: session.cashRegister?.name ?? 'Session de caisse' }]} />
 
-      <h1 className="mb-1 text-2xl font-semibold text-slate-900">
+      <h1 className="mb-1 text-2xl font-semibold text-heading">
         {session.cashRegister?.name ?? 'Session de caisse'}
       </h1>
       <p className="mb-6 text-sm text-slate-500">
@@ -94,7 +94,7 @@ export default function CashSessionDetailPage() {
       </p>
 
       {!isOpen && (
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4 text-sm">
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4 text-sm">
           <p className="mb-1">
             <span className="text-slate-500">Solde théorique :</span>{' '}
             <span className="font-medium">{formatFcfa(Number(session.theoreticalBalance))}</span>
@@ -107,7 +107,7 @@ export default function CashSessionDetailPage() {
             <span className="text-slate-500">Écart :</span>{' '}
             <span
               className={`font-medium ${
-                Number(session.discrepancy) === 0 ? 'text-green-700' : 'text-red-700'
+                Number(session.discrepancy) === 0 ? 'text-primary-700' : 'text-danger-dark'
               }`}
             >
               {formatFcfa(Number(session.discrepancy))}
@@ -116,8 +116,8 @@ export default function CashSessionDetailPage() {
         </div>
       )}
 
-      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
+      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+        <table className="table-cards w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">Heure</th>
@@ -129,23 +129,23 @@ export default function CashSessionDetailPage() {
           <tbody className="divide-y divide-slate-100">
             {session.movements.map((m) => (
               <tr key={m.id}>
-                <td className="px-4 py-2 text-slate-600">
+                <td data-label="Heure" className="px-4 py-2 text-slate-600">
                   {new Date(m.createdAt).toLocaleTimeString('fr-FR')}
                 </td>
-                <td className="px-4 py-2 text-slate-900">{MOVEMENT_LABELS[m.type]}</td>
-                <td
+                <td data-label="Type" className="px-4 py-2 text-slate-900">{MOVEMENT_LABELS[m.type]}</td>
+                <td data-label="Montant"
                   className={`px-4 py-2 font-medium ${
-                    Number(m.amount) < 0 ? 'text-red-600' : 'text-green-700'
+                    Number(m.amount) < 0 ? 'text-danger' : 'text-primary-700'
                   }`}
                 >
                   {formatFcfa(Number(m.amount))}
                 </td>
-                <td className="px-4 py-2 text-slate-500">{m.note ?? '—'}</td>
+                <td data-label="Note" className="px-4 py-2 text-slate-500">{m.note ?? '—'}</td>
               </tr>
             ))}
             {session.movements.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
                   Aucun mouvement
                 </td>
               </tr>
@@ -156,15 +156,15 @@ export default function CashSessionDetailPage() {
 
       {isOpen && (
         <>
-          <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-semibold text-slate-900">
+          <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+            <h2 className="mb-3 text-sm font-semibold text-heading-muted">
               Ajouter un mouvement manuel
             </h2>
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={movementType}
                 onChange={(e) => setMovementType(e.target.value as typeof movementType)}
-                className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+                className="input px-2"
               >
                 <option value="EXPENSE">Dépense</option>
                 <option value="REFUND">Remboursement</option>
@@ -175,37 +175,37 @@ export default function CashSessionDetailPage() {
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
                 placeholder="Montant"
-                className="w-28 rounded-md border border-slate-300 px-2 py-2 text-sm"
+                className="input w-28 px-2"
               />
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Note (optionnel)"
-                className="flex-1 rounded-md border border-slate-300 px-2 py-2 text-sm"
+                className="input flex-1 px-2"
               />
               <button
                 onClick={handleAddMovement}
-                className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                className="btn btn-primary px-3"
               >
                 Ajouter
               </button>
             </div>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-2 text-sm text-danger">{error}</p>}
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-semibold text-slate-900">Fermer la caisse</h2>
+          <div className="rounded-lg border border-slate-200 bg-surface p-4">
+            <h2 className="mb-3 text-sm font-semibold text-heading-muted">Fermer la caisse</h2>
             <div className="flex items-center gap-2">
               <input
                 type="number"
                 value={actualBalance}
                 onChange={(e) => setActualBalance(Number(e.target.value))}
                 placeholder="Solde compté"
-                className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="input w-32"
               />
               <button
                 onClick={handleClose}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                className="btn btn-danger"
               >
                 Clôturer
               </button>

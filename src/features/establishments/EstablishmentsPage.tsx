@@ -3,17 +3,26 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { fetchEstablishments, createEstablishment, updateEstablishment } from './api';
 import { Establishment, EstablishmentType } from './types';
 import { useToast } from '@/lib/toast';
+import { fetchSubscription } from '@/features/billing/api';
+import PaySubscriptionButton from '@/features/billing/PaySubscriptionButton';
+import { Subscription } from '@/features/billing/types';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { Building2 } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
 
 const TYPE_LABELS: Record<EstablishmentType, string> = {
   BAR: 'Bar',
   RESTAURANT: 'Restaurant',
   HOTEL: 'Hôtel',
+  GROSSISTE: 'Grossiste',
+  EPICERIE: 'Épicerie',
 };
 
 export default function EstablishmentsPage() {
   const { refreshProfile } = useAuth();
   const toast = useToast();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState('');
@@ -33,8 +42,15 @@ export default function EstablishmentsPage() {
       .finally(() => setIsLoading(false));
   };
 
+  const loadSubscription = () => {
+    fetchSubscription()
+      .then(setSubscription)
+      .catch(() => setSubscription(null));
+  };
+
   useEffect(() => {
     load();
+    loadSubscription();
   }, []);
 
   const handleCreate = async () => {
@@ -81,23 +97,68 @@ export default function EstablishmentsPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Établissements</h1>
+        <h1 className="text-2xl font-semibold text-heading">Établissements</h1>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary"
         >
           {showForm ? 'Annuler' : 'Nouvel établissement'}
         </button>
       </div>
 
+      {subscription && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-slate-900">
+                Formule {subscription.plan.name}
+                <span
+                  className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    subscription.status === 'TRIAL'
+                      ? 'bg-warning-soft text-warning-dark'
+                      : subscription.status === 'ACTIVE'
+                        ? 'bg-success-soft text-success-dark'
+                        : 'bg-danger-soft text-danger-dark'
+                  }`}
+                >
+                  {subscription.status === 'TRIAL'
+                    ? 'Essai'
+                    : subscription.status === 'ACTIVE'
+                      ? 'Actif'
+                      : subscription.status === 'PAST_DUE'
+                        ? 'Paiement en retard'
+                        : 'Annulé'}
+                </span>
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {subscription.status === 'TRIAL' ? "Fin de l'essai" : 'Prochain renouvellement'}{' '}
+                le {new Date(subscription.currentPeriodEnd).toLocaleDateString('fr-FR')} —{' '}
+                {establishments.length}/
+                {subscription.plan.maxEstablishments >= 999
+                  ? '∞'
+                  : subscription.plan.maxEstablishments}{' '}
+                établissement{establishments.length > 1 ? 's' : ''} utilisé
+                {establishments.length > 1 ? 's' : ''}
+              </p>
+            </div>
+            {subscription.status !== 'ACTIVE' && (
+              <PaySubscriptionButton
+                amountLabel={`${Number(subscription.plan.price).toLocaleString('fr-FR')} FCFA`}
+                onSuccess={loadSubscription}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       {showForm && (
-        <div className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-surface p-6 sm:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Nom</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
           </div>
           <div>
@@ -105,11 +166,13 @@ export default function EstablishmentsPage() {
             <select
               value={type}
               onChange={(e) => setType(e.target.value as EstablishmentType)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             >
               <option value="BAR">Bar</option>
               <option value="RESTAURANT">Restaurant</option>
               <option value="HOTEL">Hôtel</option>
+              <option value="GROSSISTE">Grossiste</option>
+              <option value="EPICERIE">Épicerie</option>
             </select>
           </div>
           <div>
@@ -119,7 +182,7 @@ export default function EstablishmentsPage() {
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
           </div>
           <div className="sm:col-span-3">
@@ -131,16 +194,16 @@ export default function EstablishmentsPage() {
               value={logo}
               onChange={(e) => setLogo(e.target.value)}
               placeholder="https://..."
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-500">
               Affiché dans l’en-tête de l’application et sur les factures imprimées.
             </p>
           </div>
           <div className="sm:col-span-3">
             <button
               onClick={handleCreate}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="btn btn-primary"
             >
               Créer
             </button>
@@ -149,39 +212,41 @@ export default function EstablishmentsPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
         <div className="space-y-3">
           {establishments.map((e) => (
-            <div key={e.id} className="rounded-lg border border-slate-200 bg-white p-4">
+            <div key={e.id} className="rounded-lg border border-slate-200 bg-surface p-4">
               {editingId === e.id ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <input
                     value={editName}
                     onChange={(ev) => setEditName(ev.target.value)}
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   />
                   <select
                     value={editType}
                     onChange={(ev) => setEditType(ev.target.value as EstablishmentType)}
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   >
                     <option value="BAR">Bar</option>
                     <option value="RESTAURANT">Restaurant</option>
                     <option value="HOTEL">Hôtel</option>
+                    <option value="GROSSISTE">Grossiste</option>
+                    <option value="EPICERIE">Épicerie</option>
                   </select>
                   <input
                     value={editAddress}
                     onChange={(ev) => setEditAddress(ev.target.value)}
                     placeholder="Adresse"
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   />
                   <input
                     type="url"
                     value={editLogo}
                     onChange={(ev) => setEditLogo(ev.target.value)}
                     placeholder="URL du logo"
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-3"
+                    className="input sm:col-span-3"
                   />
                   <div className="flex gap-3 sm:col-span-3">
                     <button
@@ -192,7 +257,7 @@ export default function EstablishmentsPage() {
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="text-sm text-slate-400 hover:text-slate-600"
+                      className="text-sm text-slate-500 hover:text-slate-600"
                     >
                       Annuler
                     </button>
@@ -204,7 +269,7 @@ export default function EstablishmentsPage() {
                     {e.logo ? (
                       <img src={e.logo} alt={e.name} className="h-9 w-9 rounded object-cover" />
                     ) : (
-                      <div className="flex h-9 w-9 items-center justify-center rounded bg-slate-100 text-sm font-semibold text-slate-400">
+                      <div className="flex h-9 w-9 items-center justify-center rounded bg-slate-100 text-sm font-semibold text-slate-500">
                         {e.name.charAt(0).toUpperCase()}
                       </div>
                     )}
@@ -227,12 +292,12 @@ export default function EstablishmentsPage() {
             </div>
           ))}
           {establishments.length === 0 && (
-            <p className="text-sm text-slate-400">Aucun établissement</p>
+            <EmptyState icon={Building2} title="Aucun établissement" description="Ajoutez votre premier établissement avec le formulaire ci-dessus." />
           )}
         </div>
       )}
 
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-slate-500">
         La suppression d’un établissement n’est pas proposée : trop de données en dépendent
         (produits, tables, commandes, utilisateurs...). Il n’y a pas non plus de désactivation
         pour l’instant — à construire si le besoin se présente.

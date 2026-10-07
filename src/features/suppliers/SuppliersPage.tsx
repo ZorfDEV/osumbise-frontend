@@ -4,12 +4,13 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
 import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from './api';
 import { Supplier } from './types';
-import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { Truck } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
 
 export default function SuppliersPage() {
   const { user } = useAuth();
-  const confirm = useConfirm();
   const toast = useToast();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,48 +85,50 @@ export default function SuppliersPage() {
     load();
   };
 
-  const handleDelete = async (s: Supplier) => {
-    const ok = await confirm({
-      title: 'Supprimer le fournisseur',
-      message: `Supprimer le fournisseur "${s.name}" ?`,
-      confirmLabel: 'Supprimer',
-      danger: true,
-    });
-    if (!ok) return;
+  // Pas de fenêtre de confirmation : l'élément disparaît tout de suite et la
+  // suppression n'est envoyée qu'après 5 s, sauf clic sur "Annuler".
+  const handleDelete = (s: Supplier) => {
     setError(null);
-    try {
-      await deleteSupplier(s.id);
-      toast.success('Fournisseur supprimé');
-      load();
-    } catch (err) {
-      const message =
-        (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
-        'Erreur lors de la suppression';
-      setError(message);
-      toast.error(message);
-    }
+    const index = suppliers.findIndex((x) => x.id === s.id);
+    setSuppliers((prev) => prev.filter((x) => x.id !== s.id));
+    toast.undoable(`Fournisseur « ${s.name} » supprimé`, {
+      // Remis à sa place d'origine, sans recharger la liste
+      onUndo: () => setSuppliers((prev) => [...prev.slice(0, index), s, ...prev.slice(index)]),
+      onCommit: async () => {
+        try {
+          await deleteSupplier(s.id);
+        } catch (err) {
+          const message =
+            (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+            'Erreur lors de la suppression';
+          setError(message);
+          toast.error(message);
+          load();
+        }
+      },
+    });
   };
 
   return (
     <div className="max-w-3xl">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Fournisseurs</h1>
+        <h1 className="text-2xl font-semibold text-heading">Fournisseurs</h1>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary"
         >
           {showForm ? 'Annuler' : 'Nouveau fournisseur'}
         </button>
       </div>
 
       {showForm && (
-        <div className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-2">
+        <div className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-surface p-6 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Nom</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
           </div>
           <div>
@@ -133,7 +136,7 @@ export default function SuppliersPage() {
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
           </div>
           <div>
@@ -141,7 +144,7 @@ export default function SuppliersPage() {
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
           </div>
           <div>
@@ -149,13 +152,13 @@ export default function SuppliersPage() {
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
           </div>
           <div className="sm:col-span-2">
             <button
               onClick={handleCreate}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="btn btn-primary"
             >
               Créer
             </button>
@@ -163,39 +166,39 @@ export default function SuppliersPage() {
         </div>
       )}
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
         <div className="space-y-3">
           {suppliers.map((s) => (
-            <div key={s.id} className="rounded-lg border border-slate-200 bg-white p-4">
+            <div key={s.id} className="rounded-lg border border-slate-200 bg-surface p-4">
               {editingId === s.id ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     placeholder="Nom"
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   />
                   <input
                     value={editPhone}
                     onChange={(e) => setEditPhone(e.target.value)}
                     placeholder="Téléphone"
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   />
                   <input
                     value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     placeholder="Email"
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   />
                   <input
                     value={editAddress}
                     onChange={(e) => setEditAddress(e.target.value)}
                     placeholder="Adresse"
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                    className="input"
                   />
                   <div className="flex gap-3 sm:col-span-2">
                     <button
@@ -206,7 +209,7 @@ export default function SuppliersPage() {
                     </button>
                     <button
                       onClick={() => setEditingId(null)}
-                      className="text-sm text-slate-400 hover:text-slate-600"
+                      className="text-sm text-slate-500 hover:text-slate-600"
                     >
                       Annuler
                     </button>
@@ -235,7 +238,7 @@ export default function SuppliersPage() {
                     </button>
                     <button
                       onClick={() => handleDelete(s)}
-                      className="text-xs font-medium text-slate-400 hover:text-red-600"
+                      className="text-xs font-medium text-slate-500 hover:text-danger"
                     >
                       Supprimer
                     </button>
@@ -245,7 +248,7 @@ export default function SuppliersPage() {
             </div>
           ))}
           {suppliers.length === 0 && (
-            <p className="text-sm text-slate-400">Aucun fournisseur</p>
+            <EmptyState icon={Truck} title="Aucun fournisseur pour l’instant" description="Ajoutez vos fournisseurs pour créer des commandes d’achat." action={{ label: 'Ajouter un fournisseur', onClick: () => setShowForm(true) }} />
           )}
         </div>
       )}

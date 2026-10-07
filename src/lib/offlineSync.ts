@@ -19,7 +19,15 @@ export const getOutboxCount = async (): Promise<number> => {
   return db.count('outbox');
 };
 
+// Actions en attente, de la plus ancienne à la plus récente (pastille de
+// connexion de la Topbar)
+export const getOutboxActions = async (): Promise<OutboxAction[]> => {
+  const db = await getDb();
+  return (await db.getAll('outbox')).sort((a, b) => a.createdAt - b.createdAt);
+};
+
 let isSyncing = false;
+export const isSyncInProgress = () => isSyncing;
 
 // Rejoue la file dans l'ordre chronologique. S'arrête à la première erreur
 // plutôt que de continuer : les actions suivantes dépendent souvent de la

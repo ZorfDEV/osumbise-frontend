@@ -9,6 +9,9 @@ import {
 } from './api';
 import { ExpenseCategory, Expense } from './types';
 import { useToast } from '@/lib/toast';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { Receipt } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
 
 const formatFcfa = (value: number) => `${Math.round(value).toLocaleString('fr-FR')} FCFA`;
 
@@ -98,7 +101,7 @@ export default function ExpensesPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-semibold text-slate-900">Dépenses</h1>
+      <h1 className="mb-4 text-2xl font-semibold text-heading">Dépenses</h1>
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         {categories.map((c) => (
@@ -118,23 +121,23 @@ export default function ExpensesPage() {
       </div>
 
       {showCategoryForm && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3">
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-surface p-3">
           <input
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             placeholder="Ex. Électricité"
             autoFocus
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input flex-1"
           />
           <button
             onClick={handleAddCategory}
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn btn-primary px-3"
           >
             Ajouter
           </button>
           <button
             onClick={() => setShowCategoryForm(false)}
-            className="text-sm text-slate-400 hover:text-slate-600"
+            className="text-sm text-slate-500 hover:text-slate-600"
           >
             Annuler
           </button>
@@ -142,8 +145,8 @@ export default function ExpensesPage() {
       )}
 
       {monthTotals.size > 0 && (
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-2 text-sm font-semibold text-slate-900">Ce mois-ci, par catégorie</h2>
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <h2 className="mb-2 text-sm font-semibold text-heading-muted">Ce mois-ci, par catégorie</h2>
           <ul className="space-y-1 text-sm">
             {Array.from(monthTotals.entries()).map(([name, total]) => (
               <li key={name} className="flex justify-between text-slate-600">
@@ -155,13 +158,13 @@ export default function ExpensesPage() {
         </div>
       )}
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Enregistrer une dépense</h2>
+      <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+        <h2 className="mb-3 text-sm font-semibold text-heading-muted">Enregistrer une dépense</h2>
         <div className="flex flex-wrap items-center gap-2">
           <select
             value={expenseCategoryId}
             onChange={(e) => setExpenseCategoryId(e.target.value)}
-            className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+            className="input px-2"
           >
             <option value="">— Catégorie —</option>
             {categories.map((c) => (
@@ -175,29 +178,29 @@ export default function ExpensesPage() {
             value={amount}
             onChange={(e) => setAmount(Number(e.target.value))}
             placeholder="Montant"
-            className="w-32 rounded-md border border-slate-300 px-2 py-2 text-sm"
+            className="input w-32 px-2"
           />
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Note (optionnel)"
-            className="flex-1 rounded-md border border-slate-300 px-2 py-2 text-sm"
+            className="input flex-1 px-2"
           />
           <button
             onClick={handleAddExpense}
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn btn-primary px-3"
           >
             Enregistrer
           </button>
         </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-danger">{error}</p>}
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+          <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Date</th>
@@ -210,19 +213,19 @@ export default function ExpensesPage() {
             <tbody className="divide-y divide-slate-100">
               {expenses.map((e) => (
                 <tr key={e.id}>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td data-label="Date" className="px-4 py-2 text-slate-600">
                     {new Date(e.createdAt).toLocaleDateString('fr-FR')}
                   </td>
-                  <td className="px-4 py-2 text-slate-900">{e.expenseCategory.name}</td>
-                  <td className="px-4 py-2 text-slate-600">{formatFcfa(Number(e.amount))}</td>
-                  <td className="px-4 py-2 text-slate-500">{e.note ?? '—'}</td>
-                  <td className="px-4 py-2 text-slate-500">{e.user?.name ?? '—'}</td>
+                  <td data-label="Catégorie" className="px-4 py-2 text-slate-900">{e.expenseCategory.name}</td>
+                  <td data-label="Montant" className="px-4 py-2 text-slate-600">{formatFcfa(Number(e.amount))}</td>
+                  <td data-label="Note" className="px-4 py-2 text-slate-500">{e.note ?? '—'}</td>
+                  <td data-label="Par" className="px-4 py-2 text-slate-500">{e.user?.name ?? '—'}</td>
                 </tr>
               ))}
               {expenses.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
-                    Aucune dépense enregistrée
+                  <td colSpan={5}>
+                    <EmptyState compact icon={Receipt} title="Aucune dépense enregistrée" description="Les dépenses saisies avec le formulaire ci-dessus apparaîtront ici." />
                   </td>
                 </tr>
               )}

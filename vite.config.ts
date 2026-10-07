@@ -21,7 +21,7 @@ export default defineConfig({
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
-        theme_color: '#0f172a',
+        theme_color: '#4A6B5D',
         // Icônes réelles à fournir plus tard (192x192 et 512x512 minimum)
         // pour une installation PWA complète sur mobile
         icons: [],
@@ -34,6 +34,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: true, // écoute sur 0.0.0.0 — accessible depuis d'autres appareils du réseau, pas seulement localhost
     port: 5173,
     proxy: {
       // Le navigateur voit localhost:5173 comme seule origine — Vite relaie

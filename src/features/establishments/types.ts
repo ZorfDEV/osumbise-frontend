@@ -1,4 +1,4 @@
-export type EstablishmentType = 'BAR' | 'RESTAURANT' | 'HOTEL';
+export type EstablishmentType = 'BAR' | 'RESTAURANT' | 'HOTEL' | 'GROSSISTE' | 'EPICERIE';
 
 export interface Establishment {
   id: string;

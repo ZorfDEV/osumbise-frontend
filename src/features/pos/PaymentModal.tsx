@@ -12,6 +12,8 @@ interface Props {
   orderId: string;
   total: number;
   defaultMethod?: PaymentLine['method'];
+  hasCustomer: boolean;
+  customerName?: string;
   onClose: () => void;
   onPaid: () => void;
 }
@@ -24,7 +26,15 @@ const METHODS: { value: PaymentLine['method']; label: string }[] = [
   { value: 'CREDIT', label: 'Crédit' },
 ];
 
-export default function PaymentModal({ orderId, total, defaultMethod, onClose, onPaid }: Props) {
+export default function PaymentModal({
+  orderId,
+  total,
+  defaultMethod,
+  hasCustomer,
+  customerName,
+  onClose,
+  onPaid,
+}: Props) {
   const toast = useToast();
   const [lines, setLines] = useState<PaymentLine[]>([
     { method: defaultMethod ?? 'CASH', amount: total },
@@ -33,6 +43,8 @@ export default function PaymentModal({ orderId, total, defaultMethod, onClose, o
   const [hasOpenSession, setHasOpenSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const hasCreditLineWithoutCustomer = lines.some((l) => l.method === 'CREDIT') && !hasCustomer;
 
   useEffect(() => {
     api.get('/cash-registers').then((res) => {
@@ -67,6 +79,10 @@ export default function PaymentModal({ orderId, total, defaultMethod, onClose, o
       setError('Le montant saisi est inférieur au total de la commande');
       return;
     }
+    if (hasCreditLineWithoutCustomer) {
+      setError('Rattache un client à la commande avant de choisir "Crédit" (voir le panneau commande)');
+      return;
+    }
     setIsSubmitting(true);
     try {
       await payOrder(orderId, lines, cashSessionId);
@@ -84,15 +100,28 @@ export default function PaymentModal({ orderId, total, defaultMethod, onClose, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center">
-      <div className="w-full max-w-md rounded-t-lg bg-white p-6 sm:rounded-lg">
-        <h2 className="mb-1 text-lg font-semibold text-slate-900">Encaissement</h2>
+      <div className="w-full max-w-md rounded-t-lg bg-surface p-6 sm:rounded-lg">
+        <h2 className="mb-1 text-lg font-semibold text-heading-muted">Encaissement</h2>
         <p className="mb-4 text-sm text-slate-500">
           Total à payer :{' '}
           <span className="font-medium text-slate-900">{total.toLocaleString('fr-FR')} FCFA</span>
         </p>
 
+        {hasCustomer && customerName && (
+          <p className="mb-4 rounded-md bg-info-soft px-3 py-2 text-xs text-info-dark">
+            Client rattaché : <span className="font-medium">{customerName}</span>
+          </p>
+        )}
+
+        {hasCreditLineWithoutCustomer && (
+          <p className="mb-4 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
+            Le mode "Crédit" nécessite un client rattaché à la commande — ferme cette fenêtre et
+            choisis un client dans le panneau commande.
+          </p>
+        )}
+
         {!hasOpenSession && (
-          <p className="mb-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+          <p className="mb-4 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
             Aucune session de caisse ouverte : le paiement sera enregistré, mais aucun mouvement
             de caisse ne sera créé.
           </p>
@@ -106,7 +135,7 @@ export default function PaymentModal({ orderId, total, defaultMethod, onClose, o
                 onChange={(e) =>
                   updateLine(i, { method: e.target.value as PaymentLine['method'] })
                 }
-                className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+                className="input px-2"
               >
                 {METHODS.map((m) => (
                   <option key={m.value} value={m.value}>
@@ -118,13 +147,13 @@ export default function PaymentModal({ orderId, total, defaultMethod, onClose, o
                 type="number"
                 value={line.amount}
                 onChange={(e) => updateLine(i, { amount: Number(e.target.value) })}
-                className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="input flex-1"
               />
               {lines.length > 1 && (
                 <button
                   onClick={() => removeLine(i)}
                   aria-label="Retirer cette ligne"
-                  className="text-slate-400 hover:text-red-600"
+                  className="text-slate-500 hover:text-danger"
                 >
                   ✕
                 </button>
@@ -143,25 +172,25 @@ export default function PaymentModal({ orderId, total, defaultMethod, onClose, o
         <p className="mt-4 text-sm text-slate-600">
           Reste à percevoir :{' '}
           <span
-            className={remaining > 0 ? 'font-medium text-red-600' : 'font-medium text-green-600'}
+            className={remaining > 0 ? 'font-medium text-danger' : 'font-medium text-primary-600'}
           >
             {remaining.toLocaleString('fr-FR')} FCFA
           </span>
         </p>
 
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-danger">{error}</p>}
 
         <div className="mt-6 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-md border border-slate-300 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="btn btn-secondary flex-1"
           >
             Annuler
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex-1 rounded-md bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            disabled={isSubmitting || hasCreditLineWithoutCustomer} aria-busy={isSubmitting}
+            className="btn btn-primary flex-1"
           >
             {isSubmitting ? 'Encaissement...' : 'Valider le paiement'}
           </button>

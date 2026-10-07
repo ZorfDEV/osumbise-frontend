@@ -2,10 +2,29 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
-import { fetchCategories, createCategory, fetchProducts, createProduct } from './api';
+import {
+  fetchCategories,
+  createCategory,
+  fetchProducts,
+  createProduct,
+  uploadProductImage,
+  resolveProductImageUrl,
+} from './api';
 import { Category, Product, Unit } from './types';
-import ProductForm from './ProductForm';
+import ProductForm, { PRODUCT_TYPE_LABELS } from './ProductForm';
 import { useToast } from '@/lib/toast';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { Package } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
+import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
+
+type ProductSort = 'name' | 'price-asc' | 'price-desc' | 'stock-asc';
+const PRODUCT_SORTS: { value: ProductSort; label: string }[] = [
+  { value: 'name', label: 'Nom (A → Z)' },
+  { value: 'price-asc', label: 'Prix croissant' },
+  { value: 'price-desc', label: 'Prix décroissant' },
+  { value: 'stock-asc', label: 'Stock le plus bas' },
+];
 
 const UNIT_LABELS: Record<Unit, string> = {
   UNIT: 'unité',
@@ -22,6 +41,8 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<ProductSort>('name');
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -60,17 +81,31 @@ export default function ProductsPage() {
     load();
   };
 
-  const filtered = selectedCategoryId
-    ? products.filter((p) => p.categoryId === selectedCategoryId)
-    : products;
+  const q = normalizeText(query);
+  const filtered = products
+    .filter((p) => !selectedCategoryId || p.categoryId === selectedCategoryId)
+    .filter((p) => !q || normalizeText(p.name).includes(q) || (!!p.sku && normalizeText(p.sku).includes(q)))
+    .sort((a, b) => {
+      switch (sort) {
+        case 'price-asc':
+          return Number(a.sellingPrice) - Number(b.sellingPrice);
+        case 'price-desc':
+          return Number(b.sellingPrice) - Number(a.sellingPrice);
+        case 'stock-asc':
+          return Number(a.stockCurrent) - Number(b.stockCurrent);
+        default:
+          return a.name.localeCompare(b.name, 'fr');
+      }
+    });
+  const isFiltering = !!q || !!selectedCategoryId;
 
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-semibold text-slate-900">Produits</h1>
+        <h1 className="text-2xl font-semibold text-heading">Produits</h1>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary"
         >
           {showForm ? 'Annuler' : 'Nouveau produit'}
         </button>
@@ -81,8 +116,11 @@ export default function ProductsPage() {
           <ProductForm
             categories={categories}
             submitLabel="Créer le produit"
-            onSubmit={async (data) => {
-              await createProduct({ ...data, establishmentId });
+            onSubmit={async (data, imageFile) => {
+              const product = await createProduct({ ...data, establishmentId });
+              if (imageFile) {
+                await uploadProductImage(product.id, imageFile);
+              }
               toast.success('Produit créé');
               setShowForm(false);
               load();
@@ -92,12 +130,23 @@ export default function ProductsPage() {
         </div>
       )}
 
+      <ListToolbar
+        id="products"
+        query={query}
+        onQueryChange={setQuery}
+        placeholder="Rechercher un produit ou une référence"
+        sort={sort}
+        onSortChange={setSort}
+        sortOptions={PRODUCT_SORTS}
+        resultCount={isFiltering ? filtered.length : undefined}
+      />
+
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <button
           onClick={() => setSelectedCategoryId(null)}
           className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${
             !selectedCategoryId
-              ? 'border-slate-900 bg-slate-900 text-white'
+              ? 'border-action bg-action text-white'
               : 'border-slate-300 text-slate-600'
           }`}
         >
@@ -109,7 +158,7 @@ export default function ProductsPage() {
             onClick={() => setSelectedCategoryId(c.id)}
             className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium ${
               selectedCategoryId === c.id
-                ? 'border-slate-900 bg-slate-900 text-white'
+                ? 'border-action bg-action text-white'
                 : 'border-slate-300 text-slate-600'
             }`}
           >
@@ -124,33 +173,33 @@ export default function ProductsPage() {
         </button>
         <Link
           to="/categories"
-          className="whitespace-nowrap text-xs font-medium text-slate-400 underline hover:text-slate-700"
+          className="whitespace-nowrap text-xs font-medium text-slate-500 underline hover:text-slate-700"
         >
           Gérer les catégories
         </Link>
       </div>
 
       {showCategoryForm && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-surface p-3">
           <input
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             placeholder="Nom de la catégorie"
             autoFocus
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input flex-1"
           />
           <button
             onClick={async () => {
               await handleAddCategory();
               setShowCategoryForm(false);
             }}
-            className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn btn-primary px-3"
           >
             Ajouter
           </button>
           <button
             onClick={() => setShowCategoryForm(false)}
-            className="text-sm text-slate-400 hover:text-slate-600"
+            className="text-sm text-slate-500 hover:text-slate-600"
           >
             Annuler
           </button>
@@ -158,10 +207,10 @@ export default function ProductsPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+          <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-2" />
@@ -175,10 +224,10 @@ export default function ProductsPage() {
             <tbody className="divide-y divide-slate-100">
               {filtered.map((p) => (
                 <tr key={p.id}>
-                  <td className="px-4 py-2">
+                  <td data-label="" data-thumb className="px-4 py-2">
                     {p.image ? (
                       <img
-                        src={p.image}
+                        src={resolveProductImageUrl(p.image)}
                         alt={p.name}
                         className="h-8 w-8 rounded-md object-cover"
                       />
@@ -188,30 +237,47 @@ export default function ProductsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-2">
+                  <td data-label="Nom" className="px-4 py-2">
                     <Link
                       to={`/products/${p.id}`}
                       className="font-medium text-slate-900 hover:underline"
                     >
                       {p.name}
                     </Link>
+                    {p.type && (
+                      <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
+                        {PRODUCT_TYPE_LABELS[p.type]}
+                      </span>
+                    )}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{p.category?.name ?? '—'}</td>
-                  <td className="px-4 py-2 text-slate-600">
-                    {Number(p.sellingPrice).toLocaleString('fr-FR')} FCFA
+                  <td data-label="Catégorie" className="px-4 py-2 text-slate-600">{p.category?.name ?? '—'}</td>
+                  <td data-label="Prix" className="px-4 py-2 text-slate-600">
+                    {p.discountActive ? (
+                      <>
+                        <span className="mr-2 text-slate-500 line-through">
+                          {Number(p.sellingPrice).toLocaleString('fr-FR')} FCFA
+                        </span>
+                        <span className="font-medium text-primary-700">
+                          {p.effectivePrice.toLocaleString('fr-FR')} FCFA
+                        </span>
+                        <span className="ml-1 text-xs text-primary-600">-{Number(p.tag)}%</span>
+                      </>
+                    ) : (
+                      `${Number(p.sellingPrice).toLocaleString('fr-FR')} FCFA`
+                    )}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td data-label="Stock" className="px-4 py-2 text-slate-600">
                     {Number(p.stockCurrent)} {UNIT_LABELS[p.unit]}
                     {Number(p.stockCurrent) <= Number(p.stockMin) && (
-                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                      <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning-dark">
                         Stock bas
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
+                  <td data-label="Statut" className="px-4 py-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        p.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                        p.isActive ? 'bg-success-soft text-success-dark' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {p.isActive ? 'Actif' : 'Désactivé'}
@@ -221,8 +287,12 @@ export default function ProductsPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
-                    Aucun produit
+                  <td colSpan={6}>
+                    {products.length === 0 ? (
+                      <EmptyState compact icon={Package} title="Aucun produit pour l’instant" description="Ajoutez vos produits pour pouvoir les vendre au point de vente." action={{ label: 'Créer un produit', onClick: () => setShowForm(true) }} />
+                    ) : (
+                      <EmptyState compact icon={Package} title={q ? `Aucun produit ne correspond à « ${query.trim()} »` : 'Aucun produit dans cette catégorie'} action={{ label: 'Réinitialiser les filtres', onClick: () => { setQuery(''); setSelectedCategoryId(null); } }} />
+                    )}
                   </td>
                 </tr>
               )}

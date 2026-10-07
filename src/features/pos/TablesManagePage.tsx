@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { api } from '@/lib/axios';
 import { useAuth } from '@/features/auth/AuthContext';
 import { fetchTables, createTable, updateTable, deleteTable } from './api';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
-import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { LayoutGrid } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 export default function TablesManagePage() {
   const { user } = useAuth();
-  const confirm = useConfirm();
   const toast = useToast();
   const [tables, setTables] = useState<DiningTable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -76,64 +77,64 @@ export default function TablesManagePage() {
     load();
   };
 
-  const handleDelete = async (t: DiningTable) => {
-    const ok = await confirm({
-      title: 'Supprimer la table',
-      message: `Supprimer la table "${t.label}" ?`,
-      confirmLabel: 'Supprimer',
-      danger: true,
-    });
-    if (!ok) return;
+  // Pas de fenêtre de confirmation : l'élément disparaît tout de suite et la
+  // suppression n'est envoyée qu'après 5 s, sauf clic sur "Annuler".
+  const handleDelete = (t: DiningTable) => {
     setError(null);
-    try {
-      await deleteTable(t.id);
-      toast.success('Table supprimée');
-      load();
-    } catch (err) {
-      const message =
-        (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
-        'Erreur lors de la suppression';
-      setError(message);
-      toast.error(message);
-    }
+    const index = tables.findIndex((x) => x.id === t.id);
+    setTables((prev) => prev.filter((x) => x.id !== t.id));
+    toast.undoable(`Table « ${t.label} » supprimée`, {
+      // Remis à sa place d'origine, sans recharger la liste
+      onUndo: () => setTables((prev) => [...prev.slice(0, index), t, ...prev.slice(index)]),
+      onCommit: async () => {
+        try {
+          await deleteTable(t.id);
+        } catch (err) {
+          const message =
+            (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+            'Erreur lors de la suppression';
+          setError(message);
+          toast.error(message);
+          load();
+        }
+      },
+    });
   };
 
   return (
     <div className="max-w-2xl">
-      <Link to="/tables" className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-900">
-        ← Retour au plan de salle
-      </Link>
+      <Breadcrumbs items={[{ label: 'Point de vente', to: '/tables' }, { label: 'Gérer les tables' }]} />
 
-      <h1 className="mb-4 text-2xl font-semibold text-slate-900">Gérer les tables</h1>
+      <h1 className="mb-4 text-2xl font-semibold text-heading">Gérer les tables</h1>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
           placeholder="Nom (ex. T01)"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input"
         />
         <input
           value={newZone}
           onChange={(e) => setNewZone(e.target.value)}
           placeholder="Zone (optionnel)"
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input"
         />
         <button
           onClick={handleCreate}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary"
         >
           Ajouter
         </button>
       </div>
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+          <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Nom</th>
@@ -145,30 +146,30 @@ export default function TablesManagePage() {
             <tbody className="divide-y divide-slate-100">
               {tables.map((t) => (
                 <tr key={t.id}>
-                  <td className="px-4 py-2">
+                  <td data-label="Nom" className="px-4 py-2">
                     {editingId === t.id ? (
                       <input
                         value={editLabel}
                         onChange={(e) => setEditLabel(e.target.value)}
-                        className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        className="input input-sm w-24"
                       />
                     ) : (
                       <span className="font-medium text-slate-900">{t.label}</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">
+                  <td data-label="Zone" className="px-4 py-2 text-slate-600">
                     {editingId === t.id ? (
                       <input
                         value={editZone}
                         onChange={(e) => setEditZone(e.target.value)}
-                        className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        className="input input-sm w-24"
                       />
                     ) : (
                       t.zone ?? '—'
                     )}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{TABLE_STATUS_LABELS[t.status]}</td>
-                  <td className="px-4 py-2 text-right">
+                  <td data-label="Statut" className="px-4 py-2 text-slate-600">{TABLE_STATUS_LABELS[t.status]}</td>
+                  <td data-label="" className="px-4 py-2 text-right">
                     {editingId === t.id ? (
                       <div className="flex justify-end gap-3">
                         <button
@@ -179,7 +180,7 @@ export default function TablesManagePage() {
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="text-xs text-slate-400 hover:text-slate-600"
+                          className="text-xs text-slate-500 hover:text-slate-600"
                         >
                           Annuler
                         </button>
@@ -194,7 +195,7 @@ export default function TablesManagePage() {
                         </button>
                         <button
                           onClick={() => handleDelete(t)}
-                          className="text-xs font-medium text-slate-400 hover:text-red-600"
+                          className="text-xs font-medium text-slate-500 hover:text-danger"
                         >
                           Supprimer
                         </button>
@@ -205,8 +206,8 @@ export default function TablesManagePage() {
               ))}
               {tables.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
-                    Aucune table
+                  <td colSpan={4}>
+                    <EmptyState compact icon={LayoutGrid} title="Aucune table" description="Ajoutez vos tables avec le formulaire ci-dessus pour prendre les commandes à table." />
                   </td>
                 </tr>
               )}
@@ -214,7 +215,7 @@ export default function TablesManagePage() {
           </table>
         </div>
       )}
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-slate-500">
         Suppression impossible pour une table occupée ou déjà utilisée dans au moins une commande
         (même ancienne) — désactive plutôt son usage en pratique si besoin.
       </p>

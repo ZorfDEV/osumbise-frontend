@@ -2,6 +2,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { fetchOrders, updateOrderStatus } from '@/features/pos/api';
 import { Order, OrderStatus } from '@/features/pos/types';
 import { getSocket } from '@/lib/socket';
+import { CardGridSkeleton } from '@/components/ui/skeleton';
+import { ChefHat } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
 
 const STATUS_ACTION: Partial<Record<OrderStatus, { label: string; next: OrderStatus }>> = {
   EN_ATTENTE: { label: 'Commencer la préparation', next: 'EN_PREPARATION' },
@@ -9,8 +12,8 @@ const STATUS_ACTION: Partial<Record<OrderStatus, { label: string; next: OrderSta
 };
 
 const STATUS_STYLES: Partial<Record<OrderStatus, string>> = {
-  EN_ATTENTE: 'bg-amber-100 text-amber-700',
-  EN_PREPARATION: 'bg-blue-100 text-blue-700',
+  EN_ATTENTE: 'bg-warning-soft text-warning-dark',
+  EN_PREPARATION: 'bg-info-soft text-info-dark',
 };
 
 const STATUS_LABELS: Partial<Record<OrderStatus, string>> = {
@@ -57,14 +60,14 @@ export default function KitchenPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-semibold text-slate-900">Cuisine</h1>
+      <h1 className="mb-4 text-2xl font-semibold text-heading">Cuisine</h1>
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <CardGridSkeleton />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {orders.map((order) => (
-            <div key={order.id} className="rounded-lg border border-slate-200 bg-white p-4">
+            <div key={order.id} className="rounded-lg border border-slate-200 bg-surface p-4">
               <div className="mb-2 flex items-center justify-between">
                 <p className="font-medium text-slate-900">
                   {order.table ? `Table ${order.table.label}` : 'Comptoir'}
@@ -85,7 +88,7 @@ export default function KitchenPage() {
               {STATUS_ACTION[order.status] && (
                 <button
                   onClick={() => handleAdvance(order)}
-                  className="w-full rounded-md bg-slate-900 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                  className="btn btn-primary w-full"
                 >
                   {STATUS_ACTION[order.status]!.label}
                 </button>
@@ -93,7 +96,9 @@ export default function KitchenPage() {
             </div>
           ))}
           {orders.length === 0 && (
-            <p className="col-span-full text-sm text-slate-400">Aucune commande en cuisine</p>
+            <div className="col-span-full">
+              <EmptyState icon={ChefHat} title="Aucune commande en cuisine" description="Les commandes envoyées depuis le point de vente s’affichent ici automatiquement." />
+            </div>
           )}
         </div>
       )}

@@ -2,6 +2,260 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Variables CSS pilotant les tokens shadcn/ui définis dans tailwind.config.ts
+   (border, background, foreground, card, popover, secondary, muted, accent,
+   destructive). Valeurs mappées sur la charte graphique Osumbise — pas de
+   gris neutre générique, tout part du vert #618373 et du reste de la charte. */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 180 3% 8%;      /* #131414, couleur heading */
+    --card: 0 0% 100%;
+    --card-foreground: 180 3% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 3% 8%;
+    --primary: 152 15% 45%;       /* #618373, couleur principale */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 162 28% 93%;     /* #E8F2EF, fond liens/widgets */
+    --secondary-foreground: 180 3% 8%;
+    --muted: 210 40% 98%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 162 28% 93%;
+    --accent-foreground: 180 3% 8%;
+    --destructive: 359 73% 51%;   /* #DD2628, couleur d'erreur */
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 152 15% 45%;
+    --radius: 0.5rem;
+
+    /* Palette Osumbise en "R G B" — consommée par tailwind.config.ts.
+       Mode clair : valeurs de la charte. */
+    --surface: 255 255 255;
+    --slate-50: 248 250 252;
+    --slate-100: 241 245 249;
+    --slate-200: 226 232 240;
+    --slate-300: 203 213 225;
+    --slate-400: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-600: 71 85 105;
+    --slate-700: 51 65 85;
+    --slate-800: 30 41 59;
+    --slate-900: 15 23 42;
+    --slate-950: 2 6 23;
+    --primary-50: 232 242 239;
+    --primary-100: 213 226 222;
+    --primary-200: 189 206 199;
+    --primary-700: 74 107 93;
+    --primary-800: 58 83 73;
+    --primary-900: 43 62 54;
+    --warning: 131 100 19;
+    --warning-dark: 88 67 13;
+    --warning-soft: 253 229 136;
+    --danger: 221 38 40;
+    --danger-dark: 88 15 16;
+    --danger-soft: 244 108 115;
+    --success: 27 127 83;
+    --success-dark: 15 77 49;
+    --success-soft: 223 243 232;
+    --info: 47 111 147;
+    --info-dark: 29 74 99;
+    --info-soft: 227 239 246;
+    --heading: 19 20 20;
+    --heading-muted: 100 102 101;
+  }
+
+  /* Mode sombre — neutres gris-vert (teinte de la marque) plutôt que noir
+     pur ; les fonds "soft" deviennent des teintes profondes et les textes
+     "dark" des teintes claires, pour garder les mêmes contrastes. */
+  .dark {
+    color-scheme: dark;
+    --background: 150 12% 8%;
+    --foreground: 150 10% 94%;
+    --card: 153 12% 11%;
+    --card-foreground: 150 10% 94%;
+    --popover: 153 12% 11%;
+    --popover-foreground: 150 10% 94%;
+    --secondary: 155 18% 17%;
+    --secondary-foreground: 150 10% 94%;
+    --muted: 150 12% 13%;
+    --muted-foreground: 150 6% 62%;
+    --accent: 155 18% 17%;
+    --accent-foreground: 150 10% 94%;
+    --border: 152 11% 20%;
+    --input: 152 11% 20%;
+
+    --surface: 26 33 30;
+    --slate-50: 18 23 21;
+    --slate-100: 31 39 35;
+    --slate-200: 46 57 52;
+    --slate-300: 61 73 67;
+    --slate-400: 107 119 114;
+    --slate-500: 150 161 156;
+    --slate-600: 176 186 181;
+    --slate-700: 200 208 204;
+    --slate-800: 222 228 225;
+    --slate-900: 238 242 240;
+    --slate-950: 247 249 248;
+    --primary-50: 30 42 37;
+    --primary-100: 37 54 47;
+    --primary-200: 48 71 61;
+    --primary-700: 156 192 175;
+    --primary-800: 181 210 196;
+    --primary-900: 207 227 217;
+    --warning: 233 196 106;
+    --warning-dark: 246 218 122;
+    --warning-soft: 58 49 21;
+    --danger: 240 100 106;
+    --danger-dark: 247 179 182;
+    --danger-soft: 74 29 32;
+    --success: 76 192 138;
+    --success-dark: 155 227 192;
+    --success-soft: 23 51 38;
+    --info: 111 169 207;
+    --info-dark: 181 214 236;
+    --info-soft: 23 42 54;
+    --heading: 238 242 240;
+    --heading-muted: 169 178 174;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* Chiffres à chasse fixe partout : montants, quantités et totaux
+       restent alignés dans les tableaux, le panier et les tickets. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Cases à cocher, radios, curseurs : couleur de la charte au lieu du bleu
+     natif du navigateur. */
+  :root {
+    accent-color: theme('colors.primary.600');
+  }
+
+  /* Focus clavier visible et aux couleurs de la charte sur tout élément
+     interactif qui ne définit pas le sien (les champs .input ont leur propre
+     style de focus, plus discret). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-surface;
+  }
+}
+
+/* Composants de base — source unique de vérité pour les boutons et champs.
+   Déclarés dans @layer components : n'importe quelle classe utilitaire
+   ajoutée à côté (w-full, px-6, rounded-full…) les surcharge. */
+@layer components {
+  /* ---------- Boutons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .btn-lg {
+    @apply px-6 py-3;
+  }
+  /* Action principale — vert de la charte, survol officiel #4A6B5D */
+  /* Fond `action` (#4A6B5D, texte blanc 5.9:1) plutôt que #618373 (4.2:1,
+     insuffisant pour du texte normal) — cf. tailwind.config.ts. Couleurs
+     fixes : même rendu en clair et en sombre. */
+  .btn-primary {
+    @apply bg-action text-white hover:bg-action-hover active:bg-action-active;
+  }
+  /* Action secondaire / annuler */
+  .btn-secondary {
+    @apply border border-slate-300 bg-surface text-slate-700 hover:border-slate-400 hover:bg-slate-50 active:bg-slate-100;
+  }
+  /* Action destructive (suppression, annulation définitive) */
+  .btn-danger {
+    @apply text-white focus-visible:ring-danger;
+    background-color: #dd2628;
+  }
+  .btn-danger:hover {
+    background-color: #b81e20;
+  }
+  /* Envoi en cours : <button className="btn …" aria-busy={isSubmitting}>
+     affiche un spinner et bloque les clics (évite les doublons). */
+  .btn[aria-busy="true"] {
+    @apply pointer-events-none opacity-80;
+  }
+  .btn[aria-busy="true"]::before {
+    content: "";
+    @apply h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent;
+  }
+
+  /* ---------- Champs de formulaire ---------- */
+  .input {
+    @apply rounded-md border border-slate-300 bg-surface px-3 py-2 text-sm text-heading transition-colors placeholder:text-slate-400 hover:border-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:ring-offset-0 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 aria-[invalid=true]:border-danger aria-[invalid=true]:focus:ring-danger/20;
+  }
+  .input-sm {
+    @apply px-2 py-1.5;
+  }
+
+  /* Bloc gris animé des squelettes de chargement */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-slate-200;
+  }
+
+  /* ---------- Tableaux → cartes sur mobile ----------
+     <table className="table-cards"> + data-label="…" sur chaque <td> : sous
+     768px chaque ligne devient une carte "libellé : valeur", sans défilement
+     horizontal. Au-delà, le tableau s'affiche normalement. */
+  @media (max-width: 767px) {
+    div:has(> table.table-cards) {
+      overflow: visible;
+      border-width: 0;
+      background-color: transparent;
+      box-shadow: none;
+    }
+    .table-cards,
+    .table-cards tbody {
+      display: block;
+      width: 100%;
+    }
+    .table-cards thead {
+      display: none;
+    }
+    .table-cards tbody > tr {
+      @apply mb-2 block rounded-xl border border-slate-200 bg-surface px-3 py-2;
+    }
+    /* Libellé à gauche (margin-right: auto), contenu groupé à droite même
+       quand la cellule contient plusieurs éléments (texte + badge…) */
+    .table-cards tbody > tr > td {
+      @apply flex flex-wrap items-center justify-end gap-x-2 gap-y-1 border-0 px-0 py-1.5 text-right;
+    }
+    .table-cards tbody > tr > td::before {
+      content: attr(data-label);
+      @apply mr-auto shrink-0 pr-2 text-left text-xs font-medium text-slate-500;
+    }
+    /* Première cellule = titre de la carte, sur toute la largeur */
+    .table-cards tbody > tr > td:first-child {
+      @apply block border-b border-slate-100 pb-2 text-left text-sm font-semibold text-heading;
+    }
+    /* Vignette (data-thumb) en première colonne : posée à gauche du titre,
+       qui devient alors la 2e cellule */
+    .table-cards tbody > tr > td[data-thumb] {
+      @apply float-left mr-3 border-0 p-0 pt-0.5;
+    }
+    .table-cards tbody > tr > td[data-thumb] + td {
+      @apply block min-h-[2.25rem] border-b border-slate-100 pb-2 text-left text-sm font-semibold text-heading;
+    }
+    .table-cards tbody > tr > td[data-thumb] + td::before,
+    .table-cards tbody > tr > td:first-child::before,
+    .table-cards tbody > tr > td[data-label=""]::before {
+      content: none;
+    }
+    .table-cards tbody > tr > td[data-label=""] {
+      @apply justify-end;
+    }
+    .table-cards tbody > tr > td[colspan] {
+      @apply block text-center font-normal text-slate-500;
+    }
+  }
+}
+
 /* Masque la scrollbar visuellement (le défilement au doigt/trackpad reste
    actif) — utilisé pour le carrousel de catégories du POS */
 .scrollbar-hide::-webkit-scrollbar {
@@ -22,6 +276,36 @@
   }
 }
 
+/* Retour visuel à l'ajout d'un produit au POS (complète la vibration) */
+@keyframes pos-bump {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-pos-bump {
+  animation: pos-bump 0.3s ease-out;
+}
+
+/* Barre de progression du toast "Annuler" */
+@keyframes toast-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.animate-toast-countdown {
+  transform-origin: left;
+  animation: toast-countdown linear forwards;
+}
+
 /* Entrée douce des notifications toast */
 @keyframes toast-in {
   from {
@@ -35,4 +319,270 @@
 }
 .animate-toast-in {
   animation: toast-in 0.22s ease-out;
+}
+
+/* Réglage système "réduire les animations" : on coupe animations et
+   transitions partout (les spinners restent lisibles car figés). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =====================================================================
+   Page marketing — animations
+   Toutes coupées par la règle "prefers-reduced-motion" plus haut.
+   ===================================================================== */
+
+/* Apparition au défilement (composant <Reveal>) */
+[data-reveal] {
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+[data-reveal='hidden'] {
+  opacity: 0;
+  transform: translateY(28px);
+}
+[data-reveal='hidden'][data-reveal-from='left'] {
+  transform: translateX(-32px);
+}
+[data-reveal='hidden'][data-reveal-from='right'] {
+  transform: translateX(32px);
+}
+[data-reveal='hidden'][data-reveal-from='scale'] {
+  transform: scale(0.94);
+}
+[data-reveal='shown'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hero : montée en cascade au chargement (délai via style) */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+.animate-rise {
+  animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Taches de couleur floues qui dérivent lentement derrière le hero */
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -40px) scale(1.08);
+  }
+  66% {
+    transform: translate(-25px, 20px) scale(0.95);
+  }
+}
+.animate-blob {
+  animation: blob 18s ease-in-out infinite;
+}
+
+/* Cartes flottantes autour de la démo */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+.animate-float-slow {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-float-slower {
+  animation: float 8s ease-in-out 1s infinite;
+}
+
+/* Démo POS : apparition d'un article, badge qui change, appui sur un bouton */
+@keyframes item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-item-in {
+  animation: item-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.animate-pop-in {
+  display: inline-block;
+  animation: pop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes press {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+    filter: brightness(0.92);
+  }
+}
+.animate-press {
+  animation: press 0.5s ease-in-out 0.6s;
+}
+@keyframes toast-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-toast-up {
+  animation: toast-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Tracé progressif de la mini-courbe */
+@keyframes draw {
+  from {
+    stroke-dashoffset: 160;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.animate-draw {
+  stroke-dasharray: 160;
+  animation: draw 1.6s ease-out 0.4s both;
+}
+
+/* Démo hors ligne : commandes qui partent vers le serveur, liaison active */
+@keyframes fly-right {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+.animate-fly-right {
+  animation: fly-right 0.9s cubic-bezier(0.55, 0, 0.45, 1) both;
+}
+@keyframes link-flow {
+  to {
+    background-position: 24px 0;
+  }
+}
+.link-flow {
+  background-image: linear-gradient(90deg, rgb(var(--success) / 0.8) 50%, transparent 50%);
+  background-size: 12px 2px;
+  animation: link-flow 0.8s linear infinite;
+}
+
+/* Bandeau défilant des types d'établissements */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+}
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.marquee-mask:hover .animate-marquee {
+  animation-play-state: paused;
+}
+
+/* Reflet qui balaie le bouton principal */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  animation: shine 3.2s ease-in-out 1.2s infinite;
+}
+@keyframes shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  40%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* Fond dégradé en mouvement du bandeau final */
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+.animate-gradient-pan {
+  background-size: 200% 200%;
+  animation: gradient-pan 12s ease-in-out infinite;
+}
+
+/* Grille de points en fond du hero, estompée sur les bords */
+.dot-grid {
+  background-image: radial-gradient(rgb(var(--slate-400) / 0.35) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+}
+
+/* Halo qui suit la souris (composant <SpotlightCard>) */
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  background: radial-gradient(260px circle at var(--x, 50%) var(--y, 50%), rgb(97 131 115 / 0.16), transparent 70%);
+}
+.spotlight-card:hover::before {
+  opacity: 1;
 }

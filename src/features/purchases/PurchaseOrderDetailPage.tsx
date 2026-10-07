@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   fetchPurchaseOrder,
   addPurchaseItem,
@@ -12,6 +12,8 @@ import { PurchaseOrder, PurchaseOrderStatus } from './types';
 import { Product } from '@/features/products/types';
 import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
+import { PageSkeleton } from '@/components/ui/skeleton';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 const STATUS_LABELS: Record<PurchaseOrderStatus, string> = {
   BROUILLON: 'Brouillon',
@@ -44,7 +46,7 @@ export default function PurchaseOrderDetailPage() {
   }, [reload]);
 
   if (!po) {
-    return <p className="text-sm text-slate-500">Chargement...</p>;
+    return <PageSkeleton />;
   }
 
   const isEditable = po.status === 'BROUILLON';
@@ -120,15 +122,10 @@ export default function PurchaseOrderDetailPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link
-        to="/purchase-orders"
-        className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-900"
-      >
-        ← Retour aux achats
-      </Link>
+      <Breadcrumbs items={[{ label: 'Achats', to: '/purchase-orders' }, { label: po.supplier.name }]} />
 
       <div className="mb-1 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">{po.supplier.name}</h1>
+        <h1 className="text-2xl font-semibold text-heading">{po.supplier.name}</h1>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
           {STATUS_LABELS[po.status]}
         </span>
@@ -139,8 +136,8 @@ export default function PurchaseOrderDetailPage() {
         </p>
       )}
 
-      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-left text-sm">
+      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+        <table className="table-cards w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">Produit</th>
@@ -153,21 +150,21 @@ export default function PurchaseOrderDetailPage() {
           <tbody className="divide-y divide-slate-100">
             {po.items.map((item) => (
               <tr key={item.id}>
-                <td className="px-4 py-2 text-slate-900">{item.product.name}</td>
-                <td className="px-4 py-2 text-slate-600">
+                <td data-label="Produit" className="px-4 py-2 text-slate-900">{item.product.name}</td>
+                <td data-label="Quantité" className="px-4 py-2 text-slate-600">
                   {Number(item.quantity)} {item.product.unit}
                 </td>
-                <td className="px-4 py-2 text-slate-600">
+                <td data-label="Prix unitaire" className="px-4 py-2 text-slate-600">
                   {formatFcfa(Number(item.unitPrice))}
                 </td>
-                <td className="px-4 py-2 text-slate-600">
+                <td data-label="Sous-total" className="px-4 py-2 text-slate-600">
                   {formatFcfa(Number(item.quantity) * Number(item.unitPrice))}
                 </td>
                 {isEditable && (
-                  <td className="px-4 py-2 text-right">
+                  <td data-label="" className="px-4 py-2 text-right">
                     <button
                       onClick={() => handleRemoveItem(item.id)}
-                      className="text-xs text-slate-400 hover:text-red-600"
+                      className="text-xs text-slate-500 hover:text-danger"
                     >
                       Retirer
                     </button>
@@ -177,7 +174,7 @@ export default function PurchaseOrderDetailPage() {
             ))}
             {po.items.length === 0 && (
               <tr>
-                <td colSpan={isEditable ? 5 : 4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={isEditable ? 5 : 4} className="px-4 py-6 text-center text-slate-500">
                   Aucun article
                 </td>
               </tr>
@@ -188,20 +185,20 @@ export default function PurchaseOrderDetailPage() {
               <td className="px-4 py-2" colSpan={3}>
                 Total
               </td>
-              <td className="px-4 py-2">{formatFcfa(Number(po.total))}</td>
+              <td data-label="Produit" className="px-4 py-2">{formatFcfa(Number(po.total))}</td>
             </tr>
           </tfoot>
         </table>
       </div>
 
       {isEditable && (
-        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 text-sm font-semibold text-slate-900">Ajouter un article</h2>
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <h2 className="mb-3 text-sm font-semibold text-heading-muted">Ajouter un article</h2>
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
-              className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+              className="input px-2"
             >
               <option value="">— Produit —</option>
               {products.map((p) => (
@@ -215,18 +212,18 @@ export default function PurchaseOrderDetailPage() {
               value={quantity}
               onChange={(e) => setQuantity(Number(e.target.value))}
               placeholder="Quantité"
-              className="w-24 rounded-md border border-slate-300 px-2 py-2 text-sm"
+              className="input w-24 px-2"
             />
             <input
               type="number"
               value={unitPrice}
               onChange={(e) => setUnitPrice(Number(e.target.value))}
               placeholder="Prix unitaire"
-              className="w-32 rounded-md border border-slate-300 px-2 py-2 text-sm"
+              className="input w-32 px-2"
             />
             <button
               onClick={handleAddItem}
-              className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+              className="btn btn-primary px-3"
             >
               Ajouter
             </button>
@@ -234,7 +231,7 @@ export default function PurchaseOrderDetailPage() {
         </div>
       )}
 
-      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-4 text-sm text-danger">{error}</p>}
 
       <div className="flex flex-wrap gap-3">
         {po.status === 'BROUILLON' && (
@@ -242,13 +239,13 @@ export default function PurchaseOrderDetailPage() {
             <button
               onClick={handleSend}
               disabled={po.items.length === 0}
-              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+              className="btn btn-primary"
             >
               Envoyer la commande
             </button>
             <button
               onClick={handleCancel}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="btn btn-secondary"
             >
               Annuler
             </button>
@@ -258,13 +255,13 @@ export default function PurchaseOrderDetailPage() {
           <>
             <button
               onClick={handleReceive}
-              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+              className="btn btn-primary"
             >
               Confirmer la réception
             </button>
             <button
               onClick={handleCancel}
-              className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="btn btn-secondary"
             >
               Annuler
             </button>

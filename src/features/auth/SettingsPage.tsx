@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import { updateProfile, changePassword } from './api';
 import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
+import { ThemePicker } from '@/components/layout/ThemeToggle';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -75,23 +76,28 @@ export default function SettingsPage() {
     }
   };
 
-
   return (
-    <div className="flex flex-col  gap-6 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-2xl font-semibold text-slate-900">Paramètres</h1>
-      <div className="grid grid-cols-2 gap-4">
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="mb-1 text-sm font-semibold text-slate-900">Mon profil</h2>
+    <div className="max-w-xl space-y-8">
+      <h1 className="text-2xl font-semibold text-heading">Paramètres</h1>
+
+      <div className="rounded-lg border border-slate-200 bg-surface p-6">
+        <h2 className="mb-1 text-sm font-semibold text-heading-muted">Apparence</h2>
+        <p className="mb-4 text-xs text-slate-500">Choix propre à cet appareil. Les tickets s’impriment toujours en clair.</p>
+        <ThemePicker />
+      </div>
+
+      <div className="rounded-lg border border-slate-200 bg-surface p-6">
+        <h2 className="mb-1 text-sm font-semibold text-heading-muted">Mon profil</h2>
         <p className="mb-4 text-xs text-slate-500">{user && ROLE_LABELS[user.role]}</p>
         <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Nom</label>
             <input
               {...profileForm.register('name')}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
             {profileForm.formState.errors.name && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-danger">
                 {profileForm.formState.errors.name.message}
               </p>
             )}
@@ -101,28 +107,28 @@ export default function SettingsPage() {
             <input
               type="email"
               {...profileForm.register('email')}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
             {profileForm.formState.errors.email && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-danger">
                 {profileForm.formState.errors.email.message}
               </p>
             )}
           </div>
-          {profileError && <p className="text-sm text-red-600">{profileError}</p>}
-          {profileSuccess && <p className="text-sm text-green-600">Profil mis à jour.</p>}
+          {profileError && <p className="text-sm text-danger">{profileError}</p>}
+          {profileSuccess && <p className="text-sm text-success">Profil mis à jour.</p>}
           <button
             type="submit"
-            disabled={profileForm.formState.isSubmitting}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            disabled={profileForm.formState.isSubmitting} aria-busy={profileForm.formState.isSubmitting}
+            className="btn btn-primary"
           >
             {profileForm.formState.isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </form>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-sm font-semibold text-slate-900">Changer de mot de passe</h2>
+      <div className="rounded-lg border border-slate-200 bg-surface p-6">
+        <h2 className="mb-4 text-sm font-semibold text-heading-muted">Changer de mot de passe</h2>
         <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -131,10 +137,10 @@ export default function SettingsPage() {
             <input
               type="password"
               {...passwordForm.register('currentPassword')}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
             {passwordForm.formState.errors.currentPassword && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-danger">
                 {passwordForm.formState.errors.currentPassword.message}
               </p>
             )}
@@ -146,10 +152,10 @@ export default function SettingsPage() {
             <input
               type="password"
               {...passwordForm.register('newPassword')}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
             {passwordForm.formState.errors.newPassword && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-danger">
                 {passwordForm.formState.errors.newPassword.message}
               </p>
             )}
@@ -161,26 +167,25 @@ export default function SettingsPage() {
             <input
               type="password"
               {...passwordForm.register('confirmPassword')}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+              className="input w-full"
             />
             {passwordForm.formState.errors.confirmPassword && (
-              <p className="mt-1 text-xs text-red-600">
+              <p className="mt-1 text-xs text-danger">
                 {passwordForm.formState.errors.confirmPassword.message}
               </p>
             )}
           </div>
-          {passwordError && <p className="text-sm text-red-600">{passwordError}</p>}
-          {passwordSuccess && <p className="text-sm text-green-600">Mot de passe mis à jour.</p>}
+          {passwordError && <p className="text-sm text-danger">{passwordError}</p>}
+          {passwordSuccess && <p className="text-sm text-success">Mot de passe mis à jour.</p>}
           <button
             type="submit"
-            disabled={passwordForm.formState.isSubmitting}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            disabled={passwordForm.formState.isSubmitting} aria-busy={passwordForm.formState.isSubmitting}
+            className="btn btn-primary"
           >
             {passwordForm.formState.isSubmitting ? 'Mise à jour...' : 'Changer le mot de passe'}
           </button>
         </form>
       </div>
-    </div>
     </div>
   );
 }

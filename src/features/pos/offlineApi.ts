@@ -48,6 +48,7 @@ export const loadOrder = async (orderId: string): Promise<Order> => {
 
 export const createOrder = async (payload: {
   tableId?: string;
+  customerId?: string;
   establishmentId?: string;
 }): Promise<Order> => {
   if (navigator.onLine) {
@@ -66,6 +67,7 @@ export const createOrder = async (payload: {
     status: 'BROUILLON',
     tableId: payload.tableId ?? null,
     table: null,
+    customerId: payload.customerId ?? null,
     subtotal: '0',
     discount: '0',
     tax: '0',
@@ -81,7 +83,7 @@ export const createOrder = async (payload: {
 
 export const addOrderItem = async (
   orderId: string,
-  product: { id: string; name: string; sellingPrice: string },
+  product: { id: string; name: string; sellingPrice: string; effectivePrice?: number },
   quantity: number
 ): Promise<void> => {
   if (navigator.onLine && !isLocalId(orderId)) {
@@ -104,7 +106,10 @@ export const addOrderItem = async (
       id: `local-item-${crypto.randomUUID()}`,
       productId: product.id,
       quantity,
-      unitPrice: product.sellingPrice,
+      // Approximation hors ligne : reprend la remise vue au dernier chargement
+      // du catalogue (offlineCache) ; le serveur recalcule la valeur exacte
+      // au moment de la synchro (addOrderItem, order.controller.ts)
+      unitPrice: String(product.effectivePrice ?? product.sellingPrice),
       note: null,
       product: { name: product.name },
     });

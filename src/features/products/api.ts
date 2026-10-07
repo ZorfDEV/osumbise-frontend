@@ -37,6 +37,10 @@ export interface ProductPayload {
   cost?: number;
   unit?: string;
   stockMin?: number;
+  tag?: number | null;
+  tagStartsAt?: string | null;
+  tagEndsAt?: string | null;
+  type?: string;
   isActive?: boolean;
   establishmentId?: string;
 }
@@ -49,6 +53,22 @@ export const createProduct = async (payload: ProductPayload): Promise<Product> =
 export const updateProduct = async (id: string, payload: ProductPayload): Promise<Product> => {
   const res = await api.patch(`/products/${id}`, payload);
   return res.data.product;
+};
+
+export const uploadProductImage = async (id: string, file: File): Promise<Product> => {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await api.post(`/products/${id}/image`, formData);
+  return res.data.product;
+};
+
+// `image` est stocké côté backend comme un chemin relatif (ex. "/uploads/products/xxx.png")
+// à résoudre contre la base de l'API, pas contre l'origine du frontend (qui peut différer en prod)
+export const resolveProductImageUrl = (image?: string | null): string | undefined => {
+  if (!image) return undefined;
+  if (/^https?:\/\//.test(image)) return image;
+  const base = (api.defaults.baseURL ?? '').replace(/\/$/, '');
+  return `${base}${image}`;
 };
 
 export const addRecipeItem = async (

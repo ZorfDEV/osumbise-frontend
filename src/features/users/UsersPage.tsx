@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import CreateUserForm from './CreateUserForm';
 import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 const ASSIGNABLE_ROLES: AssignableRole[] = ['ADMIN', 'CASHIER', 'SERVER', 'STOCK_KEEPER', 'COOK'];
 
@@ -64,10 +65,10 @@ export default function UsersPage() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Utilisateurs</h1>
+        <h1 className="text-2xl font-semibold text-heading">Utilisateurs</h1>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary"
         >
           {showForm ? 'Annuler' : 'Ajouter un utilisateur'}
         </button>
@@ -82,13 +83,13 @@ export default function UsersPage() {
         />
       )}
 
-      {resetError && <p className="mb-3 text-sm text-red-600">{resetError}</p>}
+      {resetError && <p className="mb-3 text-sm text-danger">{resetError}</p>}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-left text-sm">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+          <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Nom</th>
@@ -102,16 +103,16 @@ export default function UsersPage() {
             <tbody className="divide-y divide-slate-100">
               {users.map((u) => (
                 <tr key={u.id}>
-                  <td className="px-4 py-2 text-slate-900">{u.name}</td>
-                  <td className="px-4 py-2 text-slate-600">{u.email}</td>
-                  <td className="px-4 py-2">
+                  <td data-label="Nom" className="px-4 py-2 text-slate-900">{u.name}</td>
+                  <td data-label="Email" className="px-4 py-2 text-slate-600">{u.email}</td>
+                  <td data-label="Rôle" className="px-4 py-2">
                     {u.role === 'OWNER' || u.id === currentUser?.id ? (
                       <span className="text-slate-600">{ROLE_LABELS[u.role]}</span>
                     ) : (
                       <select
                         value={u.role}
                         onChange={(e) => handleRoleChange(u, e.target.value)}
-                        className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+                        className="input input-sm"
                       >
                         {ASSIGNABLE_ROLES.map((r) => (
                           <option key={r} value={r}>
@@ -121,17 +122,17 @@ export default function UsersPage() {
                       </select>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-slate-600">{u.establishment?.name ?? '—'}</td>
-                  <td className="px-4 py-2">
+                  <td data-label="Établissement" className="px-4 py-2 text-slate-600">{u.establishment?.name ?? '—'}</td>
+                  <td data-label="Statut" className="px-4 py-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        u.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                        u.isActive ? 'bg-success-soft text-success-dark' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {u.isActive ? 'Actif' : 'Désactivé'}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td data-label="" className="px-4 py-2 text-right">
                     {resettingId === u.id ? (
                       <div className="flex items-center justify-end gap-2">
                         <input
@@ -140,7 +141,7 @@ export default function UsersPage() {
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="Nouveau mot de passe"
                           autoFocus
-                          className="w-40 rounded-md border border-slate-300 px-2 py-1 text-xs"
+                          className="input input-sm w-40 text-xs"
                         />
                         <button
                           onClick={() => handleResetPassword(u)}
@@ -154,7 +155,7 @@ export default function UsersPage() {
                             setNewPassword('');
                             setResetError(null);
                           }}
-                          className="text-xs text-slate-400 hover:text-slate-600"
+                          className="text-xs text-slate-500 hover:text-slate-600"
                         >
                           Annuler
                         </button>

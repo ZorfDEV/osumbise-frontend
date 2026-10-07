@@ -66,15 +66,15 @@ export default function CreateUserForm({ onCreated }: Props) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-white p-6 sm:grid-cols-2"
+      className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-slate-200 bg-surface p-6 sm:grid-cols-2"
     >
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">Nom</label>
         <input
           {...register('name')}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input w-full"
         />
-        {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>}
+        {errors.name && <p className="mt-1 text-xs text-danger">{errors.name.message}</p>}
       </div>
 
       <div>
@@ -82,9 +82,9 @@ export default function CreateUserForm({ onCreated }: Props) {
         <input
           type="email"
           {...register('email')}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input w-full"
         />
-        {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
+        {errors.email && <p className="mt-1 text-xs text-danger">{errors.email.message}</p>}
       </div>
 
       <div>
@@ -94,10 +94,10 @@ export default function CreateUserForm({ onCreated }: Props) {
         <input
           type="password"
           {...register('password')}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input w-full"
         />
         {errors.password && (
-          <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+          <p className="mt-1 text-xs text-danger">{errors.password.message}</p>
         )}
       </div>
 
@@ -105,7 +105,7 @@ export default function CreateUserForm({ onCreated }: Props) {
         <label className="mb-1 block text-sm font-medium text-slate-700">Rôle</label>
         <select
           {...register('role')}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="input w-full"
         >
           {Object.entries(ROLE_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
@@ -120,7 +120,7 @@ export default function CreateUserForm({ onCreated }: Props) {
           <label className="mb-1 block text-sm font-medium text-slate-700">Établissement</label>
           <select
             {...register('establishmentId')}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input w-full"
           >
             <option value="">— Choisir —</option>
             {establishments.map((e) => (
@@ -132,13 +132,13 @@ export default function CreateUserForm({ onCreated }: Props) {
         </div>
       )}
 
-      {serverError && <p className="text-sm text-red-600 sm:col-span-2">{serverError}</p>}
+      {serverError && <p className="text-sm text-danger sm:col-span-2">{serverError}</p>}
 
       <div className="sm:col-span-2">
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          disabled={isSubmitting} aria-busy={isSubmitting}
+          className="btn btn-primary"
         >
           {isSubmitting ? 'Création...' : 'Créer l’utilisateur'}
         </button>

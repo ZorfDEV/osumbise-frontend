@@ -1,17 +1,21 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   fetchProduct,
   fetchProducts,
   fetchCategories,
   updateProduct,
+  uploadProductImage,
+  resolveProductImageUrl,
   addRecipeItem,
   updateRecipeItem,
   removeRecipeItem,
 } from './api';
 import { ProductDetail, Product, Category } from './types';
-import ProductForm from './ProductForm';
+import ProductForm, { PRODUCT_TYPE_LABELS } from './ProductForm';
 import { useToast } from '@/lib/toast';
+import { PageSkeleton } from '@/components/ui/skeleton';
+import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +40,7 @@ export default function ProductDetailPage() {
   }, [reload]);
 
   if (!product) {
-    return <p className="text-sm text-slate-500">Chargement...</p>;
+    return <PageSkeleton />;
   }
 
   const handleToggleActive = async () => {
@@ -84,13 +88,11 @@ export default function ProductDetailPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link to="/products" className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-900">
-        ← Retour aux produits
-      </Link>
+      <Breadcrumbs items={[{ label: 'Produits', to: '/products' }, { label: product.name }]} />
 
       {isEditing ? (
         <>
-          <h1 className="mb-4 text-2xl font-semibold text-slate-900">Modifier {product.name}</h1>
+          <h1 className="mb-4 text-2xl font-semibold text-heading">Modifier {product.name}</h1>
           <ProductForm
             categories={categories}
             defaultValues={{
@@ -100,12 +102,19 @@ export default function ProductDetailPage() {
               cost: Number(product.cost),
               unit: product.unit,
               stockMin: Number(product.stockMin),
-              image: product.image ?? '',
+              tag: product.tag !== null ? Number(product.tag) : undefined,
+              tagStartsAt: product.tagStartsAt ? product.tagStartsAt.slice(0, 10) : undefined,
+              tagEndsAt: product.tagEndsAt ? product.tagEndsAt.slice(0, 10) : undefined,
+              type: product.type ?? undefined,
             }}
+            currentImageUrl={resolveProductImageUrl(product.image)}
             submitLabel="Enregistrer"
-            onSubmit={async (data) => {
+            onSubmit={async (data, imageFile) => {
               if (!id) return;
               await updateProduct(id, data);
+              if (imageFile) {
+                await uploadProductImage(id, imageFile);
+              }
               toast.success('Produit mis à jour');
               setIsEditing(false);
               reload();
@@ -116,7 +125,7 @@ export default function ProductDetailPage() {
       ) : (
         <>
           <div className="mb-1 flex items-center justify-between">
-            <h1 className="text-2xl font-semibold text-slate-900">{product.name}</h1>
+            <h1 className="text-2xl font-semibold text-heading">{product.name}</h1>
             <button
               onClick={() => setIsEditing(true)}
               className="text-sm font-medium text-slate-500 hover:text-slate-900"
@@ -126,12 +135,21 @@ export default function ProductDetailPage() {
           </div>
           <p className="mb-6 text-sm text-slate-500">{product.category?.name}</p>
 
-          <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-slate-200 bg-white p-4 text-sm sm:grid-cols-3">
+          <div className="mb-6 grid grid-cols-2 gap-4 rounded-lg border border-slate-200 bg-surface p-4 text-sm sm:grid-cols-3">
             <div>
               <p className="text-xs text-slate-500">Prix de vente</p>
-              <p className="font-medium text-slate-900">
-                {Number(product.sellingPrice).toLocaleString('fr-FR')} FCFA
-              </p>
+              {product.discountActive ? (
+                <p className="font-medium text-slate-900">
+                  <span className="mr-1 text-slate-500 line-through">
+                    {Number(product.sellingPrice).toLocaleString('fr-FR')}
+                  </span>
+                  {product.effectivePrice.toLocaleString('fr-FR')} FCFA
+                </p>
+              ) : (
+                <p className="font-medium text-slate-900">
+                  {Number(product.sellingPrice).toLocaleString('fr-FR')} FCFA
+                </p>
+              )}
             </div>
             <div>
               <p className="text-xs text-slate-500">Coût d’achat</p>
@@ -153,14 +171,48 @@ export default function ProductDetailPage() {
                 {product.isActive ? 'Actif' : 'Désactivé'}
               </p>
             </div>
+            {product.tag !== null && (
+              <div>
+                <p className="text-xs text-slate-500">Remise</p>
+                <p className="font-medium text-slate-900">
+                  {Number(product.tag)}%{' '}
+                  <span
+                    className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      product.discountActive
+                        ? 'bg-success-soft text-success-dark'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {product.discountActive ? 'Active' : 'Inactive'}
+                  </span>
+                </p>
+                {(product.tagStartsAt || product.tagEndsAt) && (
+                  <p className="text-xs text-slate-500">
+                    {product.tagStartsAt
+                      ? new Date(product.tagStartsAt).toLocaleDateString('fr-FR')
+                      : '…'}
+                    {' → '}
+                    {product.tagEndsAt
+                      ? new Date(product.tagEndsAt).toLocaleDateString('fr-FR')
+                      : '…'}
+                  </p>
+                )}
+              </div>
+            )}
+            {product.type && (
+              <div>
+                <p className="text-xs text-slate-500">Type</p>
+                <p className="font-medium text-slate-900">{PRODUCT_TYPE_LABELS[product.type]}</p>
+              </div>
+            )}
           </div>
         </>
       )}
 
       {!isEditing && (
         <>
-          <div className="rounded-lg border border-slate-200 bg-white p-4">
-            <h2 className="mb-1 text-sm font-semibold text-slate-900">Recette</h2>
+          <div className="rounded-lg border border-slate-200 bg-surface p-4">
+            <h2 className="mb-1 text-sm font-semibold text-heading-muted">Recette</h2>
             <p className="mb-4 text-xs text-slate-500">
               Ingrédients décrémentés du stock à chaque vente de ce produit. Sans recette, le
               produit se décrémente lui-même (article "simple").
@@ -175,13 +227,13 @@ export default function ProductDetailPage() {
                       type="number"
                       defaultValue={Number(item.quantity)}
                       onBlur={(e) => handleUpdateIngredientQuantity(item.id, Number(e.target.value))}
-                      className="w-20 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      className="input input-sm w-20"
                     />
                     <span className="text-xs text-slate-500">{item.ingredientProduct.unit}</span>
                     <button
                       onClick={() => handleRemoveIngredient(item.id)}
                       aria-label="Retirer cet ingrédient"
-                      className="text-slate-400 hover:text-red-600"
+                      className="text-slate-500 hover:text-danger"
                     >
                       ✕
                     </button>
@@ -189,7 +241,7 @@ export default function ProductDetailPage() {
                 </li>
               ))}
               {product.recipeItems.length === 0 && (
-                <li className="py-2 text-sm text-slate-400">Aucun ingrédient — produit simple</li>
+                <li className="py-2 text-sm text-slate-500">Aucun ingrédient — produit simple</li>
               )}
             </ul>
 
@@ -197,7 +249,7 @@ export default function ProductDetailPage() {
               <select
                 value={newIngredientId}
                 onChange={(e) => setNewIngredientId(e.target.value)}
-                className="rounded-md border border-slate-300 px-2 py-2 text-sm"
+                className="input px-2"
               >
                 <option value="">— Ingrédient —</option>
                 {ingredientOptions.map((p) => (
@@ -210,27 +262,27 @@ export default function ProductDetailPage() {
                 type="number"
                 value={newQuantity}
                 onChange={(e) => setNewQuantity(Number(e.target.value))}
-                className="w-24 rounded-md border border-slate-300 px-2 py-2 text-sm"
+                className="input w-24 px-2"
               />
               <button
                 onClick={handleAddIngredient}
-                className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                className="btn btn-primary px-3"
               >
                 Ajouter
               </button>
             </div>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-2 text-sm text-danger">{error}</p>}
           </div>
 
           <div className="mt-4">
             <button
               onClick={handleToggleActive}
-              className="text-sm font-medium text-slate-500 hover:text-red-600"
+              className="text-sm font-medium text-slate-500 hover:text-danger"
             >
               {product.isActive ? 'Supprimer ce produit' : 'Réactiver ce produit'}
             </button>
             {product.isActive && (
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-slate-500">
                 "Supprimer" désactive le produit plutôt que de l’effacer : ses ventes et
                 mouvements de stock passés doivent rester consultables dans l’historique. Il
                 disparaît du POS mais reste réactivable ici à tout moment.

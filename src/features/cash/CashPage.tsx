@@ -4,6 +4,9 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { api } from '@/lib/axios';
 import { fetchCashRegisters, createCashRegister, openCashSession } from './api';
 import { CashRegister } from './types';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { Wallet } from 'lucide-react';
+import EmptyState from '@/components/ui/empty-state';
 
 export default function CashPage() {
   const { user } = useAuth();
@@ -53,26 +56,26 @@ export default function CashPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Caisse</h1>
+        <h1 className="text-2xl font-semibold text-heading">Caisse</h1>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className="btn btn-primary"
         >
           {showForm ? 'Annuler' : 'Nouvelle caisse'}
         </button>
       </div>
 
       {showForm && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-4">
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-surface p-4">
           <input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nom (ex. Caisse #01)"
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="input flex-1"
           />
           <button
             onClick={handleCreateRegister}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className="btn btn-primary"
           >
             Créer
           </button>
@@ -80,7 +83,7 @@ export default function CashPage() {
       )}
 
       {isLoading ? (
-        <p className="text-sm text-slate-500">Chargement...</p>
+        <ListSkeleton />
       ) : (
         <div className="space-y-3">
           {registers.map((r) => {
@@ -88,7 +91,7 @@ export default function CashPage() {
             return (
               <div
                 key={r.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white p-4"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 bg-surface p-4"
               >
                 <div>
                   <p className="font-medium text-slate-900">{r.name}</p>
@@ -99,7 +102,7 @@ export default function CashPage() {
                 {openSession ? (
                   <Link
                     to={`/cash/${openSession.id}`}
-                    className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="btn btn-secondary px-3"
                   >
                     Voir la session
                   </Link>
@@ -115,11 +118,11 @@ export default function CashPage() {
                           [r.id]: Number(e.target.value),
                         }))
                       }
-                      className="w-28 rounded-md border border-slate-300 px-2 py-1 text-sm"
+                      className="input input-sm w-28"
                     />
                     <button
                       onClick={() => handleOpen(r.id)}
-                      className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                      className="btn btn-primary px-3"
                     >
                       Ouvrir
                     </button>
@@ -129,7 +132,7 @@ export default function CashPage() {
             );
           })}
           {registers.length === 0 && (
-            <p className="text-sm text-slate-400">Aucune caisse configurée</p>
+            <EmptyState icon={Wallet} title="Aucune caisse configurée" description="Créez une caisse pour ouvrir une session et suivre les encaissements en espèces." action={{ label: 'Créer une caisse', onClick: () => setShowForm(true) }} />
           )}
         </div>
       )}

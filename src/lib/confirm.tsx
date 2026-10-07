@@ -39,9 +39,9 @@ export const ConfirmProvider = ({ children }: { children: ReactNode }) => {
       {children}
       {state && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+          <div className="w-full max-w-sm rounded-lg bg-surface p-6 shadow-lg">
             {state.options.title && (
-              <h2 className="mb-2 text-base font-semibold text-slate-900">
+              <h2 className="mb-2 text-base font-semibold text-heading-muted">
                 {state.options.title}
               </h2>
             )}
@@ -49,18 +49,14 @@ export const ConfirmProvider = ({ children }: { children: ReactNode }) => {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => handleClose(false)}
-                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="btn btn-secondary"
               >
                 {state.options.cancelLabel ?? 'Annuler'}
               </button>
               <button
                 onClick={() => handleClose(true)}
                 autoFocus
-                className={`rounded-md px-4 py-2 text-sm font-medium text-white ${
-                  state.options.danger
-                    ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-slate-900 hover:bg-slate-800'
-                }`}
+                className={`btn ${state.options.danger ? 'btn-danger' : 'btn-primary'}`}
               >
                 {state.options.confirmLabel ?? 'Confirmer'}
               </button>

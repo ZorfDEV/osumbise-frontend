@@ -1,3 +1,5 @@
+import { EstablishmentType } from '@/features/establishments/types';
+
 export type Role = 'OWNER' | 'ADMIN' | 'CASHIER' | 'SERVER' | 'STOCK_KEEPER' | 'COOK';
 
 export interface AuthUser {
@@ -10,4 +12,7 @@ export interface AuthUser {
   // null pour un OWNER sans établissement fixe — voir la note dans TopBar.tsx
   establishment: { name: string; logo: string | null } | null;
   organization: { name: string };
+  hasSubscription: boolean;
+  isPlatformAdmin: boolean;
+  establishmentType: EstablishmentType | null;
 }

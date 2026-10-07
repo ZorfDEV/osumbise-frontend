@@ -11,8 +11,16 @@ export interface Product {
   name: string;
   sellingPrice: string;
   categoryId: string;
+  stockCurrent: string;
+  stockMin: string;
+  unit: string;
+  tag: string | null;
+  type: string;
   isActive: boolean;
   image: string | null;
+  // Prix réellement facturable, remise en cours déjà appliquée par le backend
+  effectivePrice: number;
+  discountActive: boolean;
 }
 
 export type TableStatus = 'FREE' | 'OCCUPIED' | 'PENDING_ORDER' | 'BILL_REQUESTED';
@@ -64,6 +72,8 @@ export interface Order {
   status: OrderStatus;
   tableId: string | null;
   table: DiningTable | null;
+  customerId: string | null;
+  customer?: { id: string; name: string; balance: string } | null;
   subtotal: string;
   discount: string;
   tax: string;

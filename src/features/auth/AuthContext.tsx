@@ -7,6 +7,14 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (payload: {
+    organizationName: string;
+    name: string;
+    email: string;
+    password: string;
+    establishmentName: string;
+    establishmentType: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -36,6 +44,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     getSocket();
   };
 
+  const register = async (payload: {
+    organizationName: string;
+    name: string;
+    email: string;
+    password: string;
+    establishmentName: string;
+    establishmentType: string;
+  }) => {
+    const res = await api.post('/auth/register', payload);
+    setUser(res.data.user);
+    getSocket();
+  };
+
   const logout = async () => {
     await api.post('/auth/logout');
     setUser(null);
@@ -50,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
