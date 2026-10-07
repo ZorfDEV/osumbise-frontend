@@ -15,16 +15,26 @@ export default defineConfig({
       workbox: {
         navigateFallbackDenylist: [/^\/api/, /^\/socket\.io/],
       },
+      // Fichiers de public/ à mettre en cache pour l'app installée
+      includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png'],
+      // Seul manifeste de l'app : le plugin le génère et l'injecte dans
+      // index.html (ne pas ajouter de <link rel="manifest"> à la main)
       manifest: {
         name: 'Osumbise POS',
         short_name: 'Osumbise',
+        description: 'Point de vente pour bars, restaurants, hôtels, épiceries et grossistes — même hors ligne.',
+        lang: 'fr',
         start_url: '/',
+        scope: '/',
         display: 'standalone',
+        orientation: 'any',
         background_color: '#ffffff',
         theme_color: '#4A6B5D',
-        // Icônes réelles à fournir plus tard (192x192 et 512x512 minimum)
-        // pour une installation PWA complète sur mobile
-        icons: [],
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml' },
+        ],
       },
     }),
   ],

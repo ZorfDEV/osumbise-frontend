@@ -351,7 +351,7 @@ export default function LandingPage() {
             {/* Ligne de progression qui se dessine entre les étapes */}
             <div aria-hidden="true" className="absolute left-[16.66%] right-[16.66%] top-7 hidden h-0.5 bg-slate-200 md:block">
               <div
-                className="h-full origin-left bg-action transition-transform duration-[1400ms] ease-out"
+                className="h-full origin-left bg-action transition-transform ease-out [transition-duration:1400ms]"
                 style={{ transform: `scaleX(${steps.inView ? 1 : 0})` }}
               />
             </div>
