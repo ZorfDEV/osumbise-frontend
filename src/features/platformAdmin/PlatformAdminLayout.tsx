@@ -16,7 +16,7 @@ export default function PlatformAdminLayout() {
       <header className="border-b border-primary-950 bg-[#131414] px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <div className="flex items-center gap-6">
-            <span className="text-sm font-semibold text-white">⚙ Administration Osumbise</span>
+            <span className="text-sm font-semibold text-white">⚙ Administration Osumbice</span>
             <nav className="hidden gap-4 sm:flex">
               <Link
                 to="/platform-admin"

@@ -76,14 +76,14 @@ export default function OfflineDemo() {
           </span>
         </div>
 
-        {/* Serveur Osumbise */}
+        {/* Serveur Osumbice */}
         <div
           className={`rounded-2xl border bg-surface p-4 text-center shadow-lg transition-all duration-500 ${
             synced ? 'border-success/40 ring-2 ring-success/20' : 'border-slate-200'
           } ${offline ? 'opacity-60' : ''}`}
         >
           <Cloud size={28} className={`mx-auto mb-2 ${offline ? 'text-slate-400' : 'text-primary-600'}`} />
-          <p className="text-xs font-semibold text-heading">Serveur Osumbise</p>
+          <p className="text-xs font-semibold text-heading">Serveur Osumbice</p>
           <p className="mt-1 text-[0.7rem] text-slate-500">
             {offline ? 'Injoignable' : syncing ? 'Réception…' : synced ? '3 commandes reçues' : 'Disponible'}
           </p>

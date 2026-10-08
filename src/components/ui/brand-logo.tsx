@@ -1,14 +1,14 @@
 import logoColor from '@/assets/img/loo.png';
 import logoWhite from '@/assets/img/logoblanc.png';
 
-// Logo complet "Osumbise POS" : version couleur en mode clair, version
+// Logo complet "Osumbice POS" : version couleur en mode clair, version
 // blanche en mode sombre. La bascule se fait en CSS (classe .dark sur
 // <html>), sans attendre React, donc sans clignotement au chargement.
 export default function BrandLogo({ className = 'h-8' }: { className?: string }) {
   return (
     <>
-      <img src={logoColor} alt="Osumbise" className={`${className} w-auto dark:hidden`} />
-      <img src={logoWhite} alt="Osumbise" className={`${className} hidden w-auto dark:block`} />
+      <img src={logoColor} alt="Osumbice" className={`${className} w-auto dark:hidden`} />
+      <img src={logoWhite} alt="Osumbice" className={`${className} hidden w-auto dark:block`} />
     </>
   );
 }
@@ -16,7 +16,7 @@ export default function BrandLogo({ className = 'h-8' }: { className?: string })
 // Logo réduit (le "O" et ses bulles), repris de src/assets/img/logo-réduit.svg.
 // Dessiné en currentColor : vert de la charte #4A6B5D en clair, blanc en
 // sombre par défaut ; une classe text-* passée en className prend le dessus.
-export function BrandMark({ className = 'h-8 w-8', title = 'Osumbise' }: { className?: string; title?: string }) {
+export function BrandMark({ className = 'h-8 w-8', title = 'Osumbice' }: { className?: string; title?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

@@ -4,7 +4,7 @@
 
 /* Variables CSS pilotant les tokens shadcn/ui définis dans tailwind.config.ts
    (border, background, foreground, card, popover, secondary, muted, accent,
-   destructive). Valeurs mappées sur la charte graphique Osumbise — pas de
+   destructive). Valeurs mappées sur la charte graphique Osumbice — pas de
    gris neutre générique, tout part du vert #618373 et du reste de la charte. */
 @layer base {
   :root {
@@ -29,7 +29,7 @@
     --ring: 152 15% 45%;
     --radius: 0.5rem;
 
-    /* Palette Osumbise en "R G B" — consommée par tailwind.config.ts.
+    /* Palette Osumbice en "R G B" — consommée par tailwind.config.ts.
        Mode clair : valeurs de la charte. */
     --surface: 255 255 255;
     --slate-50: 248 250 252;

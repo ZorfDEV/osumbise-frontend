@@ -25,7 +25,7 @@ export default {
         // (blanc en clair, gris-vert profond en sombre). `white` reste blanc pur
         // pour le texte sur fond vert.
         surface: v('surface'),
-        // Charte graphique Osumbise (v2) — vert sauge #618373 ancré à 600,
+        // Charte graphique Osumbice (v2) — vert sauge #618373 ancré à 600,
         // sa teinte de survol officielle #4A6B5D ancrée à 700, et le fond
         // liens-boutons/widgets officiel #E8F2EF ancré à 50. Les teintes
         // intermédiaires sont interpolées pour une progression régulière.
@@ -109,7 +109,7 @@ export default {
         // définies dans src/index.css (:root). Nécessaires pour que les
         // composants générés par `npx shadcn add ...` et les classes
         // utilitaires de base (`border-border`, `bg-background`, etc.)
-        // fonctionnent, sans toucher à la charte Osumbise ci-dessus.
+        // fonctionnent, sans toucher à la charte Osumbice ci-dessus.
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

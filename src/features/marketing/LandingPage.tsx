@@ -143,7 +143,7 @@ export default function LandingPage() {
         <div className={`mx-auto flex max-w-6xl items-center justify-between px-4 transition-all duration-300 sm:px-6 ${scrolled ? 'h-14' : 'h-16'}`}>
           <a
             href="#top"
-            aria-label="Osumbise, retour en haut de la page"
+            aria-label="Osumbice, retour en haut de la page"
             onClick={(e) => {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -388,7 +388,7 @@ export default function LandingPage() {
               Coupure internet ? Le service continue.
             </h2>
             <p className="mb-6 text-slate-600">
-              Osumbise garde vos commandes sur l’appareil quand le réseau tombe, puis les envoie toutes seules dès qu’il
+              Osumbice garde vos commandes sur l’appareil quand le réseau tombe, puis les envoie toutes seules dès qu’il
               revient. Aucune vente perdue, aucun ticket à ressaisir.
             </p>
             <ul className="space-y-3 text-sm">
@@ -486,7 +486,7 @@ export default function LandingPage() {
           </Reveal>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[
-              { href: 'mailto:contact@osumbise.ga', icon: Mail, title: 'Email', hint: 'contact@osumbise.ga' },
+              { href: 'mailto:contact@osumbice.com', icon: Mail, title: 'Email', hint: 'contact@osumbice.com' },
               { href: 'tel:+24177545018', icon: Phone, title: 'Téléphone', hint: '+241 77 54 50 18' },
               { href: 'https://wa.me/24177545018', icon: MessageCircle, title: 'WhatsApp', hint: 'Réponse sous 24h', external: true },
             ].map((c, i) => (
@@ -518,7 +518,7 @@ export default function LandingPage() {
               Prêt à accélérer votre service ?
             </h2>
             <p className="relative mx-auto mb-8 max-w-xl text-on-primary-soft">
-              Créez votre compte en quelques minutes et testez Osumbise pendant 14 jours, sans engagement.
+              Créez votre compte en quelques minutes et testez Osumbice pendant 14 jours, sans engagement.
             </p>
             <Link
               to="/register"
@@ -542,7 +542,7 @@ export default function LandingPage() {
               </button>
             ))}
           </div>
-          <span className="text-xs text-slate-500">© {new Date().getFullYear()} Osumbise. Tous droits réservés.</span>
+          <span className="text-xs text-slate-500">© {new Date().getFullYear()} Osumbice. Tous droits réservés.</span>
         </div>
       </footer>
     </div>

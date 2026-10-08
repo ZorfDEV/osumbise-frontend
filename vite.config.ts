@@ -20,8 +20,8 @@ export default defineConfig({
       // Seul manifeste de l'app : le plugin le génère et l'injecte dans
       // index.html (ne pas ajouter de <link rel="manifest"> à la main)
       manifest: {
-        name: 'Osumbise POS',
-        short_name: 'Osumbise',
+        name: 'Osumbice POS',
+        short_name: 'Osumbice',
         description: 'Point de vente pour bars, restaurants, hôtels, épiceries et grossistes — même hors ligne.',
         lang: 'fr',
         start_url: '/',

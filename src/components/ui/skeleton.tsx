@@ -84,7 +84,7 @@ export function AppLoader() {
       <div className="h-1 w-24 overflow-hidden rounded-full bg-slate-200">
         <div className="h-full w-1/2 animate-pulse rounded-full bg-primary-600" />
       </div>
-      <span className="sr-only">Chargement d’Osumbise…</span>
+      <span className="sr-only">Chargement d’Osumbice…</span>
     </div>
   );
 }

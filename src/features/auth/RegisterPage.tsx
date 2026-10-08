@@ -133,7 +133,7 @@ export default function RegisterPage() {
 
       <div className="flex flex-col gap-4 p-6 md:p-10">
         <div className="flex items-center justify-center gap-2 md:justify-between">
-          <Link to="/" aria-label="Osumbise, page d’accueil" className="flex items-center gap-2 rounded-md">
+          <Link to="/" aria-label="Osumbice, page d’accueil" className="flex items-center gap-2 rounded-md">
             <BrandLogo className="h-8" />
           </Link>
           <p className="hidden text-sm text-slate-500 md:block">
