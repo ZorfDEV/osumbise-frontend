@@ -5,6 +5,7 @@ import { OrganizationSummary } from './types';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { Building2 } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
+import { Pagination, usePagination } from '@/components/ui/pagination';
 
 const STATUS_STYLES: Record<string, string> = {
   TRIAL: 'bg-warning-soft text-warning-dark',
@@ -42,6 +43,8 @@ export default function OrganizationsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
+  const pager = usePagination(organizations);
+
   return (
     <div>
       <h1 className="mb-4 text-2xl font-semibold text-heading">Organisations</h1>
@@ -56,6 +59,9 @@ export default function OrganizationsPage() {
       {isLoading ? (
         <ListSkeleton />
       ) : (
+      <>
+        {/* Ancre : le changement de page ramène ici, sous la barre du haut */}
+        <div ref={pager.anchorRef} aria-hidden="true" className="scroll-mt-20" />
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
           <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
@@ -70,7 +76,7 @@ export default function OrganizationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {organizations.map((org) => {
+              {pager.pageItems.map((org) => {
                 const owner = org.users[0];
                 return (
                   <tr key={org.id}>
@@ -134,6 +140,16 @@ export default function OrganizationsPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={pager.page}
+          pageCount={pager.pageCount}
+          pageSize={pager.pageSize}
+          total={pager.total}
+          onPageChange={pager.goTo}
+          onPageSizeChange={pager.setPageSize}
+          itemLabel="organisations"
+        />
+      </>
       )}
     </div>
   );

@@ -17,6 +17,7 @@ import { ListSkeleton } from '@/components/ui/skeleton';
 import { Package } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
+import { Pagination, usePagination } from '@/components/ui/pagination';
 
 type ProductSort = 'name' | 'price-asc' | 'price-desc' | 'stock-asc';
 const PRODUCT_SORTS: { value: ProductSort; label: string }[] = [
@@ -98,6 +99,8 @@ export default function ProductsPage() {
       }
     });
   const isFiltering = !!q || !!selectedCategoryId;
+
+  const pager = usePagination(filtered, { resetKey: `${query}|${selectedCategoryId}|${sort}` });
 
   return (
     <div>
@@ -209,6 +212,9 @@ export default function ProductsPage() {
       {isLoading ? (
         <ListSkeleton />
       ) : (
+      <>
+        {/* Ancre : le changement de page ramène ici, sous la barre du haut */}
+        <div ref={pager.anchorRef} aria-hidden="true" className="scroll-mt-20" />
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
           <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
@@ -222,7 +228,7 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filtered.map((p) => (
+              {pager.pageItems.map((p) => (
                 <tr key={p.id}>
                   <td data-label="" data-thumb className="px-4 py-2">
                     {p.image ? (
@@ -299,6 +305,16 @@ export default function ProductsPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={pager.page}
+          pageCount={pager.pageCount}
+          pageSize={pager.pageSize}
+          total={pager.total}
+          onPageChange={pager.goTo}
+          onPageSizeChange={pager.setPageSize}
+          itemLabel="produits"
+        />
+      </>
       )}
     </div>
   );

@@ -12,6 +12,7 @@ import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { Receipt } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
+import { Pagination, usePagination } from '@/components/ui/pagination';
 
 const formatFcfa = (value: number) => `${Math.round(value).toLocaleString('fr-FR')} FCFA`;
 
@@ -98,6 +99,8 @@ export default function ExpensesPage() {
       );
     }
   }
+
+  const pager = usePagination(expenses);
 
   return (
     <div>
@@ -199,6 +202,9 @@ export default function ExpensesPage() {
       {isLoading ? (
         <ListSkeleton />
       ) : (
+      <>
+        {/* Ancre : le changement de page ramène ici, sous la barre du haut */}
+        <div ref={pager.anchorRef} aria-hidden="true" className="scroll-mt-20" />
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
           <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
@@ -211,7 +217,7 @@ export default function ExpensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {expenses.map((e) => (
+              {pager.pageItems.map((e) => (
                 <tr key={e.id}>
                   <td data-label="Date" className="px-4 py-2 text-slate-600">
                     {new Date(e.createdAt).toLocaleDateString('fr-FR')}
@@ -232,6 +238,16 @@ export default function ExpensesPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={pager.page}
+          pageCount={pager.pageCount}
+          pageSize={pager.pageSize}
+          total={pager.total}
+          onPageChange={pager.goTo}
+          onPageSizeChange={pager.setPageSize}
+          itemLabel="dépenses"
+        />
+      </>
       )}
     </div>
   );

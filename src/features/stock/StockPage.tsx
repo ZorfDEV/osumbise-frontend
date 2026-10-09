@@ -8,6 +8,7 @@ import { ListSkeleton } from '@/components/ui/skeleton';
 import { Archive } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
+import { Pagination, usePagination } from '@/components/ui/pagination';
 
 type MovementSort = 'recent' | 'oldest';
 const MOVEMENT_SORTS: { value: MovementSort; label: string }[] = [
@@ -67,6 +68,8 @@ export default function StockPage() {
   useEffect(() => {
     load();
   }, []);
+
+  const pager = usePagination(visibleMovements, { resetKey: `${query}|${typeFilter}|${sort}` });
 
   return (
     <div>
@@ -168,6 +171,9 @@ export default function StockPage() {
       {isLoading ? (
         <ListSkeleton />
       ) : (
+      <>
+        {/* Ancre : le changement de page ramène ici, sous la barre du haut */}
+        <div ref={pager.anchorRef} aria-hidden="true" className="scroll-mt-20" />
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
           <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
@@ -182,7 +188,7 @@ export default function StockPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {visibleMovements.map((m) => (
+              {pager.pageItems.map((m) => (
                 <tr key={m.id}>
                   <td data-label="Date" className="px-4 py-2 text-slate-600">
                     {new Date(m.createdAt).toLocaleString('fr-FR', {
@@ -231,6 +237,16 @@ export default function StockPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={pager.page}
+          pageCount={pager.pageCount}
+          pageSize={pager.pageSize}
+          total={pager.total}
+          onPageChange={pager.goTo}
+          onPageSizeChange={pager.setPageSize}
+          itemLabel="mouvements"
+        />
+      </>
       )}
     </div>
   );

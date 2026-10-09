@@ -6,6 +6,7 @@ import CreateUserForm from './CreateUserForm';
 import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
 import { ListSkeleton } from '@/components/ui/skeleton';
+import { Pagination, usePagination } from '@/components/ui/pagination';
 
 const ASSIGNABLE_ROLES: AssignableRole[] = ['ADMIN', 'CASHIER', 'SERVER', 'STOCK_KEEPER', 'COOK'];
 
@@ -62,6 +63,8 @@ export default function UsersPage() {
     }
   };
 
+  const pager = usePagination(users);
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -88,6 +91,9 @@ export default function UsersPage() {
       {isLoading ? (
         <ListSkeleton />
       ) : (
+      <>
+        {/* Ancre : le changement de page ramène ici, sous la barre du haut */}
+        <div ref={pager.anchorRef} aria-hidden="true" className="scroll-mt-20" />
         <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
           <table className="table-cards w-full text-left text-sm">
             <thead className="bg-slate-50 text-slate-500">
@@ -101,7 +107,7 @@ export default function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {users.map((u) => (
+              {pager.pageItems.map((u) => (
                 <tr key={u.id}>
                   <td data-label="Nom" className="px-4 py-2 text-slate-900">{u.name}</td>
                   <td data-label="Email" className="px-4 py-2 text-slate-600">{u.email}</td>
@@ -185,6 +191,16 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={pager.page}
+          pageCount={pager.pageCount}
+          pageSize={pager.pageSize}
+          total={pager.total}
+          onPageChange={pager.goTo}
+          onPageSizeChange={pager.setPageSize}
+          itemLabel="utilisateurs"
+        />
+      </>
       )}
     </div>
   );

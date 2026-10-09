@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { Truck } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
+import { Pagination, usePagination } from '@/components/ui/pagination';
 
 export default function SuppliersPage() {
   const { user } = useAuth();
@@ -109,6 +110,8 @@ export default function SuppliersPage() {
     });
   };
 
+  const pager = usePagination(suppliers);
+
   return (
     <div className="max-w-3xl">
       <div className="mb-4 flex items-center justify-between">
@@ -171,8 +174,11 @@ export default function SuppliersPage() {
       {isLoading ? (
         <ListSkeleton />
       ) : (
+      <>
+        {/* Ancre : le changement de page ramène ici, sous la barre du haut */}
+        <div ref={pager.anchorRef} aria-hidden="true" className="scroll-mt-20" />
         <div className="space-y-3">
-          {suppliers.map((s) => (
+          {pager.pageItems.map((s) => (
             <div key={s.id} className="rounded-lg border border-slate-200 bg-surface p-4">
               {editingId === s.id ? (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -251,6 +257,16 @@ export default function SuppliersPage() {
             <EmptyState icon={Truck} title="Aucun fournisseur pour l’instant" description="Ajoutez vos fournisseurs pour créer des commandes d’achat." action={{ label: 'Ajouter un fournisseur', onClick: () => setShowForm(true) }} />
           )}
         </div>
+        <Pagination
+          page={pager.page}
+          pageCount={pager.pageCount}
+          pageSize={pager.pageSize}
+          total={pager.total}
+          onPageChange={pager.goTo}
+          onPageSizeChange={pager.setPageSize}
+          itemLabel="fournisseurs"
+        />
+      </>
       )}
     </div>
   );
