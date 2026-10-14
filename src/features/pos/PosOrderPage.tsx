@@ -797,7 +797,7 @@ export default function PosOrderPage() {
           onPaid={() => {
             setIsPaying(false);
             toast.success('Paiement encaissé avec succès');
-            navigate(`/pos/${order.id}/receipt`);
+            navigate(`/pos/${order.id}/receipt?print=1`);
           }}
         />
       )}

@@ -7,6 +7,7 @@ import { updateProfile, changePassword } from './api';
 import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
 import { ThemePicker } from '@/components/layout/ThemeToggle';
+import PrintSettingsCard from './PrintSettingsCard';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -85,6 +86,8 @@ export default function SettingsPage() {
         <p className="mb-4 text-xs text-slate-500">Choix propre à cet appareil. Les tickets s’impriment toujours en clair.</p>
         <ThemePicker />
       </div>
+
+      <PrintSettingsCard />
 
       <div className="rounded-lg border border-slate-200 bg-surface p-6">
         <h2 className="mb-1 text-sm font-semibold text-heading-muted">Mon profil</h2>

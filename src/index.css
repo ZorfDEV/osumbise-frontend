@@ -586,3 +586,87 @@
 .spotlight-card:hover::before {
   opacity: 1;
 }
+
+/* =====================================================================
+   Tickets pour imprimante thermique (src/lib/print.tsx, features/pos/tickets.tsx)
+   ===================================================================== */
+
+/* Zone d'impression isolée : invisible à l'écran ; à l'impression, c'est la
+   seule chose qui sort (body.printing-ticket masque toute l'application). */
+#print-root {
+  display: none;
+}
+@media print {
+  body.printing-ticket > *:not(#print-root) {
+    display: none !important;
+  }
+  body.printing-ticket #print-root {
+    display: block !important;
+  }
+}
+
+/* Noir sur blanc pur, quel que soit le thème : les gris sortent pâles ou
+   tramés sur papier thermique. */
+.ticket {
+  box-sizing: border-box;
+  padding: 0 1mm;
+  background: #fff;
+  color: #000;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.ticket * {
+  color: #000 !important;
+}
+.ticket-center {
+  text-align: center;
+}
+.ticket-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.ticket-huge {
+  margin: 1mm 0 2mm;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.ticket-bold {
+  font-weight: 700;
+}
+.ticket-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 2mm;
+}
+.ticket-line > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ticket-line > span:last-child {
+  flex-shrink: 0;
+  text-align: right;
+}
+.ticket-line.ticket-bold {
+  margin-top: 1mm;
+  font-size: 15px;
+}
+.ticket-rule {
+  margin: 2mm 0;
+  border-top: 1px dashed #000;
+}
+.ticket-kitchen-item {
+  margin: 1.5mm 0;
+  font-size: 16px;
+}
+.ticket-note {
+  padding-left: 4mm;
+  font-size: 13px;
+  font-style: italic;
+}
+/* Avance de papier avant la coupe */
+.ticket-feed {
+  height: 12mm;
+}

@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { loadOrder } from './offlineApi';
 import { Order, PaymentMethod } from './types';
 import { PageSkeleton } from '@/components/ui/skeleton';
+import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
+import { ReceiptTicket } from './tickets';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -17,18 +19,30 @@ const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;
 
 export default function ReceiptPage() {
   const { orderId } = useParams<{ orderId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
+  const { settings } = usePrintSettings();
+  const autoPrinted = useRef(false);
 
   useEffect(() => {
     if (!orderId) return;
     loadOrder(orderId).then(setOrder);
   }, [orderId]);
 
+  const isPaid = !!order && (order.status === 'PAYEE' || order.status === 'FERMEE');
+
+  // Impression automatique juste après l'encaissement (?print=1 ajouté par le
+  // POS), si ce poste l'a activée — une seule fois, même si la page se recharge
+  useEffect(() => {
+    if (!isPaid || autoPrinted.current || searchParams.get('print') !== '1') return;
+    autoPrinted.current = true;
+    setSearchParams({}, { replace: true });
+    if (settings.autoPrintReceipt) printTicket();
+  }, [isPaid, searchParams, setSearchParams, settings.autoPrintReceipt]);
+
   if (!order) {
     return <PageSkeleton />;
   }
-
-  const isPaid = order.status === 'PAYEE' || order.status === 'FERMEE';
 
   if (!isPaid) {
     return (
@@ -53,14 +67,16 @@ export default function ReceiptPage() {
         <Link to="/tables" className="text-sm text-slate-500 hover:text-slate-900">
           ← Retour aux tables
         </Link>
-        <button
-          onClick={() => window.print()}
-          className="btn btn-primary flex"
-        >
+        <button onClick={() => printTicket()} className="btn btn-primary flex">
           <Printer size={16} />
-          Imprimer la facture
+          Imprimer le ticket
         </button>
       </div>
+
+      {/* Version imprimante thermique, invisible à l'écran */}
+      <PrintPortal>
+        <ReceiptTicket order={order} paperWidth={settings.paperWidth} />
+      </PrintPortal>
 
       {/* Zone imprimable — largeur resserrée façon reçu de caisse */}
       <div className="mx-auto max-w-sm rounded-lg border border-slate-200 bg-surface p-6 font-mono text-sm text-slate-800 shadow-sm print:max-w-none print:border-0 print:p-10 print:shadow-none">
