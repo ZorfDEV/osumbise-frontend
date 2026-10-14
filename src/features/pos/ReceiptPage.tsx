@@ -6,6 +6,7 @@ import { Order, PaymentMethod } from './types';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import { ReceiptTicket } from './tickets';
+import { resolveUploadUrl } from '@/lib/uploads';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -83,7 +84,7 @@ export default function ReceiptPage() {
         <div className="mb-4 text-center">
           {order.establishment?.logo && (
             <img
-              src={order.establishment.logo}
+              src={resolveUploadUrl(order.establishment.logo)}
               alt={order.establishment.name}
               className="mx-auto mb-2 h-14 w-14 rounded object-cover"
             />

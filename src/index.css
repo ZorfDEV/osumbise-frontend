@@ -670,3 +670,13 @@
 .ticket-feed {
   height: 12mm;
 }
+/* Logo en tête du ticket client : niveaux de gris et contraste renforcé,
+   rendu plus net sur papier thermique (monochrome) */
+.ticket-logo {
+  display: block;
+  max-width: 60%;
+  max-height: 22mm;
+  margin: 0 auto 2mm;
+  object-fit: contain;
+  filter: grayscale(1) contrast(1.4);
+}

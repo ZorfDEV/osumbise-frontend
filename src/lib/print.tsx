@@ -78,6 +78,20 @@ export function PrintPortal({ children }: { children: ReactNode }) {
   return createPortal(children, getPrintRoot());
 }
 
+// Attend que les images du ticket (logo) soient chargées, 3 s au plus : sinon
+// l'impression automatique pourrait partir sans le logo. Une image en erreur
+// ne bloque pas l'impression.
+const waitForImages = (timeoutMs = 3000) => {
+  const images = Array.from(getPrintRoot().querySelectorAll('img'));
+  const pending = images
+    .filter((img) => !img.complete)
+    .map((img) => new Promise<void>((done) => {
+      img.addEventListener('load', () => done(), { once: true });
+      img.addEventListener('error', () => done(), { once: true });
+    }));
+  return Promise.race([Promise.all(pending), new Promise((done) => setTimeout(done, timeoutMs))]);
+};
+
 // Lance l'impression du contenu de #print-root, une fois React à jour.
 // En mode --kiosk-printing, window.print() part directement à l'imprimante.
 let printing: Promise<void> = Promise.resolve();
@@ -87,7 +101,8 @@ export const printTicket = (): Promise<void> => {
     () =>
       new Promise<void>((resolve) => {
         requestAnimationFrame(() =>
-          requestAnimationFrame(() => {
+          requestAnimationFrame(async () => {
+            await waitForImages();
             document.body.classList.add('printing-ticket');
             const done = () => {
               document.body.classList.remove('printing-ticket');

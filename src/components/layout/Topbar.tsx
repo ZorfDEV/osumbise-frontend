@@ -5,6 +5,7 @@ import { useFullscreen } from '@/lib/useFullscreen';
 import { ROLE_LABELS } from '@/config/roles';
 import ConnectionStatus from './ConnectionStatus';
 import ThemeToggle from './ThemeToggle';
+import { resolveUploadUrl } from '@/lib/uploads';
 
 interface Props {
   onMenuClick: () => void;
@@ -27,7 +28,7 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
   // l'organisation, sans logo — même simplification que pour la création de
   // commandes/produits ailleurs dans l'app.
   const brandName = user?.establishment?.name ?? user?.organization.name;
-  const brandLogo = user?.establishment?.logo ?? null;
+  const brandLogo = resolveUploadUrl(user?.establishment?.logo) ?? null;
   const fullscreenLabel = isFullscreen ? 'Quitter le plein écran' : 'Passer en plein écran';
 
   return (

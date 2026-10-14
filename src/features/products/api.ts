@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios';
+import { resolveUploadUrl } from '@/lib/uploads';
 import { Category, Product, ProductDetail } from './types';
 
 export const fetchCategories = async (): Promise<Category[]> => {
@@ -63,13 +64,7 @@ export const uploadProductImage = async (id: string, file: File): Promise<Produc
 };
 
 // `image` est stocké côté backend comme un chemin relatif (ex. "/uploads/products/xxx.png")
-// à résoudre contre la base de l'API, pas contre l'origine du frontend (qui peut différer en prod)
-export const resolveProductImageUrl = (image?: string | null): string | undefined => {
-  if (!image) return undefined;
-  if (/^https?:\/\//.test(image)) return image;
-  const base = (api.defaults.baseURL ?? '').replace(/\/$/, '');
-  return `${base}${image}`;
-};
+export const resolveProductImageUrl = resolveUploadUrl;
 
 export const addRecipeItem = async (
   productId: string,
