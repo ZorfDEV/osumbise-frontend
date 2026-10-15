@@ -32,6 +32,9 @@ import PlatformAdminLayout from '@/features/platformAdmin/PlatformAdminLayout';
 import PlatformDashboardPage from '@/features/platformAdmin/PlatformDashboardPage';
 import OrganizationsPage from '@/features/platformAdmin/OrganizationsPage';
 import OrganizationDetailPage from '@/features/platformAdmin/OrganizationDetailPage';
+import RoomsPage from '@/features/hotel/RoomsPage';
+import StaysPage from '@/features/hotel/StaysPage';
+import StayDetailPage from '@/features/hotel/StayDetailPage';
 
 const NotFoundPage = () => (
   <div className="text-slate-700">
@@ -95,6 +98,9 @@ export default function AppRouter() {
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/establishments" element={<EstablishmentsPage />} />
+            <Route path="/hotel" element={<RoomsPage />} />
+            <Route path="/hotel/stays" element={<StaysPage />} />
+            <Route path="/hotel/stays/:id" element={<StayDetailPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>

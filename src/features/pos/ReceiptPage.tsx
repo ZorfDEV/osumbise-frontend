@@ -14,6 +14,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   MOBILE_MONEY: 'Mobile Money',
   TRANSFER: 'Virement',
   CREDIT: 'Crédit',
+  ROOM: 'Sur la chambre',
 };
 
 const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;

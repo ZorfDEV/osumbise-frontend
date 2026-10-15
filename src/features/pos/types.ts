@@ -58,7 +58,7 @@ export interface OrderItem {
   product: { name: string };
 }
 
-export type PaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT';
+export type PaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT' | 'ROOM';
 
 export interface Payment {
   id: string;
@@ -82,6 +82,8 @@ export interface Order {
   payments?: Payment[];
   user?: { name: string };
   establishment?: { name: string; address: string | null; logo: string | null };
+  // Hôtel : séjour auquel la consommation a été imputée (paiement ROOM)
+  stay?: { id: string; guestName: string; room: { number: string } } | null;
   createdAt?: string;
   updatedAt?: string;
 }

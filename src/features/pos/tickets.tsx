@@ -11,6 +11,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   MOBILE_MONEY: 'Mobile Money',
   TRANSFER: 'Virement',
   CREDIT: 'Crédit',
+  ROOM: 'Sur la chambre',
 };
 
 const money = (value: number) => `${Math.round(value).toLocaleString('fr-FR')}`;
@@ -61,7 +62,11 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
         <>
           <Rule />
           {order.payments.map((p) => (
-            <Line key={p.id} left={PAYMENT_LABELS[p.method] ?? p.method} right={money(Number(p.amount))} />
+            <Line
+              key={p.id}
+              left={p.method === 'ROOM' && order.stay ? `Sur la chambre ${order.stay.room.number}` : PAYMENT_LABELS[p.method] ?? p.method}
+              right={money(Number(p.amount))}
+            />
           ))}
         </>
       )}

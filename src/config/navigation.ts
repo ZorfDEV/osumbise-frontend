@@ -13,6 +13,8 @@ import {
   Users2,
   Building2,
   Settings,
+  BedDouble,
+  CalendarDays,
   type LucideIcon,
 } from 'lucide-react';
 import { AuthUser, Role } from '@/features/auth/types';
@@ -22,7 +24,7 @@ export const ALL_ROLES: Role[] = ['OWNER', 'ADMIN', 'CASHIER', 'SERVER', 'STOCK_
 
 // Sections du menu, dans l'ordre d'affichage. Une section sans aucune entrée
 // visible pour le rôle courant n'est pas affichée.
-export const NAV_SECTIONS = ['Pilotage', 'Vente', 'Catalogue', 'Achats', 'Gestion'] as const;
+export const NAV_SECTIONS = ['Pilotage', 'Hébergement', 'Vente', 'Catalogue', 'Achats', 'Gestion'] as const;
 export type NavSection = (typeof NAV_SECTIONS)[number];
 
 export interface NavItem {
@@ -73,6 +75,26 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'Vente',
     roles: ['OWNER', 'ADMIN', 'CASHIER'],
     icon: Wallet,
+  },
+
+  // Hébergement (hôtels uniquement). Placé après la vente dans cette liste :
+  // la page d'accueil d'un caissier reste le point de vente ; le menu, lui,
+  // affiche la section Hébergement en tête (ordre de NAV_SECTIONS).
+  {
+    to: '/hotel',
+    label: 'Chambres',
+    section: 'Hébergement',
+    roles: ['OWNER', 'ADMIN', 'CASHIER'],
+    icon: BedDouble,
+    visibleForTypes: ['HOTEL'],
+  },
+  {
+    to: '/hotel/stays',
+    label: 'Séjours',
+    section: 'Hébergement',
+    roles: ['OWNER', 'ADMIN', 'CASHIER'],
+    icon: CalendarDays,
+    visibleForTypes: ['HOTEL'],
   },
 
   // Catalogue

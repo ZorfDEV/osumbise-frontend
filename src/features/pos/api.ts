@@ -94,14 +94,16 @@ export const updateOrderStatus = async (orderId: string, status: string): Promis
 };
 
 export interface PaymentLine {
-  method: 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT';
+  method: 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT' | 'ROOM';
   amount: number;
 }
 
 export const payOrder = async (
   orderId: string,
   payments: PaymentLine[],
-  cashSessionId?: string
+  cashSessionId?: string,
+  // Hôtel : séjour auquel imputer la part "sur la chambre" (ROOM)
+  stayId?: string
 ): Promise<void> => {
-  await api.post(`/orders/${orderId}/pay`, { payments, cashSessionId });
+  await api.post(`/orders/${orderId}/pay`, { payments, cashSessionId, stayId });
 };

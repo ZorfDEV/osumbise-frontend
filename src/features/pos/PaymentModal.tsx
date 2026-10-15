@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/axios';
 import { useToast } from '@/lib/toast';
 import { payOrder, PaymentLine } from './api';
+import { fetchStays } from '@/features/hotel/api';
+import type { StayListItem } from '@/features/hotel/types';
 
 interface CashRegisterWithSession {
   id: string;
@@ -26,6 +28,9 @@ const METHODS: { value: PaymentLine['method']; label: string }[] = [
   { value: 'CREDIT', label: 'Crédit' },
 ];
 
+// Hôtel : proposé seulement quand des clients sont en séjour
+const ROOM_METHOD = { value: 'ROOM' as const, label: 'Sur la chambre' };
+
 export default function PaymentModal({
   orderId,
   total,
@@ -43,8 +48,20 @@ export default function PaymentModal({
   const [hasOpenSession, setHasOpenSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Clients en séjour (hôtel) : consommation imputée à leur chambre
+  const [inHouse, setInHouse] = useState<StayListItem[]>([]);
+  const [stayId, setStayId] = useState('');
 
   const hasCreditLineWithoutCustomer = lines.some((l) => l.method === 'CREDIT') && !hasCustomer;
+  const hasRoomLine = lines.some((l) => l.method === 'ROOM');
+  const methods = inHouse.length > 0 ? [...METHODS, ROOM_METHOD] : METHODS;
+
+  // Hors hôtel ou sans droit d'accès à la réception : simplement aucune chambre proposée
+  useEffect(() => {
+    fetchStays({ status: ['CHECKED_IN'] })
+      .then((stays) => setInHouse([...stays].sort((a, b) => a.room.number.localeCompare(b.room.number, 'fr', { numeric: true }))))
+      .catch(() => setInHouse([]));
+  }, []);
 
   useEffect(() => {
     api.get('/cash-registers').then((res) => {
@@ -79,13 +96,17 @@ export default function PaymentModal({
       setError('Le montant saisi est inférieur au total de la commande');
       return;
     }
+    if (hasRoomLine && !stayId) {
+      setError('Choisissez la chambre à laquelle imputer la consommation');
+      return;
+    }
     if (hasCreditLineWithoutCustomer) {
       setError('Rattache un client à la commande avant de choisir "Crédit" (voir le panneau commande)');
       return;
     }
     setIsSubmitting(true);
     try {
-      await payOrder(orderId, lines, cashSessionId);
+      await payOrder(orderId, lines, cashSessionId, hasRoomLine ? stayId : undefined);
       onPaid();
     } catch (err) {
       const message =
@@ -137,7 +158,7 @@ export default function PaymentModal({
                 }
                 className="input px-2"
               >
-                {METHODS.map((m) => (
+                {methods.map((m) => (
                   <option key={m.value} value={m.value}>
                     {m.label}
                   </option>
@@ -161,6 +182,25 @@ export default function PaymentModal({
             </div>
           ))}
         </div>
+
+        {hasRoomLine && (
+          <div className="mt-4">
+            <label htmlFor="pay-room" className="mb-1 block text-sm font-medium text-slate-700">
+              Chambre du client
+            </label>
+            <select id="pay-room" value={stayId} onChange={(e) => setStayId(e.target.value)} className="input w-full">
+              <option value="">Choisir la chambre…</option>
+              {inHouse.map((s) => (
+                <option key={s.id} value={s.id}>
+                  Chambre {s.room.number} — {s.guestName}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              Ajouté à la facture du séjour, réglée au départ. Aucun mouvement de caisse maintenant.
+            </p>
+          </div>
+        )}
 
         <button
           onClick={addLine}

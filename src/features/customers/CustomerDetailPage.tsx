@@ -14,6 +14,7 @@ const METHOD_LABELS: Record<string, string> = {
   MOBILE_MONEY: 'Mobile Money',
   TRANSFER: 'Virement',
   CREDIT: 'Crédit',
+  ROOM: 'Sur la chambre',
 };
 
 export default function CustomerDetailPage() {

@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      end={item.to === '/dashboard'}
+                      end={item.to === '/dashboard' || item.to === '/hotel'}
                       onClick={onClose}
                       title={isCollapsed ? item.label : undefined}
                       className={({ isActive }) =>
