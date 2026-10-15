@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { NAV_ITEMS, NAV_SECTIONS, isNavItemVisible } from '@/config/navigation';
 import BrandLogo, { BrandMark } from '@/components/ui/brand-logo';
+import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 
 interface Props {
   isOpen: boolean;
@@ -15,7 +16,9 @@ const EASE = 'transition-all duration-300 ease-in-out';
 
 export default function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Props) {
   const { user } = useAuth();
-  const visibleItems = NAV_ITEMS.filter((item) => isNavItemVisible(item, user));
+  // Le menu suit le type de l'établissement en cours (choisi par un propriétaire)
+  const { current } = useActiveEstablishment();
+  const visibleItems = NAV_ITEMS.filter((item) => isNavItemVisible(item, user, current.type));
   const sections = NAV_SECTIONS.map((section) => ({
     section,
     items: visibleItems.filter((item) => item.section === section),

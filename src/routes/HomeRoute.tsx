@@ -2,9 +2,11 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { NAV_ITEMS, isNavItemVisible } from '@/config/navigation';
 import DashboardPage from '@/features/dashboard/DashboardPage';
+import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 
 export default function HomeRoute() {
   const { user } = useAuth();
+  const { current } = useActiveEstablishment();
 
   if (!user) {
     return null; // ProtectedRoute gère déjà le cas non authentifié
@@ -21,7 +23,7 @@ export default function HomeRoute() {
   }
 
   const firstAccessible = NAV_ITEMS.find(
-    (item) => item.to !== '/dashboard' && isNavItemVisible(item, user)
+    (item) => item.to !== '/dashboard' && isNavItemVisible(item, user, current.type)
   );
 
   // Filet de sécurité si un rôle n'a jamais accès à rien (ne devrait pas arriver) :

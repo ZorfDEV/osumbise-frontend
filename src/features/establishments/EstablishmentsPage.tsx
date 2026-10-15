@@ -16,6 +16,7 @@ import { Subscription } from '@/features/billing/types';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { Building2, ImagePlus, Trash2 } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
+import { useActiveEstablishment } from './ActiveEstablishmentContext';
 
 const TYPE_LABELS: Record<EstablishmentType, string> = {
   BAR: 'Bar',
@@ -138,6 +139,8 @@ function LogoPicker({
 
 export default function EstablishmentsPage() {
   const { refreshProfile } = useAuth();
+  // Le sélecteur de la Topbar (propriétaire) doit refléter les changements
+  const { reload: reloadSwitcher } = useActiveEstablishment();
   const toast = useToast();
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -197,6 +200,7 @@ export default function EstablishmentsPage() {
       setType('BAR');
       setShowForm(false);
       load();
+      reloadSwitcher();
     } catch (err) {
       toast.error(errorMessage(err, 'Impossible de créer l’établissement'));
     } finally {
@@ -227,6 +231,7 @@ export default function EstablishmentsPage() {
       toast.success('Établissement modifié');
       setEditingId(null);
       load();
+      reloadSwitcher();
       // Le nom/logo affiché dans la Topbar vient de /auth/me — on le rafraîchit
       // pour que le changement soit visible immédiatement, sans recharger la page
       refreshProfile();

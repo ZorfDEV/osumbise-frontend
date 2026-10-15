@@ -13,6 +13,9 @@ export interface OutboxAction {
   localOrderId: string;
   payload: Record<string, unknown>;
   createdAt: number;
+  // Établissement actif (propriétaire) au moment de l'action : rejoué tel
+  // quel, même si le propriétaire a changé d'établissement entre-temps
+  establishmentId?: string | null;
 }
 
 interface OsumbiseDB extends DBSchema {

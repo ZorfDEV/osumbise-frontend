@@ -3,6 +3,7 @@ import { Banknote, Percent, PackageOpen, Receipt, ShoppingCart, TrendingUp, User
 import { fetchReport, downloadReport, ReportData } from './api';
 import KpiCard from '@/features/dashboard/KpiCard';
 import { ListSkeleton } from '@/components/ui/skeleton';
+import ConsolidatedToggle from '@/features/establishments/ConsolidatedToggle';
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: 'Espèces',
@@ -78,6 +79,8 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   // Périodes précédentes (index 0 = période juste avant). null = non chargée.
   const [past, setPast] = useState<(ReportData | null)[]>([]);
+  // Propriétaire : rapport consolidé de tous ses établissements
+  const [allEstablishments, setAllEstablishments] = useState(false);
 
   const values: PeriodValues = { date, month, year, startDate, endDate };
   const buildParams = () => shiftedParams(period, values, 0);
@@ -87,14 +90,14 @@ export default function ReportsPage() {
     let cancelled = false;
     setIsLoading(true);
     setPast([]);
-    fetchReport(buildParams())
+    fetchReport(buildParams(), allEstablishments)
       .then((r) => !cancelled && setReport(r))
       .finally(() => !cancelled && setIsLoading(false));
 
     // Comparaison et mini-courbes : chargées à côté, sans bloquer l'affichage
     const { count } = COMPARISON[period];
     Promise.allSettled(
-      Array.from({ length: count - 1 }, (_, i) => fetchReport(shiftedParams(period, values, i + 1)))
+      Array.from({ length: count - 1 }, (_, i) => fetchReport(shiftedParams(period, values, i + 1), allEstablishments))
     ).then((results) => {
       if (!cancelled) setPast(results.map((r) => (r.status === 'fulfilled' ? r.value : null)));
     });
@@ -102,7 +105,7 @@ export default function ReportsPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [period, date, month, year, startDate, endDate]);
+  }, [period, date, month, year, startDate, endDate, allEstablishments]);
 
   const comparison = COMPARISON[period];
   const previous = past[0] ?? undefined;
@@ -133,6 +136,7 @@ export default function ReportsPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-heading">Rapports</h1>
         <div className="flex flex-wrap items-center gap-2">
+          <ConsolidatedToggle checked={allEstablishments} onChange={setAllEstablishments} />
           <div className="flex rounded-md border border-slate-300 p-1">
             <button
               onClick={() => setPeriod('day')}
@@ -215,13 +219,13 @@ export default function ReportsPage() {
 
       <div className="mb-4 flex gap-2">
         <button
-          onClick={() => downloadReport('csv', buildParams())}
+          onClick={() => downloadReport('csv', buildParams(), allEstablishments)}
           className="btn btn-secondary px-3"
         >
           Télécharger CSV
         </button>
         <button
-          onClick={() => downloadReport('pdf', buildParams())}
+          onClick={() => downloadReport('pdf', buildParams(), allEstablishments)}
           className="btn btn-secondary px-3"
         >
           Télécharger PDF

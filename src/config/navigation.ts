@@ -108,8 +108,14 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/settings', label: 'Paramètres', section: 'Gestion', roles: ALL_ROLES, icon: Settings },
 ];
 
-// Règle unique de visibilité d'une entrée (menu, page d'accueil, recherche)
-export const isNavItemVisible = (item: NavItem, user: AuthUser | null | undefined) =>
+// Règle unique de visibilité d'une entrée (menu, page d'accueil, recherche).
+// `establishmentType` : type de l'établissement en cours — celui choisi par un
+// propriétaire dans la Topbar, sinon celui du compte (useActiveEstablishment).
+export const isNavItemVisible = (
+  item: NavItem,
+  user: AuthUser | null | undefined,
+  establishmentType: EstablishmentType | null = user?.establishmentType ?? null
+) =>
   !!user &&
   item.roles.includes(user.role) &&
-  (!item.visibleForTypes || !user.establishmentType || item.visibleForTypes.includes(user.establishmentType));
+  (!item.visibleForTypes || !establishmentType || item.visibleForTypes.includes(establishmentType));

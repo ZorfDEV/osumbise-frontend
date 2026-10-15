@@ -6,6 +6,7 @@ import KpiCard from './KpiCard';
 import HourlySalesChart from './HourlySalesChart';
 import DashboardAlerts from './DashboardAlerts';
 import { PageSkeleton } from '@/components/ui/skeleton';
+import ConsolidatedToggle from '@/features/establishments/ConsolidatedToggle';
 
 // Date locale au format attendu par l'API (YYYY-MM-DD), décalée de n jours
 const isoDaysAgo = (n: number) => {
@@ -35,18 +36,32 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   // Résumés des 6 jours précédents (index 0 = hier). null = jour non chargé.
   const [pastDays, setPastDays] = useState<(DashboardSummary | null)[]>([]);
+  // Propriétaire : vue consolidée de tous ses établissements
+  const [allEstablishments, setAllEstablishments] = useState(false);
 
   // Historique pour les tendances et mini-courbes : chargé en parallèle, sans
   // bloquer l'affichage des chiffres du jour ; un jour en échec est ignoré.
   useEffect(() => {
-    Promise.allSettled([1, 2, 3, 4, 5, 6].map((n) => fetchDashboardSummary(isoDaysAgo(n)))).then((results) =>
-      setPastDays(results.map((r) => (r.status === 'fulfilled' ? r.value : null)))
+    let cancelled = false;
+    setPastDays([]);
+    Promise.allSettled([1, 2, 3, 4, 5, 6].map((n) => fetchDashboardSummary(isoDaysAgo(n), allEstablishments))).then(
+      (results) => !cancelled && setPastDays(results.map((r) => (r.status === 'fulfilled' ? r.value : null)))
     );
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [allEstablishments]);
 
   useEffect(() => {
-    Promise.all([fetchDashboardSummary(), fetchHourlySales(), fetchStaffPerformance()])
+    let cancelled = false;
+    setIsLoading(true);
+    Promise.all([
+      fetchDashboardSummary(undefined, allEstablishments),
+      fetchHourlySales(undefined, allEstablishments),
+      fetchStaffPerformance(undefined, allEstablishments),
+    ])
       .then(([s, h, st]) => {
+        if (cancelled) return;
         setSummary(s);
         setHourly(h);
         setStaff(st);
@@ -55,10 +70,13 @@ export default function DashboardPage() {
         const message =
           (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
           'Erreur inconnue';
-        setError(message);
+        if (!cancelled) setError(message);
       })
-      .finally(() => setIsLoading(false));
-  }, []);
+      .finally(() => !cancelled && setIsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [allEstablishments]);
 
   if (isLoading) {
     return <PageSkeleton />;
@@ -86,12 +104,16 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-2xl font-semibold text-heading">Tableau de bord</h1>
-        <p className="text-sm text-slate-500">
-          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </p>
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h1 className="text-2xl font-semibold text-heading">Tableau de bord</h1>
+          <p className="text-sm text-slate-500">
+            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
+        <ConsolidatedToggle checked={allEstablishments} onChange={setAllEstablishments} />
       </div>
 
+      {/* Alertes de l'établissement actif (stock, caisse) : elles appellent à agir là où l'on travaille */}
       <DashboardAlerts />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

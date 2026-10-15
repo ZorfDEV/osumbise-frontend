@@ -5,7 +5,7 @@ import { useFullscreen } from '@/lib/useFullscreen';
 import { ROLE_LABELS } from '@/config/roles';
 import ConnectionStatus from './ConnectionStatus';
 import ThemeToggle from './ThemeToggle';
-import { resolveUploadUrl } from '@/lib/uploads';
+import EstablishmentSwitcher from './EstablishmentSwitcher';
 
 interface Props {
   onMenuClick: () => void;
@@ -23,12 +23,6 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
   const { user, logout } = useAuth();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
-  // Un OWNER sans établissement fixe n'a pas de "logo courant" évident (il en
-  // gère potentiellement plusieurs) : on retombe alors sur le nom de
-  // l'organisation, sans logo — même simplification que pour la création de
-  // commandes/produits ailleurs dans l'app.
-  const brandName = user?.establishment?.name ?? user?.organization.name;
-  const brandLogo = resolveUploadUrl(user?.establishment?.logo) ?? null;
   const fullscreenLabel = isFullscreen ? 'Quitter le plein écran' : 'Passer en plein écran';
 
   return (
@@ -37,22 +31,8 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
         <button onClick={onMenuClick} aria-label="Ouvrir le menu" className={`${ICON_BUTTON} lg:hidden`}>
           <Menu size={22} />
         </button>
-        {brandName && (
-          <div className="flex min-w-0 items-center gap-2">
-            {brandLogo ? (
-              <img
-                src={brandLogo}
-                alt={brandName}
-                className="h-8 w-8 shrink-0 rounded object-cover"
-              />
-            ) : (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-slate-100 text-xs font-semibold text-slate-500">
-                {brandName.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="truncate text-sm font-medium text-slate-700">{brandName}</span>
-          </div>
-        )}
+        {/* Établissement en cours ; menu de changement pour un propriétaire */}
+        <EstablishmentSwitcher />
       </div>
 
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">

@@ -3,10 +3,28 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import CommandPalette from './CommandPalette';
+import {
+  ActiveEstablishmentProvider,
+  useActiveEstablishment,
+} from '@/features/establishments/ActiveEstablishmentContext';
 
 const SIDEBAR_COLLAPSED_KEY = 'osumbise:sidebar-collapsed';
 
+// Le fournisseur d'établissement actif enveloppe toute la mise en page : la
+// Topbar (sélecteur), le menu (selon le type) et les pages en dépendent.
 export default function AppLayout() {
+  return (
+    <ActiveEstablishmentProvider>
+      <AppShell />
+    </ActiveEstablishmentProvider>
+  );
+}
+
+function AppShell() {
+  // Changer d'établissement remonte les pages : elles rechargent leurs données,
+  // désormais filtrées par le nouvel établissement (en-tête X-Establishment-Id)
+  const { current } = useActiveEstablishment();
+  const scopeKey = current.id ?? 'none';
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -68,10 +86,10 @@ export default function AppLayout() {
           <Topbar onMenuClick={() => setIsSidebarOpen(true)} onSearchClick={() => setIsSearchOpen(true)} />
         </div>
         <main className="min-w-0 flex-1 p-4 sm:p-6 print:p-0">
-          <Outlet />
+          <Outlet key={scopeKey} />
         </main>
       </div>
-      <CommandPalette open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      <CommandPalette key={scopeKey} open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { getDb, OutboxAction } from './db';
-import { api } from './axios';
+import { api, getActiveEstablishmentId } from './axios';
 
 export const enqueueAction = async (
   action: Omit<OutboxAction, 'id' | 'createdAt'>
@@ -9,6 +9,7 @@ export const enqueueAction = async (
     ...action,
     id: crypto.randomUUID(),
     createdAt: Date.now(),
+    establishmentId: getActiveEstablishmentId(),
   };
   await db.put('outbox', entry);
   return entry;
@@ -47,10 +48,12 @@ export const syncOutbox = async () => {
 
     for (const action of actions) {
       const realOrderId = idMap.get(action.localOrderId) ?? action.localOrderId;
+      // Établissement d'origine de l'action (prioritaire sur l'établissement actif)
+      const scoped = action.establishmentId ? { headers: { 'X-Establishment-Id': action.establishmentId } } : {};
 
       try {
         if (action.type === 'createOrder') {
-          const res = await api.post('/orders', action.payload);
+          const res = await api.post('/orders', action.payload, scoped);
           const realId = res.data.order.id as string;
           idMap.set(action.localOrderId, realId);
           window.dispatchEvent(
@@ -59,15 +62,15 @@ export const syncOutbox = async () => {
             })
           );
         } else if (action.type === 'addItem') {
-          await api.post(`/orders/${realOrderId}/items`, action.payload);
+          await api.post(`/orders/${realOrderId}/items`, action.payload, scoped);
         } else if (action.type === 'updateItemQuantity') {
           await api.patch(`/orders/${realOrderId}/items/${action.payload.itemId}`, {
             quantity: action.payload.quantity,
-          });
+          }, scoped);
         } else if (action.type === 'removeItem') {
-          await api.delete(`/orders/${realOrderId}/items/${action.payload.itemId}`);
+          await api.delete(`/orders/${realOrderId}/items/${action.payload.itemId}`, scoped);
         } else if (action.type === 'updateStatus') {
-          await api.patch(`/orders/${realOrderId}/status`, { status: action.payload.status });
+          await api.patch(`/orders/${realOrderId}/status`, { status: action.payload.status }, scoped);
         }
 
         await db.delete('outbox', action.id);

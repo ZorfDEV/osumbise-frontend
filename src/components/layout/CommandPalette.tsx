@@ -6,6 +6,7 @@ import { NAV_ITEMS, isNavItemVisible } from '@/config/navigation';
 import { fetchProducts } from '@/features/products/api';
 import { fetchCustomers } from '@/features/customers/api';
 import { getCachedProducts } from '@/lib/offlineCache';
+import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 
 interface Props {
   open: boolean;
@@ -47,7 +48,11 @@ export default function CommandPalette({ open, onClose }: Props) {
   const [products, setProducts] = useState<{ id: string; name: string }[] | null>(null);
   const [customers, setCustomers] = useState<{ id: string; name: string; phone: string | null }[] | null>(null);
 
-  const visibleNav = useMemo(() => NAV_ITEMS.filter((item) => isNavItemVisible(item, user)), [user]);
+  const { current } = useActiveEstablishment();
+  const visibleNav = useMemo(
+    () => NAV_ITEMS.filter((item) => isNavItemVisible(item, user, current.type)),
+    [user, current.type]
+  );
   const canSee = (to: string) => visibleNav.some((item) => item.to === to);
 
   // Données chargées à la première ouverture seulement, et uniquement pour
