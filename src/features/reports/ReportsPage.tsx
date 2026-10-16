@@ -4,6 +4,7 @@ import { fetchReport, downloadReport, ReportData } from './api';
 import KpiCard from '@/features/dashboard/KpiCard';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import ConsolidatedToggle from '@/features/establishments/ConsolidatedToggle';
+import VoidsJournal from './VoidsJournal';
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: 'Espèces',
@@ -329,6 +330,8 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      <VoidsJournal />
     </div>
   );
 }

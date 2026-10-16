@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   Star,
   SearchX,
+  Undo2,
   ChefHat,
   BellRing,
   UtensilsCrossed,
@@ -37,6 +38,9 @@ import { Customer } from '@/features/customers/types';
 import { setOrderCustomer as attachOrderCustomer } from './api';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
 import { useConfirm } from '@/lib/confirm';
+import { useAuth } from '@/features/auth/AuthContext';
+import { cancelOrder, voidOrderItem } from './api';
+import VoidReasonModal from './VoidReasonModal';
 import { useToast } from '@/lib/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
@@ -199,6 +203,10 @@ export default function PosOrderPage() {
   const isOnline = useOnlineStatus();
   const confirm = useConfirm();
   const toast = useToast();
+  const { user } = useAuth();
+  // Retrait d'article / annulation après envoi en cuisine : responsables seulement
+  const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
+  const [voidTarget, setVoidTarget] = useState<{ kind: 'item'; item: OrderItem } | { kind: 'order' } | null>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const keyHandlerRef = useRef<((e: KeyboardEvent) => void) | undefined>(undefined);
@@ -291,6 +299,9 @@ export default function PosOrderPage() {
   }
 
   const isEditable = EDITABLE_STATUSES.includes(order.status);
+  // Avant encaissement : un responsable peut retirer un article ou annuler
+  const isOpenForVoid = !['PAYEE', 'FERMEE', 'ANNULEE'].includes(order.status);
+  const canVoid = isManager && isOpenForVoid && isOnline;
   const total = Number(order.total);
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
   const nextAction = NEXT_ACTION[order.status];
@@ -367,7 +378,34 @@ export default function PosOrderPage() {
     reloadOrder();
   };
 
+  const apiMessage = (err: unknown, fallback: string) =>
+    (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? fallback;
+
+  const handleVoidConfirm = async (reason: string, quantity: number) => {
+    if (!voidTarget) return;
+    try {
+      if (voidTarget.kind === 'item') {
+        await voidOrderItem(order.id, voidTarget.item.id, quantity, reason);
+        toast.success(`${quantity} × ${voidTarget.item.product.name} retiré de la commande`);
+        setVoidTarget(null);
+        reloadOrder();
+      } else {
+        await cancelOrder(order.id, reason);
+        setVoidTarget(null);
+        toast.info('Commande annulée');
+        navigate('/tables');
+      }
+    } catch (err) {
+      toast.error(apiMessage(err, 'Action impossible'));
+    }
+  };
+
   const handleCancel = async () => {
+    // Commande déjà envoyée en cuisine : motif obligatoire (responsables)
+    if (order.status !== 'BROUILLON') {
+      setVoidTarget({ kind: 'order' });
+      return;
+    }
     const ok = await confirm({
       title: 'Annuler la commande',
       message: 'Annuler cette commande ?',
@@ -708,8 +746,34 @@ export default function PosOrderPage() {
                       {formatFcfa(Number(item.unitPrice) * item.quantity)}
                     </span>
                   )}
+                  {canVoid && !isEditable && (
+                    <button
+                      onClick={() => setVoidTarget({ kind: 'item', item })}
+                      aria-label={`Retirer ${item.product.name}`}
+                      title="Retirer (motif obligatoire)"
+                      className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-danger-soft hover:text-danger"
+                    >
+                      <Undo2 size={16} />
+                    </button>
+                  )}
                 </div>
               ))}
+              {/* Articles retirés : barrés, avec le motif */}
+              {order.voids
+                ?.filter((v) => v.type === 'ITEM')
+                .map((v) => (
+                  <div key={v.id} className="flex items-start gap-3 bg-slate-50 px-4 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-slate-500 line-through">
+                        {v.quantity} × {v.productName}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Retiré par {v.user.name} · {v.reason}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm text-slate-400 line-through">{formatFcfa(Number(v.amount))}</span>
+                  </div>
+                ))}
               {order.items.length === 0 && (
                 <EmptyState compact icon={ShoppingBag} title="Commande vide" description="Touchez un produit pour l’ajouter." />
               )}
@@ -763,7 +827,17 @@ export default function PosOrderPage() {
                 <p className="text-center text-sm text-slate-500">{STATUS_LABELS[order.status]}</p>
               )}
 
-              {isEditable && (
+              {!isOpenForVoid && order.voids?.some((v) => v.type === 'ORDER') && (
+                <p className="mt-2 text-center text-xs text-slate-500">
+                  Motif : {order.voids.find((v) => v.type === 'ORDER')?.reason}
+                </p>
+              )}
+              {isOpenForVoid && !isManager && order.status !== 'BROUILLON' && (
+                <p className="mt-2 text-center text-xs text-slate-500">
+                  Retirer un article ou annuler : demandez au responsable.
+                </p>
+              )}
+              {(order.status === 'BROUILLON' || canVoid) && (
                 <button
                   onClick={handleCancel}
                   className="mt-2 w-full py-2 text-center text-xs font-medium text-slate-500 transition hover:text-danger"
@@ -807,6 +881,21 @@ export default function PosOrderPage() {
           </button>
         )}
       </div>
+
+      {voidTarget && (
+        <VoidReasonModal
+          title={voidTarget.kind === 'item' ? `Retirer « ${voidTarget.item.product.name} »` : 'Annuler la commande'}
+          description={
+            voidTarget.kind === 'item'
+              ? 'L’article ne sera pas facturé. S’il a déjà été préparé, ses ingrédients sortent du stock en perte.'
+              : 'La commande ne sera pas facturée et la table est libérée. Si elle a déjà été préparée, les ingrédients sortent du stock en perte.'
+          }
+          confirmLabel={voidTarget.kind === 'item' ? 'Retirer l’article' : 'Annuler la commande'}
+          maxQuantity={voidTarget.kind === 'item' ? voidTarget.item.quantity : undefined}
+          onConfirm={handleVoidConfirm}
+          onClose={() => setVoidTarget(null)}
+        />
+      )}
 
       {isPaying && (
         <PaymentModal

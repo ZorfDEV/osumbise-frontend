@@ -89,6 +89,15 @@ export const removeOrderItem = async (orderId: string, itemId: string): Promise<
   await api.delete(`/orders/${orderId}/items/${itemId}`);
 };
 
+// Propriétaire / administrateur uniquement, motif obligatoire
+export const voidOrderItem = async (orderId: string, itemId: string, quantity: number, reason: string): Promise<void> => {
+  await api.post(`/orders/${orderId}/items/${itemId}/void`, { quantity, reason });
+};
+
+export const cancelOrder = async (orderId: string, reason: string): Promise<void> => {
+  await api.post(`/orders/${orderId}/cancel`, { reason });
+};
+
 export const updateOrderStatus = async (orderId: string, status: string): Promise<void> => {
   await api.patch(`/orders/${orderId}/status`, { status });
 };

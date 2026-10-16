@@ -58,6 +58,18 @@ export interface OrderItem {
   product: { name: string };
 }
 
+export interface OrderVoid {
+  id: string;
+  type: 'ITEM' | 'ORDER';
+  productName: string | null;
+  quantity: number | null;
+  amount: string;
+  reason: string;
+  wasPrepared: boolean;
+  createdAt: string;
+  user: { name: string };
+}
+
 export type PaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT' | 'ROOM';
 
 export interface Payment {
@@ -84,6 +96,8 @@ export interface Order {
   establishment?: { name: string; address: string | null; logo: string | null };
   // Hôtel : séjour auquel la consommation a été imputée (paiement ROOM)
   stay?: { id: string; guestName: string; room: { number: string } } | null;
+  // Articles retirés / annulation, avec motif (propriétaire ou administrateur)
+  voids?: OrderVoid[];
   createdAt?: string;
   updatedAt?: string;
 }
