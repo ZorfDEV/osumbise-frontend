@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { BedDouble, Pencil } from 'lucide-react';
 import { useToast } from '@/lib/toast';
 import { apiError, createRoom, saveTaxRates, updateRoom } from './api';
 import { CATEGORY_LABELS, fcfa } from './labels';
@@ -90,7 +90,15 @@ export default function RoomsSettings({
     <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* Chambres */}
       <div className="rounded-lg border border-slate-200 bg-surface p-5 lg:col-span-2">
-        <h2 className="mb-3 text-sm font-semibold text-heading-muted">{editingId ? 'Modifier la chambre' : 'Ajouter une chambre'}</h2>
+        <div className="mb-4 flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+            <BedDouble size={24} strokeWidth={1.75} />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-heading">{editingId ? 'Modifier la chambre' : 'Ajouter une chambre'}</h2>
+            <p className="text-xs text-slate-500">Elle apparaît aussitôt sur le plan des chambres de la réception.</p>
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div>
             <label htmlFor="room-number" className="mb-1 block text-xs font-medium text-slate-600">

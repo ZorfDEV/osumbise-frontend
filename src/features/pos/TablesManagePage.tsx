@@ -5,7 +5,8 @@ import { fetchTables, createTable, updateTable, deleteTable } from './api';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { LayoutGrid } from 'lucide-react';
+import { MapPin, Plus } from 'lucide-react';
+import { DiningTableIcon } from '@/components/ui/icons';
 import EmptyState from '@/components/ui/empty-state';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 
@@ -107,25 +108,55 @@ export default function TablesManagePage() {
 
       <h1 className="mb-4 text-2xl font-semibold text-heading">Gérer les tables</h1>
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <input
-          value={newLabel}
-          onChange={(e) => setNewLabel(e.target.value)}
-          placeholder="Nom (ex. T01)"
-          className="input"
-        />
-        <input
-          value={newZone}
-          onChange={(e) => setNewZone(e.target.value)}
-          placeholder="Zone (optionnel)"
-          className="input"
-        />
-        <button
-          onClick={handleCreate}
-          className="btn btn-primary"
-        >
-          Ajouter
-        </button>
+      {/* Création d'une table */}
+      <div className="mb-5 rounded-xl border border-slate-200 bg-surface p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+            <DiningTableIcon size={24} strokeWidth={1.75} />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold text-heading">Ajouter une table</h2>
+            <p className="text-xs text-slate-500">Elle apparaît aussitôt sur le plan de salle du point de vente.</p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-[10rem] flex-1">
+            <label htmlFor="new-table-label" className="mb-1 block text-xs font-medium text-slate-600">
+              Nom
+            </label>
+            <div className="relative">
+              <DiningTableIcon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                id="new-table-label"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                placeholder="Ex. T01"
+                className="input w-full pl-9"
+              />
+            </div>
+          </div>
+          <div className="min-w-[10rem] flex-1">
+            <label htmlFor="new-table-zone" className="mb-1 block text-xs font-medium text-slate-600">
+              Zone (optionnel)
+            </label>
+            <div className="relative">
+              <MapPin size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                id="new-table-zone"
+                value={newZone}
+                onChange={(e) => setNewZone(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                placeholder="Ex. Terrasse"
+                className="input w-full pl-9"
+              />
+            </div>
+          </div>
+          <button onClick={handleCreate} className="btn btn-primary">
+            <Plus size={16} />
+            Ajouter
+          </button>
+        </div>
       </div>
 
       {error && <p className="mb-4 text-sm text-danger">{error}</p>}
@@ -207,7 +238,7 @@ export default function TablesManagePage() {
               {tables.length === 0 && (
                 <tr>
                   <td colSpan={4}>
-                    <EmptyState compact icon={LayoutGrid} title="Aucune table" description="Ajoutez vos tables avec le formulaire ci-dessus pour prendre les commandes à table." />
+                    <EmptyState compact icon={DiningTableIcon} title="Aucune table" description="Ajoutez vos tables avec le formulaire ci-dessus pour prendre les commandes à table." />
                   </td>
                 </tr>
               )}

@@ -8,14 +8,17 @@ import { createOrder, findLocalActiveOrderForTable } from './offlineApi';
 import { getCachedTables } from '@/lib/offlineCache';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
-import { LayoutGrid } from 'lucide-react';
+import { DiningTableIcon } from '@/components/ui/icons';
+import { MapPin } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 
-const STATUS_STYLES: Record<DiningTable['status'], string> = {
-  FREE: 'bg-success-soft border-success/30 text-success-dark',
-  OCCUPIED: 'bg-danger-soft border-danger/30 text-danger-dark',
-  PENDING_ORDER: 'bg-warning-soft border-warning/30 text-warning-dark',
-  BILL_REQUESTED: 'bg-info-soft border-info/30 text-info-dark',
+// Même langage visuel que le plan des chambres : carte teintée, icône et
+// badge à la couleur du statut
+const STATUS_STYLES: Record<DiningTable['status'], { card: string; icon: string; badge: string; dot: string }> = {
+  FREE: { card: 'border-success/40 bg-success-soft/40', icon: 'text-success-dark', badge: 'bg-success-soft text-success-dark', dot: 'bg-success-accent' },
+  OCCUPIED: { card: 'border-danger/40 bg-danger-soft/30', icon: 'text-danger-dark', badge: 'bg-danger-soft text-danger-dark', dot: 'bg-danger' },
+  PENDING_ORDER: { card: 'border-warning/40 bg-warning-soft/40', icon: 'text-warning-dark', badge: 'bg-warning-soft text-warning-dark', dot: 'bg-warning-accent' },
+  BILL_REQUESTED: { card: 'border-info/40 bg-info-soft/40', icon: 'text-info-dark', badge: 'bg-info-soft text-info-dark', dot: 'bg-info' },
 };
 
 const ACTIVE_STATUSES = ['BROUILLON', 'EN_ATTENTE', 'EN_PREPARATION', 'PRETE', 'SERVIE'];
@@ -119,20 +122,35 @@ export default function TablesPage() {
       {isLoading ? (
         <CardGridSkeleton />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {tables.map((table) => (
-            <button
-              key={table.id}
-              onClick={() => handleTableClick(table)}
-              className={`rounded-lg border-2 p-4 text-center shadow-sm ${STATUS_STYLES[table.status]}`}
-            >
-              <p className="text-lg font-semibold">{table.label}</p>
-              <p className="mt-1 text-xs">{TABLE_STATUS_LABELS[table.status]}</p>
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          {tables.map((table) => {
+            const st = STATUS_STYLES[table.status];
+            return (
+              <button
+                key={table.id}
+                onClick={() => handleTableClick(table)}
+                className={`group flex min-h-[8.5rem] flex-col rounded-xl border-2 p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${st.card}`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface/80 shadow-sm transition-transform group-hover:scale-105 ${st.icon}`}>
+                    <DiningTableIcon size={22} strokeWidth={1.75} />
+                  </span>
+                  <span className="truncate text-2xl font-bold leading-none text-heading">{table.label}</span>
+                </div>
+                <span className={`mt-3 inline-flex items-center gap-1.5 self-start rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${st.badge}`}>
+                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${st.dot}`} />
+                  {TABLE_STATUS_LABELS[table.status]}
+                </span>
+                <span className="mt-auto flex items-center gap-1 border-t border-slate-200/70 pt-2 text-xs text-slate-600">
+                  <MapPin size={12} aria-hidden />
+                  <span className="truncate">{table.zone || 'Salle'}</span>
+                </span>
+              </button>
+            );
+          })}
           {tables.length === 0 && (
             <div className="col-span-full">
-              <EmptyState icon={LayoutGrid} title="Aucune table configurée" description="Configurez vos tables pour prendre les commandes en salle, ou faites une vente au comptoir." action={{ label: 'Configurer les tables', to: '/tables/manage' }} />
+              <EmptyState icon={DiningTableIcon} title="Aucune table configurée" description="Configurez vos tables pour prendre les commandes en salle, ou faites une vente au comptoir." action={{ label: 'Configurer les tables', to: '/tables/manage' }} />
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BedDouble, CalendarPlus, DoorOpen, Settings2, Sparkles, UserPlus, Wrench, X } from 'lucide-react';
+import { BedDouble, CalendarPlus, Crown, DoorOpen, Settings2, Sparkles, UserPlus, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/lib/toast';
 import { getSocket } from '@/lib/socket';
@@ -172,14 +172,29 @@ export default function RoomsPage() {
                     <button
                       key={r.id}
                       onClick={() => setSelected(r)}
-                      className={`flex min-h-[7.5rem] flex-col rounded-xl border-2 p-3 text-left transition-transform hover:-translate-y-0.5 hover:shadow-md ${st.card}`}
+                      className={`group flex min-h-[9.5rem] flex-col rounded-xl border-2 p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${st.card}`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <span className="text-2xl font-bold text-heading">{r.number}</span>
-                        <span className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${st.badge}`}>{st.label}</span>
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface/80 shadow-sm transition-transform group-hover:scale-105 ${st.icon}`}>
+                          <BedDouble size={22} strokeWidth={1.75} />
+                        </span>
+                        <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${st.badge}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                          {st.label}
+                        </span>
                       </div>
-                      <span className="text-xs text-slate-600">{CATEGORY_LABELS[r.category]}</span>
-                      <div className="mt-auto pt-2 text-xs">
+                      <span className="mt-2 text-2xl font-bold leading-none text-heading">{r.number}</span>
+                      <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-600">
+                        {r.category !== 'STANDARD' && <Crown size={12} className="text-warning-dark" aria-hidden />}
+                        {CATEGORY_LABELS[r.category]}
+                        <span aria-hidden className="text-slate-400">·</span>
+                        <Users size={12} aria-hidden />
+                        <span>
+                          {r.capacity}
+                          <span className="sr-only"> personnes</span>
+                        </span>
+                      </span>
+                      <div className="mt-auto border-t border-slate-200/70 pt-2 text-xs">
                         {c ? (
                           <>
                             <span className="block truncate font-medium text-heading">{c.guestName}</span>

@@ -6,30 +6,34 @@ export const CATEGORY_LABELS: Record<RoomCategory, string> = {
   SUITE: 'Suite',
 };
 
-export const ROOM_STATUS: Record<RoomStatus, { label: string; card: string; dot: string; badge: string }> = {
+export const ROOM_STATUS: Record<RoomStatus, { label: string; card: string; dot: string; badge: string; icon: string }> = {
   AVAILABLE: {
     label: 'Libre',
     card: 'border-success/40 bg-success-soft/40',
     dot: 'bg-success-accent',
     badge: 'bg-success-soft text-success-dark',
+    icon: 'text-success-dark',
   },
   OCCUPIED: {
     label: 'Occupée',
     card: 'border-danger/40 bg-danger-soft/30',
     dot: 'bg-danger',
     badge: 'bg-danger-soft text-danger-dark',
+    icon: 'text-danger-dark',
   },
   CLEANING: {
     label: 'À nettoyer',
     card: 'border-warning/40 bg-warning-soft/40',
     dot: 'bg-warning-accent',
     badge: 'bg-warning-soft text-warning-dark',
+    icon: 'text-warning-dark',
   },
   OUT_OF_SERVICE: {
     label: 'Hors service',
     card: 'border-slate-300 bg-slate-100',
     dot: 'bg-slate-500',
     badge: 'bg-slate-200 text-slate-700',
+    icon: 'text-slate-500',
   },
 };
 
