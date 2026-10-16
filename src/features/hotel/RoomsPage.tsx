@@ -13,6 +13,8 @@ import RoomsSettings from './RoomsSettings';
 import type { Room, RoomStatus, TaxRate } from './types';
 
 type FormState = { walkIn?: boolean; roomId?: string } | null;
+// Filtre du plan, choisi en cliquant sur un badge de la synthèse du jour
+type RoomFilter = RoomStatus | 'ARRIVALS' | 'DEPARTURES' | null;
 
 export default function RoomsPage() {
   const { user } = useAuth();
@@ -26,6 +28,7 @@ export default function RoomsPage() {
   const [form, setForm] = useState<FormState>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState<RoomFilter>(null);
 
   const load = useCallback(() => {
     Promise.all([fetchRooms(), fetchTaxRates()])
@@ -53,6 +56,15 @@ export default function RoomsPage() {
   const nextReservation = (r: Room) => r.stays.find((s) => s.status === 'RESERVED');
 
   const active = rooms.filter((r) => r.isActive);
+  const isDeparture = (r: Room) => {
+    const c = current(r);
+    return !!c && dayOf(c.checkOutDate) <= today;
+  };
+  const matches = (r: Room) =>
+    filter === null ||
+    (filter === 'ARRIVALS' ? !!arrivalToday(r) : filter === 'DEPARTURES' ? isDeparture(r) : r.status === filter);
+  const visible = active.filter(matches);
+
   const counts = useMemo(() => {
     const by = (s: RoomStatus) => active.filter((r) => r.status === s).length;
     return {
@@ -61,22 +73,30 @@ export default function RoomsPage() {
       CLEANING: by('CLEANING'),
       OUT_OF_SERVICE: by('OUT_OF_SERVICE'),
       arrivals: active.filter((r) => arrivalToday(r)).length,
-      departures: active.filter((r) => {
-        const c = current(r);
-        return c && dayOf(c.checkOutDate) <= today;
-      }).length,
+      departures: active.filter(isDeparture).length,
     };
   }, [rooms, today]);
 
-  // Chambres regroupées par étage
+  // Chambres (filtrées) regroupées par étage
   const floors = useMemo(() => {
     const map = new Map<string, Room[]>();
-    active.forEach((r) => {
+    visible.forEach((r) => {
       const key = r.floor || 'Sans étage';
       map.set(key, [...(map.get(key) ?? []), r]);
     });
     return [...map.entries()];
-  }, [rooms]);
+  }, [rooms, filter, today]);
+
+  // Badge de la synthèse : un clic filtre le plan, un second clic l'annule
+  const chipProps = (f: Exclude<RoomFilter, null>) => ({
+    type: 'button' as const,
+    onClick: () => setFilter((cur) => (cur === f ? null : f)),
+    'aria-pressed': filter === f,
+  });
+  const chipClass = (f: Exclude<RoomFilter, null>, colors: string) =>
+    `inline-flex items-center gap-2 rounded-full px-3 py-1 font-medium transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-action/50 ${colors} ${
+      filter === f ? 'ring-2 ring-current ring-offset-1 ring-offset-surface' : filter !== null ? 'opacity-50 hover:opacity-100' : ''
+    }`;
 
   const run = async (action: () => Promise<unknown>, success: string) => {
     setBusy(true);
@@ -127,19 +147,25 @@ export default function RoomsPage() {
 
       {/* Synthèse du jour */}
       {!isLoading && active.length > 0 && (
-        <div className="mb-5 flex flex-wrap gap-2 text-sm">
+        <div className="mb-5 flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Filtrer les chambres">
           {(['AVAILABLE', 'OCCUPIED', 'CLEANING', 'OUT_OF_SERVICE'] as RoomStatus[]).map((s) => (
-            <span key={s} className={`inline-flex items-center gap-2 rounded-full px-3 py-1 font-medium ${ROOM_STATUS[s].badge}`}>
+            <button key={s} {...chipProps(s)} className={chipClass(s, ROOM_STATUS[s].badge)}>
               <span className={`h-2 w-2 rounded-full ${ROOM_STATUS[s].dot}`} />
               {ROOM_STATUS[s].label} : {counts[s]}
-            </span>
+            </button>
           ))}
-          <span className="inline-flex items-center rounded-full bg-info-soft px-3 py-1 font-medium text-info-dark">
+          <button {...chipProps('ARRIVALS')} className={chipClass('ARRIVALS', 'bg-info-soft text-info-dark')}>
             Arrivées du jour : {counts.arrivals}
-          </span>
-          <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700">
+          </button>
+          <button {...chipProps('DEPARTURES')} className={chipClass('DEPARTURES', 'bg-slate-100 text-slate-700')}>
             Départs du jour : {counts.departures}
-          </span>
+          </button>
+          {filter !== null && (
+            <button onClick={() => setFilter(null)} className="inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900">
+              <X size={14} />
+              Tout afficher
+            </button>
+          )}
         </div>
       )}
 
@@ -155,6 +181,13 @@ export default function RoomsPage() {
               : 'Le gérant doit d’abord ajouter les chambres de l’hôtel.'
           }
           action={canManage ? { label: 'Ajouter des chambres', onClick: () => setShowSettings(true) } : undefined}
+        />
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon={BedDouble}
+          title="Aucune chambre dans cette catégorie"
+          description="Aucune chambre ne correspond à ce filtre pour le moment."
+          action={{ label: 'Tout afficher', onClick: () => setFilter(null) }}
         />
       ) : (
         <div className="space-y-6">
