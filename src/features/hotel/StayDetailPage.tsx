@@ -9,15 +9,19 @@ import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
+import { fetchCustomers } from '@/features/customers/api';
+import type { Customer } from '@/features/customers/types';
 import { addStayPayment, apiError, cancelStay, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
 import { CATEGORY_LABELS, fcfa, formatDay, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import StayFormModal from './StayFormModal';
 import StayInvoiceTicket from './StayInvoiceTicket';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
 
-const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER'];
+const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
 
-// Versement (acompte ou solde) — entre dans la caisse ouverte s'il y en a une
+// Versement (acompte ou solde) — entre dans la caisse ouverte s'il y en a une.
+// « Compte client » : le montant est mis sur le compte d'un client (entreprise,
+// habitué) qui le réglera plus tard, depuis sa fiche Clients.
 function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: () => void; onPaid: (s: StayDetail) => void }) {
   const toast = useToast();
   const [method, setMethod] = useState<StayPaymentMethod>('CASH');
@@ -26,6 +30,18 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
   const [cashSessionId, setCashSessionId] = useState<string | undefined>();
   const [hasSession, setHasSession] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [customers, setCustomers] = useState<Customer[] | null>(null);
+  const [customerId, setCustomerId] = useState('');
+  const isCredit = method === 'CREDIT';
+  const customer = customers?.find((c) => c.id === customerId);
+
+  useEffect(() => {
+    if (isCredit && customers === null) {
+      fetchCustomers()
+        .then((list) => setCustomers(list.filter((c) => c.isActive)))
+        .catch(() => setCustomers([]));
+    }
+  }, [isCredit, customers]);
 
   useEffect(() => {
     api
@@ -41,10 +57,17 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
   const submit = async () => {
     const value = Number(amount);
     if (!value || value <= 0) return toast.error('Saisissez un montant');
+    if (isCredit && !customerId) return toast.error('Choisissez le compte client à débiter');
     setSaving(true);
     try {
-      const updated = await addStayPayment(stay.id, { method, amount: value, note: note.trim() || undefined, cashSessionId });
-      toast.success(`Versement de ${fcfa(value)} enregistré`);
+      const updated = await addStayPayment(stay.id, {
+        method,
+        amount: value,
+        note: note.trim() || undefined,
+        cashSessionId: isCredit ? undefined : cashSessionId,
+        customerId: isCredit ? customerId : undefined,
+      });
+      toast.success(isCredit ? `${fcfa(value)} mis sur le compte de ${customer?.name ?? 'ce client'}` : `Versement de ${fcfa(value)} enregistré`);
       onPaid(updated);
     } catch (err) {
       toast.error(apiError(err, 'Impossible d’enregistrer le versement'));
@@ -66,7 +89,7 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
           Reste à payer : <span className="font-semibold text-heading">{fcfa(Math.max(0, stay.totals.balance))}</span>
           <span className="block text-xs text-slate-500">Acompte : saisissez un montant partiel.</span>
         </p>
-        {!hasSession && (
+        {!hasSession && !isCredit && (
           <p className="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
             Aucune session de caisse ouverte : le versement sera enregistré sur le séjour, sans mouvement de caisse.
           </p>
@@ -84,6 +107,35 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
               </button>
             ))}
           </div>
+          {isCredit && (
+            <div>
+              <label htmlFor="pay-customer" className="mb-1 block text-sm font-medium text-slate-700">
+                Compte client à débiter
+              </label>
+              {customers !== null && customers.length === 0 ? (
+                <p className="rounded-md bg-slate-100 px-3 py-2 text-xs text-slate-600">
+                  Aucun compte client : créez-le d’abord dans le menu <span className="font-semibold">Clients</span>.
+                </p>
+              ) : (
+                <select id="pay-customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input w-full">
+                  <option value="">{customers === null ? 'Chargement…' : 'Choisir un client…'}</option>
+                  {customers?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                      {Number(c.balance) > 0 ? ` — doit ${fcfa(c.balance)}` : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {customer?.creditLimit && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Plafond {fcfa(customer.creditLimit)} · encore disponible{' '}
+                  {fcfa(Math.max(0, Number(customer.creditLimit) - Number(customer.balance)))}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-slate-500">Rien n’entre en caisse : le client réglera plus tard depuis sa fiche.</p>
+            </div>
+          )}
           <div>
             <label htmlFor="pay-amount" className="mb-1 block text-sm font-medium text-slate-700">
               Montant (FCFA)
@@ -101,8 +153,8 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
           <button onClick={onClose} className="btn btn-secondary flex-1">
             Annuler
           </button>
-          <button onClick={submit} disabled={saving} aria-busy={saving} className="btn btn-primary flex-1">
-            Enregistrer le versement
+          <button onClick={submit} disabled={saving || (isCredit && !customerId)} aria-busy={saving} className="btn btn-primary flex-1">
+            {isCredit ? 'Mettre sur le compte' : 'Enregistrer le versement'}
           </button>
         </div>
       </div>
@@ -322,7 +374,10 @@ export default function StayDetailPage() {
                 {stay.payments.map((p) => (
                   <li key={p.id} className="flex justify-between gap-3 py-2">
                     <span>
-                      <span className="font-medium text-heading">{STAY_PAYMENT_LABELS[p.method]}</span>
+                      <span className="font-medium text-heading">
+                        {STAY_PAYMENT_LABELS[p.method]}
+                        {p.customer ? ` — ${p.customer.name}` : ''}
+                      </span>
                       <span className="block text-xs text-slate-500">
                         {new Date(p.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · {p.user.name}
                         {p.note ? ` · ${p.note}` : ''}

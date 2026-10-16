@@ -1,7 +1,7 @@
 export type RoomCategory = 'STANDARD' | 'VIP' | 'SUITE';
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'CLEANING' | 'OUT_OF_SERVICE';
 export type StayStatus = 'RESERVED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELLED';
-export type StayPaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER';
+export type StayPaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'TRANSFER' | 'CREDIT';
 
 export interface StaySummary {
   id: string;
@@ -74,7 +74,16 @@ export interface StayDetail {
   status: StayStatus;
   notes: string | null;
   user: { name: string };
-  payments: { id: string; method: StayPaymentMethod; amount: string; note: string | null; createdAt: string; user: { name: string } }[];
+  payments: {
+    id: string;
+    method: StayPaymentMethod;
+    amount: string;
+    note: string | null;
+    createdAt: string;
+    user: { name: string };
+    // Méthode CREDIT : compte client débité
+    customer?: { id: string; name: string } | null;
+  }[];
   orders: {
     id: string;
     createdAt: string;

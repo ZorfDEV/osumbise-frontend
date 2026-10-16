@@ -21,9 +21,21 @@ export interface CustomerOrderSummary {
   total: string;
   createdAt: string;
   status: string;
+  // Part réglée « sur le compte » (méthode CREDIT)
+  payments: { amount: string }[];
+}
+
+// Séjour d'hôtel (ou part) mis sur le compte du client
+export interface CustomerStayCharge {
+  id: string;
+  amount: string;
+  createdAt: string;
+  note: string | null;
+  stay: { id: string; guestName: string; room: { number: string } };
 }
 
 export interface CustomerDetail extends Customer {
   orders: CustomerOrderSummary[];
   payments: CustomerPayment[];
+  stayPayments: CustomerStayCharge[];
 }

@@ -49,6 +49,7 @@ export const STAY_PAYMENT_LABELS: Record<StayPaymentMethod, string> = {
   CARD: 'Carte',
   MOBILE_MONEY: 'Mobile Money',
   TRANSFER: 'Virement',
+  CREDIT: 'Compte client',
 };
 
 export const fcfa = (n: number | string) => `${Math.round(Number(n)).toLocaleString('fr-FR')} FCFA`;

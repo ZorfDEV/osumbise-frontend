@@ -34,7 +34,7 @@ export const updateCustomer = async (
 
 export const recordCustomerPayment = async (
   customerId: string,
-  payload: { amount: number; method: string; note?: string }
+  payload: { amount: number; method: string; note?: string; cashSessionId?: string }
 ): Promise<CustomerPayment> => {
   const res = await api.post(`/customers/${customerId}/payments`, payload);
   return res.data.payment;

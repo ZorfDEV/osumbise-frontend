@@ -70,7 +70,7 @@ export default function StayInvoiceTicket({
           {stay.payments.map((p) => (
             <Line
               key={p.id}
-              left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${STAY_PAYMENT_LABELS[p.method]}`}
+              left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}`}
               right={`-${money(p.amount)}`}
             />
           ))}

@@ -667,7 +667,7 @@ export default function PosOrderPage() {
             {customers.length > 0 && isEditable && (
               <div className="border-b border-slate-100 px-4 py-2.5">
                 <label htmlFor="pos-customer" className="mb-1 block text-xs font-medium text-slate-500">
-                  Client (vente à crédit)
+                  Compte client (payer plus tard)
                 </label>
                 <select
                   id="pos-customer"
@@ -679,6 +679,7 @@ export default function PosOrderPage() {
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
+                      {Number(c.balance) > 0 ? ` — doit ${Math.round(Number(c.balance)).toLocaleString('fr-FR')} FCFA` : ''}
                     </option>
                   ))}
                 </select>

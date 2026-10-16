@@ -25,7 +25,7 @@ const METHODS: { value: PaymentLine['method']; label: string }[] = [
   { value: 'MOBILE_MONEY', label: 'Mobile Money' },
   { value: 'CARD', label: 'Carte' },
   { value: 'TRANSFER', label: 'Virement' },
-  { value: 'CREDIT', label: 'Crédit' },
+  { value: 'CREDIT', label: 'Compte client' },
 ];
 
 // Hôtel : proposé seulement quand des clients sont en séjour
@@ -101,7 +101,7 @@ export default function PaymentModal({
       return;
     }
     if (hasCreditLineWithoutCustomer) {
-      setError('Rattache un client à la commande avant de choisir "Crédit" (voir le panneau commande)');
+      setError('Rattache un client à la commande avant de choisir "Compte client" (voir le panneau commande)');
       return;
     }
     setIsSubmitting(true);
@@ -136,7 +136,7 @@ export default function PaymentModal({
 
         {hasCreditLineWithoutCustomer && (
           <p className="mb-4 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
-            Le mode "Crédit" nécessite un client rattaché à la commande — ferme cette fenêtre et
+            Le mode "Compte client" nécessite un client rattaché à la commande — ferme cette fenêtre et
             choisis un client dans le panneau commande.
           </p>
         )}

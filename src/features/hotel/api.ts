@@ -42,7 +42,7 @@ export const checkOutStay = async (id: string, force = false): Promise<StayDetai
 export const cancelStay = async (id: string): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/cancel`)).data.stay;
 export const addStayPayment = async (
   id: string,
-  payload: { method: StayPaymentMethod; amount: number; note?: string; cashSessionId?: string }
+  payload: { method: StayPaymentMethod; amount: number; note?: string; cashSessionId?: string; customerId?: string }
 ): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/payments`, payload)).data.stay;
 
 // Message d'erreur renvoyé par l'API (ou message par défaut)

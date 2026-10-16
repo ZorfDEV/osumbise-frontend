@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { api } from '@/lib/axios';
 import { fetchCustomer, recordCustomerPayment } from './api';
 import { CustomerDetail } from './types';
 import { useToast } from '@/lib/toast';
@@ -26,6 +27,18 @@ export default function CustomerDetailPage() {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Session de caisse ouverte : un règlement espèces/carte/mobile y entre
+  const [cashSessionId, setCashSessionId] = useState<string | undefined>();
+
+  useEffect(() => {
+    api
+      .get('/cash-registers')
+      .then((res) => {
+        const open = (res.data.cashRegisters as { sessions: { id: string }[] }[]).find((r) => r.sessions.length > 0);
+        setCashSessionId(open?.sessions[0].id);
+      })
+      .catch(() => setCashSessionId(undefined));
+  }, []);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -49,6 +62,7 @@ export default function CustomerDetailPage() {
         amount: Number(amount),
         method,
         note: note.trim() || undefined,
+        cashSessionId,
       });
       toast.success('Règlement enregistré');
       setAmount('');
@@ -64,6 +78,26 @@ export default function CustomerDetailPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Relevé : tout ce qui a été mis sur le compte (POS et hôtel), du plus récent
+  const charges = [
+    ...customer.orders
+      .map((o) => ({
+        id: o.id,
+        date: o.createdAt,
+        label: 'Consommation',
+        to: `/pos/${o.id}/receipt`,
+        amount: o.payments.reduce((sum, p) => sum + Number(p.amount), 0),
+      }))
+      .filter((c) => c.amount > 0),
+    ...(customer.stayPayments ?? []).map((p) => ({
+      id: p.id,
+      date: p.createdAt,
+      label: `Séjour chambre ${p.stay.room.number} — ${p.stay.guestName}`,
+      to: `/hotel/stays/${p.stay.id}`,
+      amount: Number(p.amount),
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
 
   return (
     <div className="max-w-2xl">
@@ -139,32 +173,43 @@ export default function CustomerDetailPage() {
           </button>
         </div>
         {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+        <p className="mt-2 text-xs text-slate-500">
+          {cashSessionId
+            ? 'Les règlements en espèces, carte ou Mobile Money entrent dans la caisse ouverte.'
+            : 'Aucune caisse ouverte : le règlement réduit le solde du client sans mouvement de caisse.'}
+        </p>
       </div>
 
       {/* Historique des ventes à crédit */}
       <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
-        <h2 className="mb-3 text-sm font-semibold text-heading-muted">Ventes à crédit</h2>
-        {customer.orders.length > 0 ? (
+        <h2 className="mb-3 text-sm font-semibold text-heading-muted">Mis sur le compte</h2>
+        {charges.length > 0 ? (
           <table className="table-cards w-full text-left text-sm">
             <thead className="text-slate-500">
               <tr>
                 <th className="py-1 font-medium">Date</th>
-                <th className="py-1 font-medium">Total commande</th>
+                <th className="py-1 font-medium">Détail</th>
+                <th className="py-1 font-medium">Montant</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {customer.orders.map((o) => (
-                <tr key={o.id}>
+              {charges.map((c) => (
+                <tr key={c.id}>
                   <td data-label="Date" className="py-1.5 text-slate-600">
-                    {new Date(o.createdAt).toLocaleDateString('fr-FR')}
+                    {new Date(c.date).toLocaleDateString('fr-FR')}
                   </td>
-                  <td data-label="Total commande" className="py-1.5 text-slate-600">{formatFcfa(Number(o.total))}</td>
+                  <td data-label="Détail" className="py-1.5">
+                    <Link to={c.to} className="text-slate-700 hover:underline">
+                      {c.label}
+                    </Link>
+                  </td>
+                  <td data-label="Montant" className="py-1.5 font-medium text-slate-700">{formatFcfa(c.amount)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
-          <p className="text-sm text-slate-500">Aucune vente à crédit</p>
+          <p className="text-sm text-slate-500">Rien n’a encore été mis sur ce compte</p>
         )}
       </div>
 

@@ -67,7 +67,7 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'Vente',
     roles: ['OWNER', 'ADMIN', 'CASHIER'],
     icon: Users2,
-    visibleForTypes: ['GROSSISTE'],
+    // Comptes clients (consommer maintenant, payer plus tard) : tous types
   },
   {
     to: '/cash',
