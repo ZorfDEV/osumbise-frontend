@@ -21,6 +21,14 @@ const STATUS_STYLES: Record<DiningTable['status'], { card: string; icon: string;
   BILL_REQUESTED: { card: 'border-info/40 bg-info-soft/40', icon: 'text-info-dark', badge: 'bg-info-soft text-info-dark', dot: 'bg-info' },
 };
 
+// Libellés courts pour le badge de la carte (le libellé complet reste en info-bulle)
+const SHORT_STATUS_LABELS: Record<DiningTable['status'], string> = {
+  FREE: 'Libre',
+  OCCUPIED: 'Occupée',
+  PENDING_ORDER: 'En attente',
+  BILL_REQUESTED: 'Addition',
+};
+
 const ACTIVE_STATUSES = ['BROUILLON', 'EN_ATTENTE', 'EN_PREPARATION', 'PRETE', 'SERVIE'];
 
 export default function TablesPage() {
@@ -129,18 +137,21 @@ export default function TablesPage() {
               <button
                 key={table.id}
                 onClick={() => handleTableClick(table)}
-                className={`group flex min-h-[8.5rem] flex-col rounded-xl border-2 p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${st.card}`}
+                className={`group flex min-h-[9.5rem] flex-col rounded-xl border-2 p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${st.card}`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-start justify-between gap-2">
                   <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface/80 shadow-sm transition-transform group-hover:scale-105 ${st.icon}`}>
                     <DiningTableIcon size={22} strokeWidth={1.75} />
                   </span>
-                  <span className="truncate text-2xl font-bold leading-none text-heading">{table.label}</span>
+                  <span
+                    title={TABLE_STATUS_LABELS[table.status]}
+                    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${st.badge}`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${st.dot}`} />
+                    {SHORT_STATUS_LABELS[table.status]}
+                  </span>
                 </div>
-                <span className={`mt-3 inline-flex items-center gap-1.5 self-start rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${st.badge}`}>
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${st.dot}`} />
-                  {TABLE_STATUS_LABELS[table.status]}
-                </span>
+                <span className="mt-2 truncate text-2xl font-bold leading-none text-heading">{table.label}</span>
                 <span className="mt-auto flex items-center gap-1 border-t border-slate-200/70 pt-2 text-xs text-slate-600">
                   <MapPin size={12} aria-hidden />
                   <span className="truncate">{table.zone || 'Salle'}</span>
