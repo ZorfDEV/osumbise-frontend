@@ -10,6 +10,8 @@ export interface Product {
   id: string;
   name: string;
   sellingPrice: string;
+  // Taxe optionnelle (%)
+  tva?: string;
   categoryId: string;
   stockCurrent: string;
   stockMin: string;
@@ -54,6 +56,8 @@ export interface OrderItem {
   productId: string;
   quantity: number;
   unitPrice: string;
+  // Taxe (%) figée sur la ligne, ajoutée au prix hors taxe
+  taxRate?: string;
   note: string | null;
   product: { name: string };
 }

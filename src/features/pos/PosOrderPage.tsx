@@ -333,6 +333,7 @@ export default function PosOrderPage() {
         name: product.name,
         sellingPrice: product.sellingPrice,
         effectivePrice: product.effectivePrice,
+        tva: product.tva,
       },
       quantity
     );
@@ -737,6 +738,9 @@ export default function PosOrderPage() {
                     <p className="text-xs text-slate-500">
                       {formatFcfa(Number(item.unitPrice))} × {item.quantity} ={' '}
                       <span className="font-medium text-slate-700">{formatFcfa(Number(item.unitPrice) * item.quantity)}</span>
+                      {Number(item.taxRate ?? 0) > 0 && (
+                        <span className="ml-1 text-slate-500">+ taxe {Number(item.taxRate).toLocaleString('fr-FR')} %</span>
+                      )}
                     </p>
                   </div>
                   {isEditable ? (

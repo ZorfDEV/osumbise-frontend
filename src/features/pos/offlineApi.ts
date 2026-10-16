@@ -20,8 +20,13 @@ const recalculateLocalTotals = (order: Order) => {
     (sum, item) => sum + item.quantity * Number(item.unitPrice),
     0
   );
+  // Même calcul que le serveur (order.service.ts) : taxe ajoutée, arrondie au franc
+  const tax = Math.round(
+    order.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPrice) * (Number(item.taxRate ?? 0) / 100), 0)
+  );
   order.subtotal = String(subtotal);
-  order.total = String(subtotal - Number(order.discount) + Number(order.tax));
+  order.tax = String(tax);
+  order.total = String(subtotal - Number(order.discount) + tax);
 };
 
 // --- Lecture ---------------------------------------------------------------
@@ -83,7 +88,7 @@ export const createOrder = async (payload: {
 
 export const addOrderItem = async (
   orderId: string,
-  product: { id: string; name: string; sellingPrice: string; effectivePrice?: number },
+  product: { id: string; name: string; sellingPrice: string; effectivePrice?: number; tva?: string },
   quantity: number
 ): Promise<void> => {
   if (navigator.onLine && !isLocalId(orderId)) {
@@ -110,6 +115,7 @@ export const addOrderItem = async (
       // du catalogue (offlineCache) ; le serveur recalcule la valeur exacte
       // au moment de la synchro (addOrderItem, order.controller.ts)
       unitPrice: String(product.effectivePrice ?? product.sellingPrice),
+      taxRate: product.tva ?? '0',
       note: null,
       product: { name: product.name },
     });

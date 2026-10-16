@@ -13,6 +13,8 @@ export interface Product {
   sku: string | null;
   sellingPrice: string;
   cost: string;
+  // Taxe optionnelle (%) ajoutée au prix de vente hors taxe
+  tva: string;
   unit: Unit;
   stockCurrent: string;
   stockMin: string;

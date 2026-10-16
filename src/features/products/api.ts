@@ -36,6 +36,7 @@ export interface ProductPayload {
   name?: string;
   sellingPrice?: number;
   cost?: number;
+  tva?: number;
   unit?: string;
   stockMin?: number;
   tag?: number | null;
