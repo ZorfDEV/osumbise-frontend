@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from 'react';
 import { CheckCircle2, XCircle, Info, AlertTriangle, X } from 'lucide-react';
 
-type ToastType = 'success' | 'error' | 'info' | 'warning';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastItem {
   id: string;
@@ -33,7 +33,8 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-const TOAST_STYLES: Record<
+// Partagé avec le bandeau <Alert> (components/ui/alert.tsx)
+export const TOAST_STYLES: Record<
   ToastType,
   { bg: string; border: string; text: string; icon: typeof CheckCircle2 }
 > = {

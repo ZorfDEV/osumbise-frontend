@@ -18,6 +18,10 @@ import {
   ShoppingBag,
   Star,
   SearchX,
+  ChefHat,
+  BellRing,
+  UtensilsCrossed,
+  type LucideIcon,
 } from 'lucide-react';
 import { fetchCategories, fetchProducts } from './api';
 import { resolveProductImageUrl } from '@/features/products/api';
@@ -36,6 +40,8 @@ import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
+import Alert from '@/components/ui/alert';
+import type { ToastType } from '@/lib/toast';
 import { Order, OrderItem, Category, Product, OrderStatus } from './types';
 import PaymentModal from './PaymentModal';
 
@@ -62,6 +68,17 @@ const NEXT_ACTION: Partial<Record<OrderStatus, { label: string; next: OrderStatu
 };
 
 const EDITABLE_STATUSES: OrderStatus[] = ['BROUILLON', 'EN_ATTENTE'];
+
+// Bandeau affiché au-dessus de la recherche quand la commande n'est plus
+// modifiable — couleur des notifications selon l'étape atteinte
+const LOCKED_ALERTS: Partial<Record<OrderStatus, { type: ToastType; icon?: LucideIcon; text: string }>> = {
+  EN_PREPARATION: { type: 'warning', icon: ChefHat, text: 'La cuisine prépare la commande : les articles ne peuvent plus être modifiés.' },
+  PRETE: { type: 'info', icon: BellRing, text: 'La commande est prête à être servie.' },
+  SERVIE: { type: 'info', icon: UtensilsCrossed, text: 'La commande a été servie : il reste à l’encaisser.' },
+  PAYEE: { type: 'success', text: 'La commande est payée.' },
+  FERMEE: { type: 'success', text: 'La commande est payée et clôturée.' },
+  ANNULEE: { type: 'error', text: 'La commande a été annulée.' },
+};
 
 const QUICK_PAYMENT_METHODS: {
   value: 'CASH' | 'MOBILE_MONEY' | 'CARD';
@@ -442,16 +459,20 @@ export default function PosOrderPage() {
 
   return (
     <div className="flex flex-col gap-3 pb-24 lg:pb-0">
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {!isEditable && (
-        <p className="rounded-md bg-slate-100 px-3 py-2 text-xs text-slate-500">
-          Cette commande n’est plus modifiable à ce stade ({STATUS_LABELS[order.status]}).
-        </p>
-      )}
+      {error && <Alert type="error">{error}</Alert>}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Panneau produits */}
         <div className={`lg:col-span-2 ${view === 'products' ? 'block' : 'hidden'} lg:block`}>
+          {!isEditable && (() => {
+            const a = LOCKED_ALERTS[order.status] ?? { type: 'info' as ToastType, text: '' };
+            return (
+              <Alert type={a.type} icon={a.icon} title={`Commande ${STATUS_LABELS[order.status].toLowerCase()}`} className="mb-3">
+                {a.text || 'Cette commande n’est plus modifiable à ce stade.'}
+              </Alert>
+            );
+          })()}
+
           {/* Recherche — "/" pour y accéder, Entrée ajoute le 1er résultat */}
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
