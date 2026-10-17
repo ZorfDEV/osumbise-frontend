@@ -1,5 +1,6 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
+import { legalLines } from '@/features/establishments/legalInfo';
 import type { Order, OrderItem, PaymentMethod } from './types';
 
 // Tickets pour imprimante thermique : noir sur blanc, police à chasse fixe,
@@ -43,7 +44,7 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
           <img src={resolveUploadUrl(order.establishment.logo)} alt="" className="ticket-logo" />
         )}
         <div className="ticket-title">{order.establishment?.name ?? 'Établissement'}</div>
-        {order.establishment?.address && <div>{order.establishment.address}</div>}
+        {order.establishment && legalLines(order.establishment).map((line) => <div key={line}>{line}</div>)}
       </div>
       <Rule />
       <Line left="Reçu" right={shortId(order.id)} />

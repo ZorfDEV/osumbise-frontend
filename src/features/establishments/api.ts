@@ -12,6 +12,11 @@ export interface EstablishmentPayload {
   name: string;
   type: string;
   address?: string;
+  // null efface la valeur
+  phone?: string | null;
+  postalBox?: string | null;
+  nif?: string | null;
+  rc?: string | null;
 }
 
 export const createEstablishment = async (

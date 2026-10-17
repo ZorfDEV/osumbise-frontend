@@ -58,6 +58,16 @@ export interface StayTotals {
 
 export interface StayDetail {
   id: string;
+  // En-tête de la facture
+  establishment?: {
+    name: string;
+    address: string | null;
+    logo: string | null;
+    phone?: string | null;
+    postalBox?: string | null;
+    nif?: string | null;
+    rc?: string | null;
+  };
   roomId: string;
   room: { id: string; number: string; category: RoomCategory; floor: string | null };
   guestName: string;

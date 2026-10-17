@@ -1,5 +1,6 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
+import { legalLines } from '@/features/establishments/legalInfo';
 import { CATEGORY_LABELS, formatDay, STAY_PAYMENT_LABELS } from './labels';
 import type { StayDetail } from './types';
 
@@ -26,6 +27,8 @@ export default function StayInvoiceTicket({
   paperWidth: PaperWidth;
 }) {
   const { totals } = stay;
+  // Établissement du séjour (avec ses mentions légales), à défaut l'actif
+  const header = stay.establishment ?? { ...establishment, address: null };
   const roomCharges = stay.orders
     .map((o) => ({
       ...o,
@@ -36,8 +39,11 @@ export default function StayInvoiceTicket({
   return (
     <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
       <div className="ticket-center">
-        {establishment.logo && <img src={resolveUploadUrl(establishment.logo)} alt="" className="ticket-logo" />}
-        <div className="ticket-title">{establishment.name ?? 'Hôtel'}</div>
+        {header.logo && <img src={resolveUploadUrl(header.logo)} alt="" className="ticket-logo" />}
+        <div className="ticket-title">{header.name ?? 'Hôtel'}</div>
+        {legalLines(header).map((line) => (
+          <div key={line}>{line}</div>
+        ))}
         <div>FACTURE DE SÉJOUR</div>
       </div>
       <div className="ticket-rule" />

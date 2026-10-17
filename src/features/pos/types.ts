@@ -99,7 +99,15 @@ export interface Order {
   items: OrderItem[];
   payments?: Payment[];
   user?: { name: string };
-  establishment?: { name: string; address: string | null; logo: string | null };
+  establishment?: {
+    name: string;
+    address: string | null;
+    logo: string | null;
+    phone?: string | null;
+    postalBox?: string | null;
+    nif?: string | null;
+    rc?: string | null;
+  };
   // Hôtel : séjour auquel la consommation a été imputée (paiement ROOM)
   stay?: { id: string; guestName: string; room: { number: string } } | null;
   // Articles retirés / annulation, avec motif (propriétaire ou administrateur)

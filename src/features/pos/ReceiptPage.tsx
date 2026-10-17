@@ -7,6 +7,7 @@ import { PageSkeleton } from '@/components/ui/skeleton';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import { ReceiptTicket } from './tickets';
 import { resolveUploadUrl } from '@/lib/uploads';
+import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
 import Alert from '@/components/ui/alert';
 import CancelSaleModal from './CancelSaleModal';
@@ -133,9 +134,12 @@ export default function ReceiptPage() {
           <p className="text-base font-semibold">
             {order.establishment?.name ?? 'Établissement'}
           </p>
-          {order.establishment?.address && (
-            <p className="text-xs text-slate-500">{order.establishment.address}</p>
-          )}
+          {order.establishment &&
+            legalLines(order.establishment).map((line) => (
+              <p key={line} className="text-xs text-slate-500">
+                {line}
+              </p>
+            ))}
         </div>
 
         <div className="space-y-0.5 border-t border-dashed border-slate-300 py-3 text-xs">

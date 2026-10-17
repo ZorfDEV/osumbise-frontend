@@ -17,6 +17,24 @@ import { ListSkeleton } from '@/components/ui/skeleton';
 import { Building2, ImagePlus, Trash2 } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import { useActiveEstablishment } from './ActiveEstablishmentContext';
+import { legalLines } from './legalInfo';
+
+// Mentions légales facultatives, imprimées en tête des factures
+type LegalForm = { phone: string; postalBox: string; nif: string; rc: string };
+const EMPTY_LEGAL: LegalForm = { phone: '', postalBox: '', nif: '', rc: '' };
+const LEGAL_FIELDS: { key: keyof LegalForm; label: string; placeholder: string }[] = [
+  { key: 'phone', label: 'Téléphone', placeholder: 'Ex. +241 77 00 00 00' },
+  { key: 'postalBox', label: 'Boîte postale', placeholder: 'Ex. BP 1234 Libreville' },
+  { key: 'nif', label: 'N° NIF', placeholder: 'Numéro d’identification fiscale' },
+  { key: 'rc', label: 'N° RC', placeholder: 'Registre du commerce (RCCM)' },
+];
+// Champ vidé -> null : la mention disparaît des factures
+const legalPayload = (l: LegalForm) => ({
+  phone: l.phone.trim() || null,
+  postalBox: l.postalBox.trim() || null,
+  nif: l.nif.trim() || null,
+  rc: l.rc.trim() || null,
+});
 
 const TYPE_LABELS: Record<EstablishmentType, string> = {
   BAR: 'Bar',
@@ -150,11 +168,13 @@ export default function EstablishmentsPage() {
   const [name, setName] = useState('');
   const [type, setType] = useState<EstablishmentType>('BAR');
   const [address, setAddress] = useState('');
+  const [legal, setLegal] = useState<LegalForm>(EMPTY_LEGAL);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editType, setEditType] = useState<EstablishmentType>('BAR');
   const [editAddress, setEditAddress] = useState('');
+  const [editLegal, setEditLegal] = useState<LegalForm>(EMPTY_LEGAL);
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editLogoRemoved, setEditLogoRemoved] = useState(false);
 
@@ -184,6 +204,7 @@ export default function EstablishmentsPage() {
         name: name.trim(),
         type,
         address: address.trim() || undefined,
+        ...legalPayload(legal),
       });
       // Le logo s'envoie une fois l'établissement créé (il faut son id)
       if (logoFile) {
@@ -196,6 +217,7 @@ export default function EstablishmentsPage() {
       toast.success('Établissement créé');
       setName('');
       setAddress('');
+      setLegal(EMPTY_LEGAL);
       setLogoFile(null);
       setType('BAR');
       setShowForm(false);
@@ -213,6 +235,7 @@ export default function EstablishmentsPage() {
     setEditName(e.name);
     setEditType(e.type);
     setEditAddress(e.address ?? '');
+    setEditLegal({ phone: e.phone ?? '', postalBox: e.postalBox ?? '', nif: e.nif ?? '', rc: e.rc ?? '' });
     setEditLogoFile(null);
     setEditLogoRemoved(false);
   };
@@ -225,6 +248,7 @@ export default function EstablishmentsPage() {
         name: editName.trim(),
         type: editType,
         address: editAddress.trim() || undefined,
+        ...legalPayload(editLegal),
       });
       if (editLogoFile) await uploadEstablishmentLogo(editingId, editLogoFile);
       else if (editLogoRemoved) await removeEstablishmentLogo(editingId);
@@ -325,6 +349,20 @@ export default function EstablishmentsPage() {
             </label>
             <input id="new-address" value={address} onChange={(e) => setAddress(e.target.value)} className="input w-full" />
           </div>
+          {LEGAL_FIELDS.map((f) => (
+            <div key={f.key}>
+              <label htmlFor={`new-${f.key}`} className="mb-1 block text-sm font-medium text-slate-700">
+                {f.label} <span className="font-normal text-slate-500">(optionnel)</span>
+              </label>
+              <input
+                id={`new-${f.key}`}
+                value={legal[f.key]}
+                onChange={(ev) => setLegal((l) => ({ ...l, [f.key]: ev.target.value }))}
+                placeholder={f.placeholder}
+                className="input w-full"
+              />
+            </div>
+          ))}
           <div className="sm:col-span-3">
             <LogoPicker id="new-logo" file={logoFile} onFileChange={setLogoFile} name={name} />
           </div>
@@ -383,6 +421,20 @@ export default function EstablishmentsPage() {
                       className="input w-full"
                     />
                   </div>
+          {LEGAL_FIELDS.map((f) => (
+            <div key={f.key}>
+              <label htmlFor={`edit-${f.key}`} className="mb-1 block text-sm font-medium text-slate-700">
+                {f.label} <span className="font-normal text-slate-500">(optionnel)</span>
+              </label>
+              <input
+                id={`edit-${f.key}`}
+                value={editLegal[f.key]}
+                onChange={(ev) => setEditLegal((l) => ({ ...l, [f.key]: ev.target.value }))}
+                placeholder={f.placeholder}
+                className="input w-full"
+              />
+            </div>
+          ))}
                   <div className="sm:col-span-3">
                     <LogoPicker
                       id={`edit-logo-${e.id}`}
@@ -429,6 +481,11 @@ export default function EstablishmentsPage() {
                         {TYPE_LABELS[e.type]}
                         {e.address ? ` — ${e.address}` : ''}
                       </p>
+                      {legalLines({ phone: e.phone, postalBox: e.postalBox, nif: e.nif, rc: e.rc }).map((line) => (
+                        <p key={line} className="text-xs text-slate-500">
+                          {line}
+                        </p>
+                      ))}
                     </div>
                   </div>
                   <button onClick={() => startEdit(e)} className="btn btn-secondary btn-sm">
