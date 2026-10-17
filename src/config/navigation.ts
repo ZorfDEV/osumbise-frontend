@@ -9,6 +9,7 @@ import {
   Wallet,
   Receipt,
   BarChart3,
+  ReceiptText,
   Users,
   Users2,
   Building2,
@@ -43,6 +44,8 @@ export const NAV_ITEMS: NavItem[] = [
   // Pilotage
   { to: '/dashboard', label: 'Tableau de bord', section: 'Pilotage', roles: ['OWNER', 'ADMIN'], icon: LayoutDashboard },
   { to: '/reports', label: 'Rapports', section: 'Pilotage', roles: ['OWNER', 'ADMIN'], icon: BarChart3 },
+  // Ventes encaissées : retrouver et annuler une vente (test, remboursement)
+  { to: '/sales', label: 'Ventes', section: 'Pilotage', roles: ['OWNER', 'ADMIN'], icon: ReceiptText },
 
   // Vente
   {

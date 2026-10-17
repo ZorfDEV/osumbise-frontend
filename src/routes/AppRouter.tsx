@@ -23,6 +23,7 @@ import ExpensesPage from '@/features/expenses/ExpensesPage';
 import CustomersPage from '@/features/customers/CustomersPage';
 import CustomerDetailPage from '@/features/customers/CustomerDetailPage';
 import ReportsPage from '@/features/reports/ReportsPage';
+import SalesPage from '@/features/pos/SalesPage';
 import ProtectedRoute from './ProtectedRoute';
 import PlatformAdminRoute from './PlatformAdminRoute';
 import RootRoute from './RootRoute';
@@ -96,6 +97,7 @@ export default function AppRouter() {
             <Route path="/customers" element={<CustomersPage />} />
             <Route path="/customers/:id" element={<CustomerDetailPage />} />
             <Route path="/reports" element={<ReportsPage />} />
+            <Route path="/sales" element={<SalesPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/establishments" element={<EstablishmentsPage />} />
             <Route path="/hotel" element={<RoomsPage />} />

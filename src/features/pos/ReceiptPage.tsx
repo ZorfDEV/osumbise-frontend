@@ -7,6 +7,9 @@ import { PageSkeleton } from '@/components/ui/skeleton';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import { ReceiptTicket } from './tickets';
 import { resolveUploadUrl } from '@/lib/uploads';
+import { useAuth } from '@/features/auth/AuthContext';
+import Alert from '@/components/ui/alert';
+import CancelSaleModal from './CancelSaleModal';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -25,6 +28,9 @@ export default function ReceiptPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const { settings } = usePrintSettings();
   const autoPrinted = useRef(false);
+  const { user } = useAuth();
+  const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!orderId) return;
@@ -44,6 +50,21 @@ export default function ReceiptPage() {
 
   if (!order) {
     return <PageSkeleton />;
+  }
+
+  // Vente annulée après encaissement : plus de reçu, mais le motif
+  if (order.status === 'ANNULEE' && order.payments && order.payments.length > 0) {
+    const reason = order.voids?.find((v) => v.type === 'ORDER')?.reason;
+    return (
+      <div className="max-w-md space-y-3">
+        <Alert type="error" title="Vente annulée">
+          {reason ? `Motif : ${reason}` : 'Cette vente a été annulée après encaissement.'} Elle ne compte plus dans les rapports.
+        </Alert>
+        <Link to={isManager ? '/sales' : '/tables'} className="inline-block text-sm font-medium text-slate-900 hover:underline">
+          ← {isManager ? 'Retour aux ventes' : 'Retour aux tables'}
+        </Link>
+      </div>
+    );
   }
 
   if (!isPaid) {
@@ -69,11 +90,30 @@ export default function ReceiptPage() {
         <Link to="/tables" className="text-sm text-slate-500 hover:text-slate-900">
           ← Retour aux tables
         </Link>
-        <button onClick={() => printTicket()} className="btn btn-primary flex">
-          <Printer size={16} />
-          Imprimer le ticket
-        </button>
+        <div className="flex gap-2">
+          {isManager && (
+            <button onClick={() => setCancelling(true)} className="btn btn-secondary">
+              Annuler la vente
+            </button>
+          )}
+          <button onClick={() => printTicket()} className="btn btn-primary flex">
+            <Printer size={16} />
+            Imprimer le ticket
+          </button>
+        </div>
       </div>
+
+      {cancelling && (
+        <CancelSaleModal
+          orderId={order.id}
+          total={Number(order.total)}
+          onClose={() => setCancelling(false)}
+          onCancelled={() => {
+            setCancelling(false);
+            if (orderId) loadOrder(orderId).then(setOrder);
+          }}
+        />
+      )}
 
       {/* Version imprimante thermique, invisible à l'écran */}
       <PrintPortal>

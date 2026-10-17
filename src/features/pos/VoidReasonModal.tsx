@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
 // Motifs les plus courants ; « Autre » impose une précision
@@ -9,6 +9,7 @@ export const VOID_REASONS = [
   'Produit défectueux ou mal préparé',
   'Geste commercial',
   'Client parti sans payer',
+  'Commande de test',
   'Autre',
 ];
 
@@ -21,6 +22,7 @@ export default function VoidReasonModal({
   maxQuantity,
   onConfirm,
   onClose,
+  children,
 }: {
   title: string;
   description: string;
@@ -29,6 +31,8 @@ export default function VoidReasonModal({
   maxQuantity?: number;
   onConfirm: (reason: string, quantity: number) => Promise<void>;
   onClose: () => void;
+  // Options propres à l'action (ex. remise en stock), sous le motif
+  children?: ReactNode;
 }) {
   const [preset, setPreset] = useState('');
   const [detail, setDetail] = useState('');
@@ -113,6 +117,8 @@ export default function VoidReasonModal({
             placeholder="Ex. viande trop cuite, client de la table 4…"
           />
         </div>
+
+        {children}
 
         <div className="flex gap-2">
           <button onClick={onClose} className="btn btn-secondary flex-1">

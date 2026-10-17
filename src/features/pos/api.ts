@@ -94,8 +94,15 @@ export const voidOrderItem = async (orderId: string, itemId: string, quantity: n
   await api.post(`/orders/${orderId}/items/${itemId}/void`, { quantity, reason });
 };
 
-export const cancelOrder = async (orderId: string, reason: string): Promise<void> => {
-  await api.post(`/orders/${orderId}/cancel`, { reason });
+// Vente déjà encaissée : restock remet les produits en stock ; closedSessionCash
+// = espèces encaissées dans une caisse déjà clôturée (non modifiée)
+export const cancelOrder = async (
+  orderId: string,
+  reason: string,
+  restock?: boolean
+): Promise<{ closedSessionCash: number }> => {
+  const res = await api.post(`/orders/${orderId}/cancel`, { reason, restock });
+  return { closedSessionCash: Number(res.data.closedSessionCash ?? 0) };
 };
 
 export const updateOrderStatus = async (orderId: string, status: string): Promise<void> => {
