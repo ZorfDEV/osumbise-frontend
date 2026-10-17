@@ -6,6 +6,10 @@ import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { Printer } from 'lucide-react';
+import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
+import CashReportTicket from './CashReportTicket';
+import { summarizeSession } from './summary';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   SALE_CASH: 'Vente espèces',
@@ -30,19 +34,29 @@ export default function CashSessionDetailPage() {
   const [note, setNote] = useState('');
   const [actualBalance, setActualBalance] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const { settings } = usePrintSettings();
 
   const reload = useCallback(() => {
     if (!sessionId) return;
-    fetchCashSession(sessionId).then(setSession);
+    fetchCashSession(sessionId)
+      .then(setSession)
+      .catch((err) =>
+        setLoadError((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Session introuvable')
+      );
   }, [sessionId]);
 
   useEffect(() => {
     reload();
   }, [reload]);
 
+  if (loadError) {
+    return <p className="text-sm text-danger">{loadError}</p>;
+  }
   if (!session) {
     return <PageSkeleton />;
   }
+  const summary = summarizeSession(session);
 
   const isOpen = !session.closedAt;
 
@@ -71,27 +85,72 @@ export default function CashSessionDetailPage() {
   const handleClose = async () => {
     if (!sessionId) return;
     const ok = await confirm({
-      title: 'Fermer la caisse',
-      message: 'Confirmer la fermeture de la caisse ?',
-      confirmLabel: 'Fermer',
+      title: 'Clôturer ma session',
+      message: `Solde compté : ${formatFcfa(actualBalance)}. Le rapport de clôture sera imprimé. Confirmer ?`,
+      confirmLabel: 'Clôturer',
     });
     if (!ok) return;
-    await closeCashSession(sessionId, actualBalance);
-    toast.success('Caisse fermée');
-    reload();
+    try {
+      const closed = await closeCashSession(sessionId, actualBalance);
+      toast.success('Caisse clôturée');
+      // Rapport de clôture imprimé tout de suite, avec les montants définitifs
+      setSession({ ...session, ...closed, movements: session.movements, cashRegister: session.cashRegister, openedBy: session.openedBy });
+      setTimeout(() => printTicket(), 300);
+      reload();
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Clôture impossible');
+    }
   };
 
   return (
     <div className="max-w-2xl">
       <Breadcrumbs items={[{ label: 'Sessions de caisse', to: '/cash' }, { label: session.cashRegister?.name ?? 'Session de caisse' }]} />
 
-      <h1 className="mb-1 text-2xl font-semibold text-heading">
-        {session.cashRegister?.name ?? 'Session de caisse'}
-      </h1>
-      <p className="mb-6 text-sm text-slate-500">
-        Ouverte le {new Date(session.openedAt).toLocaleString('fr-FR')} — solde initial{' '}
-        {formatFcfa(Number(session.openingBalance))}
-      </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="mb-1 text-2xl font-semibold text-heading">
+            {session.cashRegister?.name ?? 'Session de caisse'}
+          </h1>
+          <p className="text-sm text-slate-500">
+            {session.openedBy ? `${session.openedBy.name} · ` : ''}ouverte le {new Date(session.openedAt).toLocaleString('fr-FR')} — fond de caisse{' '}
+            {formatFcfa(Number(session.openingBalance))}
+          </p>
+          {session.closedAt && (
+            <p className="text-sm text-slate-500">
+              Clôturée le {new Date(session.closedAt).toLocaleString('fr-FR')}
+              {session.closedBy ? ` par ${session.closedBy.name}` : ''}
+            </p>
+          )}
+        </div>
+        <button onClick={() => printTicket()} className="btn btn-secondary">
+          <Printer size={16} />
+          {isOpen ? 'Imprimer un rapport provisoire' : 'Imprimer le rapport de clôture'}
+        </button>
+      </div>
+
+      {/* Synthèse du service */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          { label: 'Ventes', value: `${summary.salesCount}` },
+          { label: 'Espèces', value: formatFcfa(summary.cashSales) },
+          { label: 'Mobile Money', value: formatFcfa(summary.mobileSales) },
+          { label: 'Carte', value: formatFcfa(summary.cardSales) },
+        ].map((k) => (
+          <div key={k.label} className="rounded-lg border border-slate-200 bg-surface p-3">
+            <p className="text-xs text-slate-500">{k.label}</p>
+            <p className="text-lg font-semibold text-heading">{k.value}</p>
+          </div>
+        ))}
+      </div>
+      {isOpen && (
+        <p className="mb-6 text-sm text-slate-600">
+          Solde théorique du tiroir en ce moment : <span className="font-semibold text-heading">{formatFcfa(summary.theoretical)}</span>
+        </p>
+      )}
+
+      <PrintPortal>
+        <CashReportTicket session={session} paperWidth={settings.paperWidth} />
+      </PrintPortal>
 
       {!isOpen && (
         <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4 text-sm">
@@ -194,7 +253,8 @@ export default function CashSessionDetailPage() {
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-surface p-4">
-            <h2 className="mb-3 text-sm font-semibold text-heading-muted">Fermer la caisse</h2>
+            <h2 className="mb-1 text-sm font-semibold text-heading-muted">Clôturer la session</h2>
+            <p className="mb-3 text-xs text-slate-500">Comptez les espèces du tiroir et saisissez le total. Le rapport de clôture s’imprime ensuite.</p>
             <div className="flex items-center gap-2">
               <input
                 type="number"

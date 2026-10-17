@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/axios';
+import { fetchMyCashSession } from '@/features/cash/api';
 import { useToast } from '@/lib/toast';
 import { payOrder, PaymentLine } from './api';
 import { fetchStays } from '@/features/hotel/api';
 import type { StayListItem } from '@/features/hotel/types';
 
-interface CashRegisterWithSession {
-  id: string;
-  sessions: { id: string }[];
-}
 
 interface Props {
   orderId: string;
@@ -64,15 +61,13 @@ export default function PaymentModal({
   }, []);
 
   useEffect(() => {
-    api.get('/cash-registers').then((res) => {
-      const registers: CashRegisterWithSession[] = res.data.cashRegisters;
-      const withOpenSession = registers.find((r) => r.sessions.length > 0);
-      if (withOpenSession) {
-        setCashSessionId(withOpenSession.sessions[0].id);
-      } else {
-        setHasOpenSession(false);
-      }
-    });
+    // Les encaissements vont dans la session de caisse de la personne connectée
+    fetchMyCashSession()
+      .then((session) => {
+        if (session) setCashSessionId(session.id);
+        else setHasOpenSession(false);
+      })
+      .catch(() => setHasOpenSession(false));
   }, []);
 
   const totalEntered = lines.reduce((sum, l) => sum + (l.amount || 0), 0);
@@ -143,8 +138,8 @@ export default function PaymentModal({
 
         {!hasOpenSession && (
           <p className="mb-4 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
-            Aucune session de caisse ouverte : le paiement sera enregistré, mais aucun mouvement
-            de caisse ne sera créé.
+            Vous n’avez pas de session de caisse ouverte : le paiement sera enregistré, mais il
+            n’entrera dans aucune caisse. Ouvrez votre session dans « Sessions de caisse ».
           </p>
         )}
 

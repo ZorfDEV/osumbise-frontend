@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { api } from '@/lib/axios';
+import { fetchMyCashSession } from '@/features/cash/api';
 import { fetchCustomer, recordCustomerPayment } from './api';
 import { CustomerDetail } from './types';
 import { useToast } from '@/lib/toast';
@@ -31,12 +31,8 @@ export default function CustomerDetailPage() {
   const [cashSessionId, setCashSessionId] = useState<string | undefined>();
 
   useEffect(() => {
-    api
-      .get('/cash-registers')
-      .then((res) => {
-        const open = (res.data.cashRegisters as { sessions: { id: string }[] }[]).find((r) => r.sessions.length > 0);
-        setCashSessionId(open?.sessions[0].id);
-      })
+    fetchMyCashSession()
+      .then((session) => setCashSessionId(session?.id))
       .catch(() => setCashSessionId(undefined));
   }, []);
 
@@ -175,8 +171,8 @@ export default function CustomerDetailPage() {
         {error && <p className="mt-2 text-sm text-danger">{error}</p>}
         <p className="mt-2 text-xs text-slate-500">
           {cashSessionId
-            ? 'Les règlements en espèces, carte ou Mobile Money entrent dans la caisse ouverte.'
-            : 'Aucune caisse ouverte : le règlement réduit le solde du client sans mouvement de caisse.'}
+            ? 'Les règlements en espèces, carte ou Mobile Money entrent dans votre session de caisse.'
+            : 'Vous n’avez pas de session de caisse ouverte : le règlement réduit le solde du client sans entrer en caisse.'}
         </p>
       </div>
 

@@ -10,6 +10,7 @@ import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 import { fetchCustomers } from '@/features/customers/api';
+import { fetchMyCashSession } from '@/features/cash/api';
 import type { Customer } from '@/features/customers/types';
 import { addStayPayment, apiError, cancelStay, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
 import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
@@ -44,11 +45,10 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
   }, [isCredit, customers]);
 
   useEffect(() => {
-    api
-      .get('/cash-registers')
-      .then((res) => {
-        const open = (res.data.cashRegisters as { sessions: { id: string }[] }[]).find((r) => r.sessions.length > 0);
-        if (open) setCashSessionId(open.sessions[0].id);
+    // Le versement entre dans la session de caisse de la personne connectée
+    fetchMyCashSession()
+      .then((session) => {
+        if (session) setCashSessionId(session.id);
         else setHasSession(false);
       })
       .catch(() => setHasSession(false));
@@ -91,7 +91,7 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
         </p>
         {!hasSession && !isCredit && (
           <p className="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
-            Aucune session de caisse ouverte : le versement sera enregistré sur le séjour, sans mouvement de caisse.
+            Vous n’avez pas de session de caisse ouverte : le versement sera enregistré sur le séjour, sans entrer en caisse.
           </p>
         )}
         <div className="space-y-3">

@@ -22,6 +22,13 @@ export const openCashSession = async (
   return res.data.session;
 };
 
+// Session ouverte de l'utilisateur connecté (où vont ses encaissements) ;
+// null s'il n'en a pas (propriétaire/administrateur : celle de l'établissement)
+export const fetchMyCashSession = async (): Promise<{ id: string; cashRegister: { name: string } } | null> => {
+  const res = await api.get('/cash-sessions/mine');
+  return res.data.session;
+};
+
 export const fetchCashSession = async (id: string): Promise<CashSession> => {
   const res = await api.get(`/cash-sessions/${id}`);
   return res.data.session;
