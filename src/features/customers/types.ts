@@ -31,7 +31,7 @@ export interface CustomerStayCharge {
   amount: string;
   createdAt: string;
   note: string | null;
-  stay: { id: string; guestName: string; room: { number: string } };
+  stay: { id: string; guestName: string; room: { number: string; building?: string } };
 }
 
 export interface CustomerDetail extends Customer {

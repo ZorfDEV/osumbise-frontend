@@ -12,7 +12,7 @@ import { useActiveEstablishment } from '@/features/establishments/ActiveEstablis
 import { fetchCustomers } from '@/features/customers/api';
 import type { Customer } from '@/features/customers/types';
 import { addStayPayment, apiError, cancelStay, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
-import { CATEGORY_LABELS, fcfa, formatDay, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
+import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import StayFormModal from './StayFormModal';
 import StayInvoiceTicket from './StayInvoiceTicket';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
@@ -222,7 +222,7 @@ export default function StayDetailPage() {
     setBusy(true);
     try {
       setStay(await checkOutStay(stay.id));
-      toast.success(`Départ de ${stay.guestName} enregistré — chambre ${stay.room.number} à nettoyer`);
+      toast.success(`Départ de ${stay.guestName} enregistré — chambre ${roomName(stay.room)} à nettoyer`);
     } catch (err) {
       const data = (err as { response?: { data?: { code?: string; message?: string } } }).response?.data;
       if (data?.code === 'BALANCE_DUE') {
@@ -271,7 +271,7 @@ export default function StayDetailPage() {
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.badge}`}>{st.label}</span>
           </div>
           <p className="text-sm text-slate-500">
-            Chambre {stay.room.number} · {CATEGORY_LABELS[stay.room.category]} · {stay.adults} adulte{stay.adults > 1 ? 's' : ''}
+            Chambre {roomName(stay.room)} · {CATEGORY_LABELS[stay.room.category]} · {stay.adults} adulte{stay.adults > 1 ? 's' : ''}
             {stay.children > 0 ? `, ${stay.children} enfant${stay.children > 1 ? 's' : ''}` : ''}
           </p>
         </div>

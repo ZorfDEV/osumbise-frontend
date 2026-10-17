@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from '@/lib/toast';
 import { apiError, createStay, updateStay } from './api';
-import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, nightsBetween, todayIso } from './labels';
+import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, nightsBetween, roomName, todayIso } from './labels';
 import type { Room, StayDetail, TaxRate } from './types';
 
 interface Props {
@@ -60,7 +60,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
     if (!roomId) return setError('Choisissez une chambre.');
     if (guestName.trim().length < 2) return setError('Indiquez le nom du client.');
     if (room && adults + children > room.capacity) {
-      return setError(`La chambre ${room.number} accueille ${room.capacity} personne(s) au maximum.`);
+      return setError(`La chambre ${roomName(room)} accueille ${room.capacity} personne(s) au maximum.`);
     }
     const payload = {
       roomId,
@@ -107,7 +107,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               <option value="">Choisir une chambre…</option>
               {activeRooms.map((r) => (
                 <option key={r.id} value={r.id} disabled={r.status === 'OUT_OF_SERVICE' && walkIn}>
-                  {r.number} — {CATEGORY_LABELS[r.category]} — {fcfa(r.nightlyRate)}/nuit
+                  {roomName(r)} — {CATEGORY_LABELS[r.category]} — {fcfa(r.nightlyRate)}/nuit
                   {r.status === 'OUT_OF_SERVICE' ? ' (hors service)' : r.status === 'OCCUPIED' ? ' (occupée)' : ''}
                 </option>
               ))}

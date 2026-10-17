@@ -52,6 +52,10 @@ export const STAY_PAYMENT_LABELS: Record<StayPaymentMethod, string> = {
   CREDIT: 'Compte client',
 };
 
+// « 101 · Bâtiment A » : le bâtiment n'est ajouté que s'il est renseigné
+export const roomName = (r: { number: string; building?: string | null }) =>
+  r.building ? `${r.number} · ${r.building}` : r.number;
+
 export const fcfa = (n: number | string) => `${Math.round(Number(n)).toLocaleString('fr-FR')} FCFA`;
 
 // Dates "jour" (AAAA-MM-JJ) — en heure locale, comme la réception les saisit

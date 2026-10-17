@@ -109,7 +109,7 @@ export interface Order {
     rc?: string | null;
   };
   // Hôtel : séjour auquel la consommation a été imputée (paiement ROOM)
-  stay?: { id: string; guestName: string; room: { number: string } } | null;
+  stay?: { id: string; guestName: string; room: { number: string; building?: string } } | null;
   // Articles retirés / annulation, avec motif (propriétaire ou administrateur)
   voids?: OrderVoid[];
   createdAt?: string;

@@ -14,6 +14,8 @@ export interface StaySummary {
 export interface Room {
   id: string;
   number: string;
+  // "" = aucun bâtiment
+  building: string;
   category: RoomCategory;
   floor: string | null;
   capacity: number;
@@ -33,7 +35,7 @@ export interface TaxRate {
 export interface StayListItem {
   id: string;
   roomId: string;
-  room: { id: string; number: string; category: RoomCategory };
+  room: { id: string; number: string; building?: string; category: RoomCategory };
   guestName: string;
   guestPhone: string | null;
   adults: number;
@@ -69,7 +71,7 @@ export interface StayDetail {
     rc?: string | null;
   };
   roomId: string;
-  room: { id: string; number: string; category: RoomCategory; floor: string | null };
+  room: { id: string; number: string; building?: string; category: RoomCategory; floor: string | null };
   guestName: string;
   guestPhone: string | null;
   guestIdNumber: string | null;
@@ -121,6 +123,7 @@ export interface StayPayload {
 
 export interface RoomPayload {
   number: string;
+  building?: string;
   category: RoomCategory;
   floor?: string;
   capacity: number;

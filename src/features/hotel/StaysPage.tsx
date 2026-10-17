@@ -8,7 +8,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 import { fetchRooms, fetchStays, fetchTaxRates } from './api';
-import { addDaysIso, CATEGORY_LABELS, dayOf, formatDay, nightsBetween, STAY_STATUS, todayIso } from './labels';
+import { addDaysIso, CATEGORY_LABELS, dayOf, formatDay, nightsBetween, roomName, STAY_STATUS, todayIso } from './labels';
 import StayFormModal from './StayFormModal';
 import type { Room, StayListItem, StayStatus, TaxRate } from './types';
 
@@ -182,7 +182,7 @@ export default function StaysPage() {
                           {s.guestPhone && <span className="block text-xs text-slate-500">{s.guestPhone}</span>}
                         </td>
                         <td data-label="Chambre" className="px-4 py-2 text-slate-600">
-                          {s.room.number} · {CATEGORY_LABELS[s.room.category]}
+                          {roomName(s.room)} · {CATEGORY_LABELS[s.room.category]}
                         </td>
                         <td data-label="Arrivée" className="px-4 py-2 text-slate-600">
                           {formatDay(s.checkInDate)}
@@ -279,6 +279,7 @@ export default function StaysPage() {
                     <div key={r.id} className="contents">
                       <div className="sticky left-0 z-10 border-b border-r border-slate-200 bg-surface px-2 py-2">
                         <span className="block font-semibold text-heading">{r.number}</span>
+                        {r.building && <span className="block text-xs text-slate-500">{r.building}</span>}
                         <span className="text-slate-500">{CATEGORY_LABELS[r.category]}</span>
                       </div>
                       <div className="relative border-b border-slate-200" style={{ gridColumn: `span ${PLANNING_DAYS}` }}>
@@ -288,7 +289,7 @@ export default function StaysPage() {
                             <button
                               key={d}
                               onClick={() => setForm({ roomId: r.id, checkIn: d })}
-                              aria-label={`Réserver la chambre ${r.number} le ${formatDay(d)}`}
+                              aria-label={`Réserver la chambre ${roomName(r)} le ${formatDay(d)}`}
                               className={`min-h-[3rem] border-r border-slate-100 hover:bg-primary-50 ${d === today ? 'bg-primary-50/50' : ''}`}
                             />
                           ))}

@@ -65,7 +65,7 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
           {order.payments.map((p) => (
             <Line
               key={p.id}
-              left={p.method === 'ROOM' && order.stay ? `Sur la chambre ${order.stay.room.number}` : PAYMENT_LABELS[p.method] ?? p.method}
+              left={p.method === 'ROOM' && order.stay ? `Sur la chambre ${order.stay.room.number}${order.stay.room.building ? ` (${order.stay.room.building})` : ''}` : PAYMENT_LABELS[p.method] ?? p.method}
               right={money(Number(p.amount))}
             />
           ))}

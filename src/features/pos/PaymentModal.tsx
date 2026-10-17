@@ -192,7 +192,7 @@ export default function PaymentModal({
               <option value="">Choisir la chambre…</option>
               {inHouse.map((s) => (
                 <option key={s.id} value={s.id}>
-                  Chambre {s.room.number} — {s.guestName}
+                  Chambre {s.room.building ? `${s.room.number} · ${s.room.building}` : s.room.number} — {s.guestName}
                 </option>
               ))}
             </select>

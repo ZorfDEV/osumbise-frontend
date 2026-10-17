@@ -7,7 +7,7 @@ import { getSocket } from '@/lib/socket';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import { apiError, checkInStay, fetchRooms, fetchTaxRates, setRoomStatus } from './api';
-import { CATEGORY_LABELS, dayOf, fcfa, formatDay, ROOM_STATUS, todayIso } from './labels';
+import { CATEGORY_LABELS, dayOf, fcfa, formatDay, ROOM_STATUS, roomName, todayIso } from './labels';
 import StayFormModal from './StayFormModal';
 import RoomsSettings from './RoomsSettings';
 import type { Room, RoomStatus, TaxRate } from './types';
@@ -77,11 +77,12 @@ export default function RoomsPage() {
     };
   }, [rooms, today]);
 
-  // Chambres (filtrées) regroupées par étage
+  // Chambres (filtrées) regroupées par bâtiment puis par étage
   const floors = useMemo(() => {
     const map = new Map<string, Room[]>();
     visible.forEach((r) => {
-      const key = r.floor || 'Sans étage';
+      const floor = r.floor ? `Étage ${r.floor}` : 'Sans étage';
+      const key = r.building ? `${r.building} · ${floor}` : floor;
       map.set(key, [...(map.get(key) ?? []), r]);
     });
     return [...map.entries()];
@@ -194,7 +195,7 @@ export default function RoomsPage() {
           {floors.map(([floor, list]) => (
             <section key={floor}>
               <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                {floor === 'Sans étage' ? floor : `Étage ${floor}`}
+                {floor}
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 {list.map((r) => {
@@ -253,13 +254,13 @@ export default function RoomsPage() {
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/30 sm:items-center sm:p-4" onClick={() => setSelected(null)}>
           <div
             role="dialog"
-            aria-label={`Chambre ${selected.number}`}
+            aria-label={`Chambre ${roomName(selected)}`}
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md rounded-t-xl bg-surface p-5 sm:rounded-xl"
           >
             <div className="mb-4 flex items-start justify-between">
               <div>
-                <p className="text-xl font-bold text-heading">Chambre {selected.number}</p>
+                <p className="text-xl font-bold text-heading">Chambre {roomName(selected)}</p>
                 <p className="text-sm text-slate-500">
                   {CATEGORY_LABELS[selected.category]} · {selected.capacity} pers. · {fcfa(selected.nightlyRate)}/nuit
                 </p>

@@ -1,7 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
-import { CATEGORY_LABELS, formatDay, STAY_PAYMENT_LABELS } from './labels';
+import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
 import type { StayDetail } from './types';
 
 // Facture de séjour au format ticket thermique (mêmes styles que les reçus
@@ -50,7 +50,7 @@ export default function StayInvoiceTicket({
       <Line left="Facture" right={`#${stay.id.slice(0, 8).toUpperCase()}`} />
       <Line left="Client" right={stay.guestName} />
       {stay.guestPhone && <Line left="Téléphone" right={stay.guestPhone} />}
-      <Line left="Chambre" right={`${stay.room.number} (${CATEGORY_LABELS[stay.room.category]})`} />
+      <Line left="Chambre" right={`${roomName(stay.room)} (${CATEGORY_LABELS[stay.room.category]})`} />
       <Line left="Arrivée" right={formatDay(stay.checkInDate)} />
       <Line left="Départ" right={formatDay(stay.checkOutDate)} />
       <div className="ticket-rule" />

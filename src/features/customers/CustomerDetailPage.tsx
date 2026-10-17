@@ -93,7 +93,7 @@ export default function CustomerDetailPage() {
     ...(customer.stayPayments ?? []).map((p) => ({
       id: p.id,
       date: p.createdAt,
-      label: `Séjour chambre ${p.stay.room.number} — ${p.stay.guestName}`,
+      label: `Séjour chambre ${p.stay.room.number}${p.stay.room.building ? ` (${p.stay.room.building})` : ''} — ${p.stay.guestName}`,
       to: `/hotel/stays/${p.stay.id}`,
       amount: Number(p.amount),
     })),
