@@ -1,6 +1,10 @@
+// Cuisine (plats : écran Cuisine) ou bar (boissons servies par le serveur)
+export type PreparationArea = 'KITCHEN' | 'BAR';
+
 export interface Category {
   id: string;
   name: string;
+  preparationArea?: PreparationArea;
 }
 
 export type Unit = 'UNIT' | 'G' | 'KG' | 'ML' | 'CL' | 'L';
@@ -26,6 +30,7 @@ export interface Product {
   tagStartsAt: string | null;
   tagEndsAt: string | null;
   type: ProductType | null;
+  preparationArea?: PreparationArea;
   // Calculés côté backend (fenêtre de remise déjà résolue par rapport à "maintenant") :
   // à utiliser pour l'affichage plutôt que de recalculer tag/tagStartsAt/tagEndsAt ici
   effectivePrice: number;

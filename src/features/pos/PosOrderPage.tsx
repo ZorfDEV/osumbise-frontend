@@ -304,7 +304,18 @@ export default function PosOrderPage() {
   const canVoid = isManager && isOpenForVoid && isOnline;
   const total = Number(order.total);
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
-  const nextAction = NEXT_ACTION[order.status];
+  // Plats -> cuisine ; boissons -> bar (servies par le serveur, jamais en cuisine)
+  const hasKitchenItems = order.items.some((i) => (i.product.preparationArea ?? 'KITCHEN') === 'KITCHEN');
+  const hasBarItems = order.items.some((i) => i.product.preparationArea === 'BAR');
+  const nextAction =
+    order.status === 'BROUILLON'
+      ? {
+          next: 'EN_ATTENTE' as OrderStatus,
+          label: hasKitchenItems && hasBarItems ? 'Envoyer en cuisine et au bar' : hasBarItems ? 'Envoyer au bar' : 'Envoyer en cuisine',
+        }
+      : order.status === 'EN_ATTENTE' && hasBarItems && !hasKitchenItems
+        ? { next: 'SERVIE' as OrderStatus, label: 'Marquer servie' }
+        : NEXT_ACTION[order.status];
   const canPay = order.status === 'SERVIE' && isOnline;
   const canAdvance = !!nextAction && order.items.length > 0;
 
@@ -334,6 +345,7 @@ export default function PosOrderPage() {
         sellingPrice: product.sellingPrice,
         effectivePrice: product.effectivePrice,
         tva: product.tva,
+        preparationArea: product.preparationArea,
       },
       quantity
     );
@@ -738,6 +750,7 @@ export default function PosOrderPage() {
                     <p className="text-xs text-slate-500">
                       {formatFcfa(Number(item.unitPrice))} × {item.quantity} ={' '}
                       <span className="font-medium text-slate-700">{formatFcfa(Number(item.unitPrice) * item.quantity)}</span>
+                      {item.product.preparationArea === 'BAR' && <span className="ml-1 text-slate-500">· Bar</span>}
                       {Number(item.taxRate ?? 0) > 0 && (
                         <span className="ml-1 text-slate-500">+ taxe {Number(item.taxRate).toLocaleString('fr-FR')} %</span>
                       )}

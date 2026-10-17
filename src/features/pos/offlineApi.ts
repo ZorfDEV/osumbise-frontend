@@ -88,7 +88,14 @@ export const createOrder = async (payload: {
 
 export const addOrderItem = async (
   orderId: string,
-  product: { id: string; name: string; sellingPrice: string; effectivePrice?: number; tva?: string },
+  product: {
+    id: string;
+    name: string;
+    sellingPrice: string;
+    effectivePrice?: number;
+    tva?: string;
+    preparationArea?: 'KITCHEN' | 'BAR';
+  },
   quantity: number
 ): Promise<void> => {
   if (navigator.onLine && !isLocalId(orderId)) {
@@ -117,7 +124,7 @@ export const addOrderItem = async (
       unitPrice: String(product.effectivePrice ?? product.sellingPrice),
       taxRate: product.tva ?? '0',
       note: null,
-      product: { name: product.name },
+      product: { name: product.name, preparationArea: product.preparationArea },
     });
   }
   recalculateLocalTotals(order);

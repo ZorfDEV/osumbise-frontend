@@ -107,6 +107,7 @@ export default function ProductDetailPage() {
               tagStartsAt: product.tagStartsAt ? product.tagStartsAt.slice(0, 10) : undefined,
               tagEndsAt: product.tagEndsAt ? product.tagEndsAt.slice(0, 10) : undefined,
               type: product.type ?? undefined,
+              preparationArea: product.preparationArea ?? 'KITCHEN',
             }}
             currentImageUrl={resolveProductImageUrl(product.image)}
             submitLabel="Enregistrer"

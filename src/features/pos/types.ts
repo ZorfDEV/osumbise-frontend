@@ -12,6 +12,8 @@ export interface Product {
   sellingPrice: string;
   // Taxe optionnelle (%)
   tva?: string;
+  // Cuisine (plats) ou bar (boissons servies par le serveur)
+  preparationArea?: 'KITCHEN' | 'BAR';
   categoryId: string;
   stockCurrent: string;
   stockMin: string;
@@ -59,7 +61,7 @@ export interface OrderItem {
   // Taxe (%) figée sur la ligne, ajoutée au prix hors taxe
   taxRate?: string;
   note: string | null;
-  product: { name: string };
+  product: { name: string; preparationArea?: 'KITCHEN' | 'BAR' };
 }
 
 export interface OrderVoid {

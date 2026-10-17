@@ -47,7 +47,16 @@ export default function KitchenPage() {
 
   const load = useCallback(() => {
     Promise.all([fetchOrders({ status: 'EN_ATTENTE' }), fetchOrders({ status: 'EN_PREPARATION' })])
-      .then(([waiting, preparing]) => setOrders([...waiting, ...preparing]))
+      // Les boissons (produits « Bar ») ne passent pas par la cuisine : écran
+      // et bons n'affichent que les plats, et une commande de boissons seules
+      // n'apparaît pas du tout
+      .then(([waiting, preparing]) =>
+        setOrders(
+          [...waiting, ...preparing]
+            .map((o) => ({ ...o, items: o.items.filter((i) => (i.product.preparationArea ?? 'KITCHEN') === 'KITCHEN') }))
+            .filter((o) => o.items.length > 0)
+        )
+      )
       .finally(() => setIsLoading(false));
   }, []);
 

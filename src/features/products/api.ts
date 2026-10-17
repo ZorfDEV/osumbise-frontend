@@ -12,8 +12,11 @@ export const createCategory = async (name: string, establishmentId?: string): Pr
   return res.data.category;
 };
 
-export const updateCategory = async (id: string, name: string): Promise<Category> => {
-  const res = await api.patch(`/categories/${id}`, { name });
+export const updateCategory = async (
+  id: string,
+  payload: { name?: string; preparationArea?: 'KITCHEN' | 'BAR' }
+): Promise<Category> => {
+  const res = await api.patch(`/categories/${id}`, payload);
   return res.data.category;
 };
 
@@ -43,6 +46,7 @@ export interface ProductPayload {
   tagStartsAt?: string | null;
   tagEndsAt?: string | null;
   type?: string;
+  preparationArea?: 'KITCHEN' | 'BAR';
   isActive?: boolean;
   establishmentId?: string;
 }

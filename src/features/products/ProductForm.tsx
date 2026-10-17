@@ -31,6 +31,7 @@ const productFormSchema = z
       (v) => (v === '' || v === undefined ? null : v),
       z.string().nullable().optional()
     ),
+    preparationArea: z.enum(['KITCHEN', 'BAR']).optional(),
     type: z
       .enum(['VEGETARIEN', 'SANS_SUCRE', 'ALCOOLISE', 'MUSULMAN'])
       .optional()
@@ -79,10 +80,17 @@ export default function ProductForm({
     formState: { errors, isSubmitting },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
-    defaultValues: { unit: 'UNIT', ...defaultValues },
+    defaultValues: { unit: 'UNIT', preparationArea: 'KITCHEN', ...defaultValues },
   });
 
   const name = watch('name');
+  // Nouveau produit : la préparation (cuisine / bar) suit celle de sa catégorie
+  const categoryId = watch('categoryId');
+  useEffect(() => {
+    if (defaultValues?.preparationArea) return;
+    const area = categories.find((c) => c.id === categoryId)?.preparationArea;
+    if (area) setValue('preparationArea', area);
+  }, [categoryId, categories, defaultValues?.preparationArea, setValue]);
   const priceHt = Number(watch('sellingPrice')) || 0;
   const taxRate = Number(watch('tva')) || 0;
   const tagField = register('tag', { valueAsNumber: true });
@@ -293,6 +301,17 @@ export default function ProductForm({
         <p className="mt-1 text-xs text-slate-500">
           Sans dates, la remise s’applique tant qu’elle est renseignée.
         </p>
+      </div>
+
+      <div>
+        <label htmlFor="product-area" className="mb-1 block text-sm font-medium text-slate-700">
+          Préparation
+        </label>
+        <select id="product-area" {...register('preparationArea')} className="input w-full">
+          <option value="KITCHEN">Cuisine (plats)</option>
+          <option value="BAR">Bar (boissons, servi par le serveur)</option>
+        </select>
+        <p className="mt-1 text-xs text-slate-500">Un produit « Bar » n’apparaît pas en cuisine.</p>
       </div>
 
       <div>

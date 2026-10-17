@@ -55,10 +55,26 @@ export default function CategoriesPage() {
 
   const saveEdit = async () => {
     if (!editingId || !editingName.trim()) return;
-    await updateCategory(editingId, editingName.trim());
+    await updateCategory(editingId, { name: editingName.trim() });
     toast.success('Catégorie modifiée');
     setEditingId(null);
     load();
+  };
+
+  // Cuisine ou bar : appliqué à tous les produits de la catégorie
+  const changeArea = async (c: Category, preparationArea: 'KITCHEN' | 'BAR') => {
+    setCategories((prev) => prev.map((x) => (x.id === c.id ? { ...x, preparationArea } : x)));
+    try {
+      await updateCategory(c.id, { preparationArea });
+      toast.success(
+        preparationArea === 'BAR'
+          ? `Les produits « ${c.name} » partent maintenant au bar`
+          : `Les produits « ${c.name} » partent maintenant en cuisine`
+      );
+    } catch {
+      toast.error('Modification impossible');
+      load();
+    }
   };
 
   // Pas de fenêtre de confirmation : l'élément disparaît tout de suite et la
@@ -117,6 +133,7 @@ export default function CategoriesPage() {
             <thead className="bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-2 font-medium">Nom</th>
+                <th className="px-4 py-2 font-medium">Préparation</th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
@@ -135,6 +152,17 @@ export default function CategoriesPage() {
                     ) : (
                       <span className="text-slate-900">{c.name}</span>
                     )}
+                  </td>
+                  <td data-label="Préparation" className="px-4 py-2">
+                    <select
+                      value={c.preparationArea ?? 'KITCHEN'}
+                      onChange={(e) => changeArea(c, e.target.value as 'KITCHEN' | 'BAR')}
+                      aria-label={`Préparation des produits « ${c.name} »`}
+                      className="input input-sm"
+                    >
+                      <option value="KITCHEN">Cuisine</option>
+                      <option value="BAR">Bar (servi par le serveur)</option>
+                    </select>
                   </td>
                   <td data-label="" className="px-4 py-2 text-right">
                     {editingId === c.id ? (
@@ -173,7 +201,7 @@ export default function CategoriesPage() {
               ))}
               {categories.length === 0 && (
                 <tr>
-                  <td colSpan={2}>
+                  <td colSpan={3}>
                     <EmptyState compact icon={Tags} title="Aucune catégorie" description="Créez une catégorie avec le champ ci-dessus pour organiser vos produits." />
                   </td>
                 </tr>
@@ -183,6 +211,10 @@ export default function CategoriesPage() {
         </div>
       )}
       <p className="mt-3 text-xs text-slate-500">
+        Préparation : les produits « Bar » (boissons) ne s’affichent pas en cuisine et sont servis
+        directement par le serveur. Changer ce réglage l’applique à tous les produits de la catégorie.
+      </p>
+      <p className="mt-2 text-xs text-slate-500">
         Une catégorie encore utilisée par au moins un produit ne peut pas être supprimée — il
         faut d’abord changer la catégorie de ces produits ou les désactiver.
       </p>
