@@ -39,7 +39,11 @@ export const checkInStay = async (id: string): Promise<StayDetail> => (await api
 // force : départ malgré un solde impayé (sinon le serveur répond 409 BALANCE_DUE)
 export const checkOutStay = async (id: string, force = false): Promise<StayDetail> =>
   (await api.post(`/hotel/stays/${id}/check-out`, { force })).data.stay;
-export const cancelStay = async (id: string): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/cancel`)).data.stay;
+// advance : que faire de l'avance versée (REFUND = rendue, RETAIN = conservée)
+export const cancelStay = async (
+  id: string,
+  options: { advance?: 'REFUND' | 'RETAIN'; cashSessionId?: string } = {}
+): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/cancel`, options)).data.stay;
 export const addStayPayment = async (
   id: string,
   payload: { method: StayPaymentMethod; amount: number; note?: string; cashSessionId?: string; customerId?: string }

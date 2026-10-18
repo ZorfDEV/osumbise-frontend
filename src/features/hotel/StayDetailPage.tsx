@@ -162,6 +162,92 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
   );
 }
 
+// Annulation d'une réservation qui a reçu une avance : la rembourser (sortie
+// de caisse) ou la conserver comme frais d'annulation
+function CancelWithAdvanceDialog({ stay, onClose, onCancelled }: { stay: StayDetail; onClose: () => void; onCancelled: (s: StayDetail) => void }) {
+  const toast = useToast();
+  const [choice, setChoice] = useState<'REFUND' | 'RETAIN'>('RETAIN');
+  const [cashSessionId, setCashSessionId] = useState<string | undefined>();
+  const [saving, setSaving] = useState(false);
+  const paid = stay.totals.paid;
+  const cashPaid = stay.payments.filter((p) => p.method === 'CASH').reduce((s, p) => s + Number(p.amount), 0);
+
+  useEffect(() => {
+    fetchMyCashSession()
+      .then((s) => setCashSessionId(s?.id))
+      .catch(() => setCashSessionId(undefined));
+  }, []);
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      const updated = await cancelStay(stay.id, { advance: choice, cashSessionId: choice === 'REFUND' ? cashSessionId : undefined });
+      toast.success(choice === 'REFUND' ? `Réservation annulée — ${fcfa(paid)} remboursés` : `Réservation annulée — avance de ${fcfa(paid)} conservée`);
+      onCancelled(updated);
+    } catch (err) {
+      toast.error(apiError(err, 'Annulation impossible'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const options = [
+    {
+      value: 'RETAIN' as const,
+      title: 'Conserver l’avance',
+      text: 'Elle devient des frais d’annulation et compte dans le chiffre d’affaires de l’hébergement.',
+    },
+    {
+      value: 'REFUND' as const,
+      title: 'Rembourser l’avance',
+      text: 'Elle est rendue au client par le même mode de paiement. Les espèces sortent de votre caisse.',
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Annuler la réservation">
+      <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-heading">Annuler la réservation</h2>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
+            <X size={20} />
+          </button>
+        </div>
+        <p className="mb-4 text-sm text-slate-600">
+          {stay.guestName} a versé une avance de <span className="font-semibold text-heading">{fcfa(paid)}</span>. Que faut-il en faire ?
+        </p>
+        <div className="space-y-2">
+          {options.map((o) => (
+            <label
+              key={o.value}
+              className={`flex cursor-pointer gap-3 rounded-lg border p-3 ${choice === o.value ? 'border-action bg-primary-50 ring-1 ring-action' : 'border-slate-200'}`}
+            >
+              <input type="radio" name="advance" checked={choice === o.value} onChange={() => setChoice(o.value)} className="mt-1 h-4 w-4" />
+              <span>
+                <span className="block text-sm font-semibold text-heading">{o.title}</span>
+                <span className="block text-xs text-slate-600">{o.text}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        {choice === 'REFUND' && cashPaid > 0 && !cashSessionId && (
+          <p className="mt-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
+            Vous n’avez pas de session de caisse ouverte : les {fcfa(cashPaid)} en espèces seront notés remboursés, sans sortie de caisse.
+          </p>
+        )}
+        <div className="mt-5 flex gap-2">
+          <button onClick={onClose} className="btn btn-secondary flex-1">
+            Retour
+          </button>
+          <button onClick={submit} disabled={saving} aria-busy={saving} className="btn btn-danger flex-1">
+            Annuler la réservation
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StayDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -174,6 +260,7 @@ export default function StayDetailPage() {
   const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
   const [editing, setEditing] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [cancellingWithAdvance, setCancellingWithAdvance] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
@@ -249,6 +336,11 @@ export default function StayDetailPage() {
   };
 
   const handleCancel = async () => {
+    // Une avance a été versée : rembourser ou conserver ?
+    if (stay.totals.paid > 0) {
+      setCancellingWithAdvance(true);
+      return;
+    }
     const ok = await confirm({
       title: 'Annuler la réservation',
       message: `Annuler la réservation de ${stay.guestName} ? La chambre sera libérée pour ces dates.`,
@@ -380,6 +472,7 @@ export default function StayDetailPage() {
                   <li key={p.id} className="flex justify-between gap-3 py-2">
                     <span>
                       <span className="font-medium text-heading">
+                        {Number(p.amount) < 0 ? 'Remboursement · ' : ''}
                         {STAY_PAYMENT_LABELS[p.method]}
                         {p.customer ? ` — ${p.customer.name}` : ''}
                       </span>
@@ -472,6 +565,17 @@ export default function StayDetailPage() {
       <PrintPortal>
         <StayInvoiceTicket stay={stay} establishment={{ name: establishment.name, logo: establishment.logo }} paperWidth={settings.paperWidth} />
       </PrintPortal>
+
+      {cancellingWithAdvance && (
+        <CancelWithAdvanceDialog
+          stay={stay}
+          onClose={() => setCancellingWithAdvance(false)}
+          onCancelled={(s) => {
+            setCancellingWithAdvance(false);
+            setStay(s);
+          }}
+        />
+      )}
 
       {/* Retour au plan après départ ou annulation */}
       {(stay.status === 'CHECKED_OUT' || stay.status === 'CANCELLED') && (

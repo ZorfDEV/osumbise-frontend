@@ -5,6 +5,7 @@ import KpiCard from '@/features/dashboard/KpiCard';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import ConsolidatedToggle from '@/features/establishments/ConsolidatedToggle';
 import VoidsJournal from './VoidsJournal';
+import HotelReportCard from './HotelReportCard';
 
 const PAYMENT_LABELS: Record<string, string> = {
   CASH: 'Espèces',
@@ -330,6 +331,8 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {report?.hotel && <HotelReportCard hotel={report.hotel} />}
 
       <VoidsJournal />
     </div>

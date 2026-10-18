@@ -65,8 +65,8 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
           {payments.map((p) => (
             <Line
               key={p.id}
-              left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}`}
-              right={`-${money(p.amount)}`}
+              left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${Number(p.amount) < 0 ? 'Remboursement' : p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}`}
+              right={Number(p.amount) < 0 ? `+${money(-Number(p.amount))}` : `-${money(p.amount)}`}
             />
           ))}
         </>

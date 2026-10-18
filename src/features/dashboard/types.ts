@@ -10,6 +10,20 @@ export interface TopCategory {
   profit: number;
 }
 
+// Hôtel : facturé (séjours terminés, avances conservées) et encaissé
+export interface HotelReport {
+  checkedOutStays: number;
+  nights: number;
+  lodging: number;
+  stayTax: number;
+  cancellationFees: number;
+  billed: number;
+  received: Record<string, number>;
+  receivedTotal: number;
+  refunds: number;
+  advancesHeld: number;
+}
+
 export interface DashboardSummary {
   period: { start: string; end: string };
   revenue: number;
@@ -23,6 +37,8 @@ export interface DashboardSummary {
   paymentBreakdown: Record<string, number>;
   topProducts: TopProduct[];
   topCategories: TopCategory[];
+  // null si l'établissement n'a pas de chambres
+  hotel?: HotelReport | null;
 }
 
 export interface HourlySales {
