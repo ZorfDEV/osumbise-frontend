@@ -9,6 +9,7 @@ import EmptyState from '@/components/ui/empty-state';
 import { apiError, checkInStay, fetchRooms, fetchTaxRates, setRoomStatus } from './api';
 import { CATEGORY_LABELS, dayOf, fcfa, formatDay, ROOM_STATUS, roomName, todayIso } from './labels';
 import StayFormModal from './StayFormModal';
+import GroupFormModal from './GroupFormModal';
 import RoomsSettings from './RoomsSettings';
 import type { Room, RoomStatus, TaxRate } from './types';
 
@@ -27,6 +28,7 @@ export default function RoomsPage() {
   const [selected, setSelected] = useState<Room | null>(null);
   const [form, setForm] = useState<FormState>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [groupForm, setGroupForm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<RoomFilter>(null);
 
@@ -131,6 +133,10 @@ export default function RoomsPage() {
               {showSettings ? 'Fermer la configuration' : 'Chambres et tarifs'}
             </button>
           )}
+          <button onClick={() => setGroupForm(true)} disabled={active.length === 0} className="btn btn-secondary">
+            <Users size={16} />
+            Réservation de groupe
+          </button>
           <button onClick={() => setForm({ walkIn: true })} disabled={active.length === 0} className="btn btn-secondary">
             <UserPlus size={16} />
             Arrivée sans réservation
@@ -232,6 +238,7 @@ export default function RoomsPage() {
                         {c ? (
                           <>
                             <span className="block truncate font-medium text-heading">{c.guestName}</span>
+                            {c.group && c.group.name !== c.guestName && <span className="block truncate text-slate-500">{c.group.name}</span>}
                             <span className="text-slate-600">Départ {formatDay(c.checkOutDate, { day: '2-digit', month: '2-digit' })}</span>
                           </>
                         ) : arrival ? (
@@ -349,6 +356,19 @@ export default function RoomsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {groupForm && (
+        <GroupFormModal
+          rooms={rooms}
+          taxRates={taxRates}
+          onClose={() => setGroupForm(false)}
+          onSaved={(group) => {
+            setGroupForm(false);
+            load();
+            navigate(`/hotel/groups/${group.id}`);
+          }}
+        />
       )}
 
       {form && (

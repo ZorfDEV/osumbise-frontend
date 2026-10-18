@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, List } from 'lucide-react';
+import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, List, Users } from 'lucide-react';
 import { getSocket } from '@/lib/socket';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
@@ -10,9 +10,11 @@ import { Pagination, usePagination } from '@/components/ui/pagination';
 import { fetchRooms, fetchStays, fetchTaxRates } from './api';
 import { addDaysIso, CATEGORY_LABELS, dayOf, formatDay, nightsBetween, roomName, STAY_STATUS, todayIso } from './labels';
 import StayFormModal from './StayFormModal';
+import GroupFormModal from './GroupFormModal';
+import GroupsList from './GroupsList';
 import type { Room, StayListItem, StayStatus, TaxRate } from './types';
 
-type View = 'list' | 'planning';
+type View = 'list' | 'planning' | 'groups';
 type Filter = 'today' | 'reserved' | 'in-house' | 'past';
 
 const FILTERS: { value: Filter; label: string }[] = [
@@ -37,6 +39,7 @@ export default function StaysPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [weekStart, setWeekStart] = useState(todayIso());
   const [form, setForm] = useState<{ roomId?: string; checkIn?: string } | null>(null);
+  const [groupForm, setGroupForm] = useState(false);
 
   const today = todayIso();
 
@@ -105,6 +108,7 @@ export default function StaysPage() {
             {([
               { v: 'list', label: 'Liste', icon: List },
               { v: 'planning', label: 'Planning', icon: CalendarDays },
+              { v: 'groups', label: 'Groupes', icon: Users },
             ] as const).map(({ v, label, icon: Icon }) => (
               <button
                 key={v}
@@ -118,6 +122,10 @@ export default function StaysPage() {
               </button>
             ))}
           </div>
+          <button onClick={() => setGroupForm(true)} disabled={activeRooms.length === 0} className="btn btn-secondary">
+            <Users size={16} />
+            Réservation de groupe
+          </button>
           <button onClick={() => setForm({})} disabled={activeRooms.length === 0} className="btn btn-primary">
             <CalendarPlus size={16} />
             Nouvelle réservation
@@ -125,7 +133,9 @@ export default function StaysPage() {
         </div>
       </div>
 
-      {view === 'list' ? (
+      {view === 'groups' ? (
+        <GroupsList onCreate={() => setGroupForm(true)} />
+      ) : view === 'list' ? (
         <>
           <div className="mb-3 flex flex-wrap gap-2">
             {FILTERS.map((f) => (
@@ -183,6 +193,7 @@ export default function StaysPage() {
                         </td>
                         <td data-label="Chambre" className="px-4 py-2 text-slate-600">
                           {roomName(s.room)} · {CATEGORY_LABELS[s.room.category]}
+                          {s.group ? ` · Groupe ${s.group.name}` : ''}
                         </td>
                         <td data-label="Arrivée" className="px-4 py-2 text-slate-600">
                           {formatDay(s.checkInDate)}
@@ -325,6 +336,18 @@ export default function StaysPage() {
             Une case vide permet de réserver la chambre à cette date. Les montants sont visibles dans le détail du séjour.
           </p>
         </div>
+      )}
+
+      {groupForm && (
+        <GroupFormModal
+          rooms={rooms}
+          taxRates={taxRates}
+          onClose={() => setGroupForm(false)}
+          onSaved={(group) => {
+            setGroupForm(false);
+            navigate(`/hotel/groups/${group.id}`);
+          }}
+        />
       )}
 
       {form && (

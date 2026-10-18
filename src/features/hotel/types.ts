@@ -9,6 +9,8 @@ export interface StaySummary {
   status: StayStatus;
   checkInDate: string;
   checkOutDate: string;
+  // Réservation de groupe
+  group?: { id: string; name: string } | null;
 }
 
 export interface Room {
@@ -46,6 +48,7 @@ export interface StayListItem {
   nightlyRate: string;
   taxPerNight: string;
   payments: { amount: string }[];
+  group?: { id: string; name: string } | null;
 }
 
 export interface StayTotals {
@@ -60,6 +63,8 @@ export interface StayTotals {
 
 export interface StayDetail {
   id: string;
+  // Réservation de groupe (facture unique)
+  group?: { id: string; name: string } | null;
   // En-tête de la facture
   establishment?: {
     name: string;

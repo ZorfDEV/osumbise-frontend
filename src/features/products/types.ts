@@ -19,6 +19,8 @@ export interface Product {
   cost: string;
   // Taxe optionnelle (%) ajoutée au prix de vente hors taxe
   tva: string;
+  // Contribution spéciale de solidarité (%)
+  css?: string;
   unit: Unit;
   stockCurrent: string;
   stockMin: string;

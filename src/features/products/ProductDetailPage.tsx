@@ -101,6 +101,7 @@ export default function ProductDetailPage() {
               sellingPrice: Number(product.sellingPrice),
               cost: Number(product.cost),
               tva: Number(product.tva ?? 0),
+              css: Number(product.css ?? 0),
               unit: product.unit,
               stockMin: Number(product.stockMin),
               tag: product.tag !== null ? Number(product.tag) : undefined,

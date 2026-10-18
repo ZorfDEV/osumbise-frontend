@@ -40,6 +40,7 @@ export interface ProductPayload {
   sellingPrice?: number;
   cost?: number;
   tva?: number;
+  css?: number;
   unit?: string;
   stockMin?: number;
   tag?: number | null;

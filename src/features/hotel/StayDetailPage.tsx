@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Banknote, DoorClosed, DoorOpen, Pencil, Printer, X } from 'lucide-react';
 import { api } from '@/lib/axios';
 import { useToast } from '@/lib/toast';
@@ -271,6 +271,11 @@ export default function StayDetailPage() {
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.badge}`}>{st.label}</span>
           </div>
           <p className="text-sm text-slate-500">
+            {stay.group && (
+              <Link to={`/hotel/groups/${stay.group.id}`} className="mr-1 font-medium text-primary-700 hover:underline">
+                Groupe {stay.group.name} ·
+              </Link>
+            )}
             Chambre {roomName(stay.room)} · {CATEGORY_LABELS[stay.room.category]} · {stay.adults} adulte{stay.adults > 1 ? 's' : ''}
             {stay.children > 0 ? `, ${stay.children} enfant${stay.children > 1 ? 's' : ''}` : ''}
           </p>

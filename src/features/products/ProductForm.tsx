@@ -11,6 +11,10 @@ const productFormSchema = z
     sellingPrice: z.number().nonnegative(),
     cost: z.number().nonnegative().optional(),
     // Taxe optionnelle : champ vidé -> 0 (aucune taxe)
+    css: z.preprocess(
+      (v) => (typeof v === 'number' && Number.isNaN(v) ? 0 : v),
+      z.number().min(0, 'Entre 0 et 100').max(100, 'Entre 0 et 100').optional()
+    ),
     tva: z.preprocess(
       (v) => (typeof v === 'number' && Number.isNaN(v) ? 0 : v),
       z.number().min(0, 'Entre 0 et 100').max(100, 'Entre 0 et 100').optional()
@@ -93,6 +97,7 @@ export default function ProductForm({
   }, [categoryId, categories, defaultValues?.preparationArea, setValue]);
   const priceHt = Number(watch('sellingPrice')) || 0;
   const taxRate = Number(watch('tva')) || 0;
+  const cssRate = Number(watch('css')) || 0;
   const tagField = register('tag', { valueAsNumber: true });
 
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -195,7 +200,7 @@ export default function ProductForm({
 
       <div>
         <label htmlFor="product-tva" className="mb-1 block text-sm font-medium text-slate-700">
-          Taxe (%, optionnel)
+          TVA (%, optionnel)
         </label>
         <input
           id="product-tva"
@@ -215,15 +220,40 @@ export default function ProductForm({
         </datalist>
         {errors.tva ? (
           <p className="mt-1 text-xs text-danger">{errors.tva.message}</p>
-        ) : taxRate > 0 ? (
+        ) : (
+          <p className="mt-1 text-xs text-slate-500">Laissez vide si le produit n’est pas soumis à la TVA.</p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="product-css" className="mb-1 block text-sm font-medium text-slate-700">
+          CSS (%, optionnel)
+        </label>
+        <input
+          id="product-css"
+          type="number"
+          step="0.01"
+          min={0}
+          max={100}
+          list="product-css-rates"
+          placeholder="Aucune"
+          {...register('css', { valueAsNumber: true })}
+          className="input w-full"
+        />
+        <datalist id="product-css-rates">
+          <option value="1">CSS 1 %</option>
+        </datalist>
+        {errors.css ? (
+          <p className="mt-1 text-xs text-danger">{errors.css.message}</p>
+        ) : taxRate + cssRate > 0 ? (
           <p className="mt-1 text-xs text-slate-500">
-            Ajoutée au prix : le client paie{' '}
+            Prix TTC payé par le client :{' '}
             <span className="font-medium text-slate-700">
-              {Math.round(priceHt * (1 + taxRate / 100)).toLocaleString('fr-FR')} FCFA
+              {Math.round(priceHt * (1 + (taxRate + cssRate) / 100)).toLocaleString('fr-FR')} FCFA
             </span>
           </p>
         ) : (
-          <p className="mt-1 text-xs text-slate-500">Laissez vide si le produit n’est pas taxé.</p>
+          <p className="mt-1 text-xs text-slate-500">Contribution spéciale de solidarité, ajoutée comme la TVA.</p>
         )}
       </div>
 

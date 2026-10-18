@@ -1,0 +1,81 @@
+import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
+import { resolveUploadUrl } from '@/lib/uploads';
+import { legalLines } from '@/features/establishments/legalInfo';
+import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
+import type { StayGroupDetail } from './groupApi';
+
+// Facture unique d'un groupe : chaque chambre détaillée (nuits, taxe de
+// séjour, consommations), puis le total, les versements et le reste à payer.
+
+const money = (n: number | string) => Math.round(Number(n)).toLocaleString('fr-FR');
+
+const Line = ({ left, right, bold }: { left: string; right?: string; bold?: boolean }) => (
+  <div className={`ticket-line ${bold ? 'ticket-bold' : ''}`}>
+    <span>{left}</span>
+    {right !== undefined && <span>{right}</span>}
+  </div>
+);
+const Rule = () => <div className="ticket-rule" />;
+
+export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayGroupDetail; paperWidth: PaperWidth }) {
+  const billed = group.stays.filter((s) => s.status !== 'CANCELLED');
+  const { totals } = group;
+  const payments = billed.flatMap((s) => s.payments).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+
+  return (
+    <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
+      <div className="ticket-center">
+        {group.establishment.logo && <img src={resolveUploadUrl(group.establishment.logo)} alt="" className="ticket-logo" />}
+        <div className="ticket-title">{group.establishment.name}</div>
+        {legalLines(group.establishment).map((line) => (
+          <div key={line}>{line}</div>
+        ))}
+        <div>FACTURE DE GROUPE</div>
+      </div>
+      <Rule />
+      <Line left="Facture" right={`#${group.id.slice(0, 8).toUpperCase()}`} />
+      <Line left="Client" right={group.customer?.name ?? group.name} />
+      {group.customer && <Line left="Groupe" right={group.name} />}
+      {group.contactPhone && <Line left="Téléphone" right={group.contactPhone} />}
+      <Line left="Chambres" right={String(totals.rooms)} />
+      <Rule />
+      {billed.map((s) => (
+        <div key={s.id}>
+          <div className="ticket-bold">
+            Ch. {roomName(s.room)} ({CATEGORY_LABELS[s.room.category]})
+          </div>
+          {s.guestName !== group.name && <div>{s.guestName}</div>}
+          <div>
+            {formatDay(s.checkInDate, { day: '2-digit', month: '2-digit' })} → {formatDay(s.checkOutDate, { day: '2-digit', month: '2-digit' })}
+          </div>
+          <Line left={`${s.totals.nights} nuit(s) x ${money(s.nightlyRate)}`} right={money(s.totals.lodging)} />
+          {s.totals.tax > 0 && <Line left="Taxe de séjour" right={money(s.totals.tax)} />}
+          {s.totals.charges > 0 && <Line left="Consommations" right={money(s.totals.charges)} />}
+          <Line left="Sous-total" right={money(s.totals.total)} bold />
+          <Rule />
+        </div>
+      ))}
+      <Line left="Hébergement" right={money(totals.lodging)} />
+      {totals.tax > 0 && <Line left="Taxe de séjour" right={money(totals.tax)} />}
+      {totals.charges > 0 && <Line left="Consommations" right={money(totals.charges)} />}
+      <Line left="TOTAL FCFA" right={money(totals.total)} bold />
+      {payments.length > 0 && (
+        <>
+          <Rule />
+          {payments.map((p) => (
+            <Line
+              key={p.id}
+              left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}`}
+              right={`-${money(p.amount)}`}
+            />
+          ))}
+        </>
+      )}
+      <Rule />
+      <Line left={totals.balance > 0 ? 'RESTE À PAYER' : 'SOLDÉ'} right={money(Math.max(0, totals.balance))} bold />
+      <Rule />
+      <div className="ticket-center">Merci de votre confiance !</div>
+      <div className="ticket-feed" />
+    </div>
+  );
+}

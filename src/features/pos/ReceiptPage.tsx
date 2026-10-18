@@ -11,6 +11,7 @@ import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
 import Alert from '@/components/ui/alert';
 import CancelSaleModal from './CancelSaleModal';
+import { taxBreakdown, taxLabel } from './taxes';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -174,15 +175,17 @@ export default function ReceiptPage() {
 
         <div className="space-y-1 border-t border-dashed border-slate-300 py-3">
           <div className="flex justify-between text-slate-500">
-            <span>Sous-total</span>
-            <span>{formatFcfa(Number(order.subtotal))}</span>
+            <span>Total HT</span>
+            <span>{formatFcfa(Number(order.subtotal) - Number(order.discount))}</span>
           </div>
-          <div className="flex justify-between text-slate-500">
-            <span>Taxe</span>
-            <span>{formatFcfa(Number(order.tax))}</span>
-          </div>
+          {taxBreakdown(order.items).map((t) => (
+            <div key={taxLabel(t)} className="flex justify-between text-slate-500">
+              <span>{taxLabel(t)}</span>
+              <span>{formatFcfa(t.amount)}</span>
+            </div>
+          ))}
           <div className="flex justify-between text-base font-semibold text-slate-900">
-            <span>TOTAL</span>
+            <span>TOTAL TTC</span>
             <span>{formatFcfa(Number(order.total))}</span>
           </div>
         </div>

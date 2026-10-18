@@ -1,6 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
+import { taxBreakdown, taxLabel } from './taxes';
 import type { Order, OrderItem, PaymentMethod } from './types';
 
 // Tickets pour imprimante thermique : noir sur blanc, police à chasse fixe,
@@ -55,10 +56,13 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
         <Line key={item.id} left={`${item.quantity} x ${item.product.name}`} right={money(Number(item.unitPrice) * item.quantity)} />
       ))}
       <Rule />
-      <Line left="Sous-total" right={money(Number(order.subtotal))} />
+      {Number(order.discount) > 0 && <Line left="Sous-total" right={money(Number(order.subtotal))} />}
       {Number(order.discount) > 0 && <Line left="Remise" right={`-${money(Number(order.discount))}`} />}
-      {Number(order.tax) > 0 && <Line left="Taxe" right={money(Number(order.tax))} />}
-      <Line left="TOTAL FCFA" right={money(Number(order.total))} bold />
+      <Line left="Total HT" right={money(Number(order.subtotal) - Number(order.discount))} />
+      {taxBreakdown(order.items).map((t) => (
+        <Line key={taxLabel(t)} left={taxLabel(t)} right={money(t.amount)} />
+      ))}
+      <Line left="TOTAL TTC FCFA" right={money(Number(order.total))} bold />
       {order.payments && order.payments.length > 0 && (
         <>
           <Rule />

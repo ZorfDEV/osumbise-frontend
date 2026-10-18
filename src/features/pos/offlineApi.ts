@@ -2,6 +2,7 @@ import { getDb } from '@/lib/db';
 import { enqueueAction } from '@/lib/offlineSync';
 import * as api from './api';
 import { Order } from './types';
+import { taxTotal } from './taxes';
 
 const isLocalId = (id: string) => id.startsWith('local-');
 
@@ -21,9 +22,7 @@ const recalculateLocalTotals = (order: Order) => {
     0
   );
   // Même calcul que le serveur (order.service.ts) : taxe ajoutée, arrondie au franc
-  const tax = Math.round(
-    order.items.reduce((sum, item) => sum + item.quantity * Number(item.unitPrice) * (Number(item.taxRate ?? 0) / 100), 0)
-  );
+  const tax = taxTotal(order.items);
   order.subtotal = String(subtotal);
   order.tax = String(tax);
   order.total = String(subtotal - Number(order.discount) + tax);
@@ -94,6 +93,7 @@ export const addOrderItem = async (
     sellingPrice: string;
     effectivePrice?: number;
     tva?: string;
+    css?: string;
     preparationArea?: 'KITCHEN' | 'BAR';
   },
   quantity: number
@@ -123,6 +123,7 @@ export const addOrderItem = async (
       // au moment de la synchro (addOrderItem, order.controller.ts)
       unitPrice: String(product.effectivePrice ?? product.sellingPrice),
       taxRate: product.tva ?? '0',
+      cssRate: product.css ?? '0',
       note: null,
       product: { name: product.name, preparationArea: product.preparationArea },
     });
