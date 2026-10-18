@@ -3,6 +3,7 @@ import { fetchUsers, updateUser, resetUserPassword } from './api';
 import { AppUser, AssignableRole } from './types';
 import { useAuth } from '@/features/auth/AuthContext';
 import CreateUserForm from './CreateUserForm';
+import EditUserModal from './EditUserModal';
 import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
 import { ListSkeleton } from '@/components/ui/skeleton';
@@ -19,6 +20,7 @@ export default function UsersPage() {
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [resetError, setResetError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<AppUser | null>(null);
 
   const load = () => {
     setIsLoading(true);
@@ -171,6 +173,12 @@ export default function UsersPage() {
                       u.id !== currentUser?.id && (
                         <div className="flex justify-end gap-3">
                           <button
+                            onClick={() => setEditing(u)}
+                            className="text-xs font-medium text-primary-700 hover:underline"
+                          >
+                            Modifier
+                          </button>
+                          <button
                             onClick={() => handleToggleActive(u)}
                             className="text-xs font-medium text-slate-500 hover:text-slate-900"
                           >
@@ -201,6 +209,17 @@ export default function UsersPage() {
           itemLabel="utilisateurs"
         />
       </>
+      )}
+
+      {editing && (
+        <EditUserModal
+          user={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            load();
+          }}
+        />
       )}
     </div>
   );

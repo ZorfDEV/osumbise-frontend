@@ -20,7 +20,10 @@ export const createUser = async (payload: CreateUserPayload): Promise<AppUser> =
 };
 
 export interface UpdateUserPayload {
+  name?: string;
+  email?: string;
   role?: AssignableRole;
+  establishmentId?: string;
   isActive?: boolean;
 }
 
