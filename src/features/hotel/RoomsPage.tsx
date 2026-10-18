@@ -244,7 +244,7 @@ export default function RoomsPage() {
                         ) : arrival ? (
                           <span className="block truncate font-medium text-info-dark">Arrivée : {arrival.guestName}</span>
                         ) : (
-                          <span className="text-slate-500">{fcfa(r.nightlyRate)}/nuit</span>
+                          <span className="text-slate-500">{fcfa(r.nightlyRate)}/nuitée</span>
                         )}
                       </div>
                     </button>
@@ -269,7 +269,7 @@ export default function RoomsPage() {
               <div>
                 <p className="text-xl font-bold text-heading">Chambre {roomName(selected)}</p>
                 <p className="text-sm text-slate-500">
-                  {CATEGORY_LABELS[selected.category]} · {selected.capacity} pers. · {fcfa(selected.nightlyRate)}/nuit
+                  {CATEGORY_LABELS[selected.category]} · {selected.capacity} pers. · {fcfa(selected.nightlyRate)}/nuitée
                 </p>
               </div>
               <button onClick={() => setSelected(null)} aria-label="Fermer" className="rounded-md p-1 text-slate-500 hover:bg-slate-100">

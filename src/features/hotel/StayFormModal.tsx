@@ -107,7 +107,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               <option value="">Choisir une chambre…</option>
               {activeRooms.map((r) => (
                 <option key={r.id} value={r.id} disabled={r.status === 'OUT_OF_SERVICE' && walkIn}>
-                  {roomName(r)} — {CATEGORY_LABELS[r.category]} — {fcfa(r.nightlyRate)}/nuit
+                  {roomName(r)} — {CATEGORY_LABELS[r.category]} — {fcfa(r.nightlyRate)}/nuitée
                   {r.status === 'OUT_OF_SERVICE' ? ' (hors service)' : r.status === 'OCCUPIED' ? ' (occupée)' : ''}
                 </option>
               ))}
@@ -176,7 +176,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
 
           <div>
             <label htmlFor="stay-rate" className="mb-1 block text-sm font-medium text-slate-700">
-              Tarif par nuit (FCFA)
+              Tarif par nuitée (FCFA)
             </label>
             <input id="stay-rate" type="number" min={0} value={rate} onChange={(e) => setRate(e.target.value)} className="input w-full" />
             <p className="mt-1 text-xs text-slate-500">Tarif de la chambre par défaut ; modifiable pour un tarif négocié.</p>

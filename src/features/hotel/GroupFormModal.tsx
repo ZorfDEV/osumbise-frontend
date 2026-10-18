@@ -162,7 +162,7 @@ export default function GroupFormModal({
                       <input type="checkbox" checked={!!line} onChange={() => toggle(r)} className="h-4 w-4" />
                       <span className="font-semibold text-heading">{roomName(r)}</span>
                       <span className="text-xs text-slate-500">
-                        {CATEGORY_LABELS[r.category]} · {fcfa(r.nightlyRate)}/nuit
+                        {CATEGORY_LABELS[r.category]} · {fcfa(r.nightlyRate)}/nuitée
                       </span>
                     </label>
                     {line && (

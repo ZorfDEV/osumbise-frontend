@@ -159,7 +159,7 @@ export default function RoomsSettings({
           </div>
           <div>
             <label htmlFor="room-rate" className="mb-1 block text-xs font-medium text-slate-600">
-              Tarif / nuit (FCFA)
+              Tarif / nuitée (FCFA)
             </label>
             <input
               id="room-rate"
@@ -237,7 +237,7 @@ export default function RoomsSettings({
       <div className="rounded-lg border border-slate-200 bg-surface p-5">
         <h2 className="mb-1 text-sm font-semibold text-heading-muted">Taxe de séjour</h2>
         <p className="mb-3 text-xs text-slate-500">
-          Montant par nuit et par chambre, selon le type. Appliquée aux nouvelles réservations (les séjours déjà
+          Montant par nuitée et par chambre, selon le type. Appliquée aux nouvelles réservations (les séjours déjà
           enregistrés gardent leur taxe).
         </p>
         <div className="space-y-3">
