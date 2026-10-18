@@ -108,10 +108,15 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               {activeRooms.map((r) => (
                 <option key={r.id} value={r.id} disabled={r.status === 'OUT_OF_SERVICE' && walkIn}>
                   {roomName(r)} — {CATEGORY_LABELS[r.category]} — {fcfa(r.nightlyRate)}/nuitée
-                  {r.status === 'OUT_OF_SERVICE' ? ' (hors service)' : r.status === 'OCCUPIED' ? ' (occupée)' : ''}
+                  {r.status === 'OUT_OF_SERVICE' ? ' (hors service)' : r.status === 'OCCUPIED' ? ' (occupée)' : r.status === 'CLEANING' ? ' (à nettoyer)' : ''}
                 </option>
               ))}
             </select>
+            {walkIn && room?.status === 'CLEANING' && (
+              <p className="mt-1 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
+                Cette chambre n’a pas encore été nettoyée.
+              </p>
+            )}
           </div>
 
           <div>

@@ -56,6 +56,15 @@ export default function StayInvoiceTicket({
       <div className="ticket-rule" />
       <Line left={`Hébergement ${totals.nights} nuitée${totals.nights > 1 ? 's' : ''} x ${money(stay.nightlyRate)}`} right={money(totals.lodging)} />
       {totals.tax > 0 && <Line left={`Taxe de séjour ${totals.nights} x ${money(stay.taxPerNight)}`} right={money(totals.tax)} />}
+      {(stay.charges ?? []).length > 0 && (
+        <>
+          <div className="ticket-rule" />
+          <div className="ticket-bold">Prestations</div>
+          {(stay.charges ?? []).map((c) => (
+            <Line key={c.id} left={`${c.quantity} x ${c.label}`} right={money(c.quantity * Number(c.unitPrice))} />
+          ))}
+        </>
+      )}
       {roomCharges.length > 0 && (
         <>
           <div className="ticket-rule" />

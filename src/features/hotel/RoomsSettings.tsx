@@ -4,6 +4,7 @@ import { useToast } from '@/lib/toast';
 import { apiError, createRoom, saveTaxRates, updateRoom } from './api';
 import { CATEGORY_LABELS, fcfa, roomName } from './labels';
 import type { Room, RoomCategory, RoomPayload, TaxRate } from './types';
+import HotelServicesSettings from './HotelServicesSettings';
 
 const CATEGORIES: RoomCategory[] = ['STANDARD', 'VIP', 'SUITE'];
 const EMPTY: RoomPayload = { number: '', building: '', category: 'STANDARD', floor: '', capacity: 2, nightlyRate: 0, notes: '' };
@@ -266,6 +267,8 @@ export default function RoomsSettings({
           Enregistrer la taxe
         </button>
       </div>
+
+      <HotelServicesSettings />
     </div>
   );
 }

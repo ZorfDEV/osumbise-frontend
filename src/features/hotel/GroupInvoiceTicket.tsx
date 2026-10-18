@@ -51,6 +51,7 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
           <Line left={`${s.totals.nights} nuitée(s) x ${money(s.nightlyRate)}`} right={money(s.totals.lodging)} />
           {s.totals.tax > 0 && <Line left="Taxe de séjour" right={money(s.totals.tax)} />}
           {s.totals.charges > 0 && <Line left="Consommations" right={money(s.totals.charges)} />}
+          {s.totals.services > 0 && <Line left="Prestations" right={money(s.totals.services)} />}
           <Line left="Sous-total" right={money(s.totals.total)} bold />
           <Rule />
         </div>
@@ -58,6 +59,7 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
       <Line left="Hébergement" right={money(totals.lodging)} />
       {totals.tax > 0 && <Line left="Taxe de séjour" right={money(totals.tax)} />}
       {totals.charges > 0 && <Line left="Consommations" right={money(totals.charges)} />}
+      {totals.services > 0 && <Line left="Prestations" right={money(totals.services)} />}
       <Line left="TOTAL FCFA" right={money(totals.total)} bold />
       {payments.length > 0 && (
         <>

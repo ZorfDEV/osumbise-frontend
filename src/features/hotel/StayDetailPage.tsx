@@ -16,6 +16,7 @@ import { addStayPayment, apiError, cancelStay, checkInStay, checkOutStay, fetchR
 import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import StayFormModal from './StayFormModal';
 import StayInvoiceTicket from './StayInvoiceTicket';
+import StayChargesCard from './StayChargesCard';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
@@ -335,6 +336,19 @@ export default function StayDetailPage() {
     }
   };
 
+  // Chambre pas encore nettoyée : on prévient avant d'y installer le client
+  const handleCheckIn = async () => {
+    if (stay.room.status === 'CLEANING') {
+      const ok = await confirm({
+        title: 'Chambre à nettoyer',
+        message: `La chambre ${roomName(stay.room)} n’a pas encore été nettoyée. Enregistrer l’arrivée quand même ?`,
+        confirmLabel: 'Enregistrer l’arrivée',
+      });
+      if (!ok) return;
+    }
+    act(() => checkInStay(stay.id), `Arrivée de ${stay.guestName} enregistrée`);
+  };
+
   const handleCancel = async () => {
     // Une avance a été versée : rembourser ou conserver ?
     if (stay.totals.paid > 0) {
@@ -374,7 +388,7 @@ export default function StayDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {stay.status === 'RESERVED' && (
-            <button onClick={() => act(() => checkInStay(stay.id), `Arrivée de ${stay.guestName} enregistrée`)} disabled={busy} aria-busy={busy} className="btn btn-primary">
+            <button onClick={handleCheckIn} disabled={busy} aria-busy={busy} className="btn btn-primary">
               <DoorOpen size={16} />
               Enregistrer l’arrivée
             </button>
@@ -433,6 +447,8 @@ export default function StayDetailPage() {
               </div>
             )}
           </div>
+
+          <StayChargesCard stay={stay} onChanged={setStay} />
 
           {/* Consommations mises sur la chambre */}
           <div className="rounded-lg border border-slate-200 bg-surface p-4">
@@ -513,6 +529,12 @@ export default function StayDetailPage() {
               <span>Consommations</span>
               <span>{fcfa(totals.charges)}</span>
             </div>
+            {(totals.services ?? 0) > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Prestations</span>
+                <span>{fcfa(totals.services)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-slate-200 pt-1.5 font-semibold text-heading">
               <span>Total</span>
               <span>{fcfa(totals.total)}</span>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BedDouble, CalendarPlus, Crown, DoorOpen, Settings2, Sparkles, UserPlus, Users, Wrench, X } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/lib/toast';
+import { useConfirm } from '@/lib/confirm';
 import { getSocket } from '@/lib/socket';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
@@ -20,6 +21,7 @@ type RoomFilter = RoomStatus | 'ARRIVALS' | 'DEPARTURES' | null;
 export default function RoomsPage() {
   const { user } = useAuth();
   const toast = useToast();
+  const confirm = useConfirm();
   const navigate = useNavigate();
   const canManage = user?.role === 'OWNER' || user?.role === 'ADMIN';
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -296,7 +298,17 @@ export default function RoomsPage() {
                     )}
                     {!c && arrival && (
                       <button
-                        onClick={() => run(() => checkInStay(arrival.id), `Arrivée de ${arrival.guestName} enregistrée`)}
+                        onClick={async () => {
+                          if (selected.status === 'CLEANING') {
+                            const ok = await confirm({
+                              title: 'Chambre à nettoyer',
+                              message: `La chambre ${roomName(selected)} n’a pas encore été nettoyée. Enregistrer l’arrivée quand même ?`,
+                              confirmLabel: 'Enregistrer l’arrivée',
+                            });
+                            if (!ok) return;
+                          }
+                          run(() => checkInStay(arrival.id), `Arrivée de ${arrival.guestName} enregistrée`);
+                        }}
                         disabled={busy || selected.status === 'OUT_OF_SERVICE'}
                         aria-busy={busy}
                         className="btn btn-primary w-full justify-start"
@@ -328,6 +340,16 @@ export default function RoomsPage() {
                       >
                         <Sparkles size={16} />
                         Ménage terminé : chambre prête
+                      </button>
+                    )}
+                    {!c && selected.status === 'AVAILABLE' && (
+                      <button
+                        onClick={() => run(() => setRoomStatus(selected.id, 'CLEANING'), `Chambre ${roomName(selected)} à nettoyer`)}
+                        disabled={busy}
+                        className="btn btn-secondary w-full justify-start"
+                      >
+                        <Sparkles size={16} />
+                        Marquer à nettoyer
                       </button>
                     )}
                     {!c && selected.status !== 'OUT_OF_SERVICE' && (

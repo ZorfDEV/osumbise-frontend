@@ -174,6 +174,20 @@ export default function GroupDetailPage() {
     }
   };
 
+  // Chambres pas encore nettoyées : on prévient avant l'arrivée du groupe
+  const checkIn = async () => {
+    const dirty = group.stays.filter((s) => s.status === 'RESERVED' && s.room.status === 'CLEANING').map((s) => roomName(s.room));
+    if (dirty.length > 0) {
+      const ok = await confirm({
+        title: 'Chambres à nettoyer',
+        message: `Pas encore nettoyée${dirty.length > 1 ? 's' : ''} : ${dirty.join(', ')}. Enregistrer l’arrivée du groupe quand même ?`,
+        confirmLabel: 'Enregistrer l’arrivée',
+      });
+      if (!ok) return;
+    }
+    run(() => checkInStayGroup(group.id), 'Arrivée du groupe enregistrée');
+  };
+
   const checkOut = async () => {
     setBusy(true);
     try {
@@ -219,7 +233,7 @@ export default function GroupDetailPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           {reserved > 0 && (
-            <button onClick={() => run(() => checkInStayGroup(group.id), 'Arrivée du groupe enregistrée')} disabled={busy} className="btn btn-secondary">
+            <button onClick={checkIn} disabled={busy} className="btn btn-secondary">
               <DoorOpen size={16} />
               Arrivée du groupe ({reserved})
             </button>
@@ -246,7 +260,7 @@ export default function GroupDetailPage() {
           { label: 'Total', value: fcfa(totals.total) },
           { label: 'Avance', value: fcfa(totals.paid) },
           { label: totals.balance > 0 ? 'Reste à payer' : 'Soldé', value: fcfa(Math.max(0, totals.balance)) },
-          { label: 'Consommations', value: fcfa(totals.charges) },
+          { label: 'Consommations et prestations', value: fcfa(totals.charges + (totals.services ?? 0)) },
         ].map((k) => (
           <div key={k.label} className="rounded-lg border border-slate-200 bg-surface p-3">
             <p className="text-xs text-slate-500">{k.label}</p>

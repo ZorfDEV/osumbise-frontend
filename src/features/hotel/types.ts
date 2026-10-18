@@ -56,6 +56,8 @@ export interface StayTotals {
   lodging: number;
   tax: number;
   charges: number;
+  // Prestations de l'hôtel (pressing, room service…)
+  services: number;
   total: number;
   paid: number;
   balance: number;
@@ -76,7 +78,18 @@ export interface StayDetail {
     rc?: string | null;
   };
   roomId: string;
-  room: { id: string; number: string; building?: string; category: RoomCategory; floor: string | null };
+  room: { id: string; number: string; building?: string; category: RoomCategory; floor: string | null; status?: RoomStatus };
+  // Prestations ajoutées à la facture (pressing, room service…)
+  charges?: {
+    id: string;
+    label: string;
+    category: string;
+    quantity: number;
+    unitPrice: string;
+    note: string | null;
+    createdAt: string;
+    user: { name: string };
+  }[];
   guestName: string;
   guestPhone: string | null;
   guestIdNumber: string | null;
