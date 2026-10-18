@@ -244,7 +244,7 @@ export default function GroupDetailPage() {
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: 'Total', value: fcfa(totals.total) },
-          { label: 'Déjà versé', value: fcfa(totals.paid) },
+          { label: 'Avance', value: fcfa(totals.paid) },
           { label: totals.balance > 0 ? 'Reste à payer' : 'Soldé', value: fcfa(Math.max(0, totals.balance)) },
           { label: 'Consommations', value: fcfa(totals.charges) },
         ].map((k) => (
@@ -279,7 +279,7 @@ export default function GroupDetailPage() {
                 <td data-label="Occupant" className="px-4 py-2 text-slate-700">{s.guestName}</td>
                 <td data-label="Dates" className="px-4 py-2 text-slate-600">
                   {formatDay(s.checkInDate, { day: '2-digit', month: '2-digit' })} → {formatDay(s.checkOutDate, { day: '2-digit', month: '2-digit' })}
-                  <span className="block text-xs text-slate-500">{s.totals.nights} nuit{s.totals.nights > 1 ? 's' : ''}</span>
+                  <span className="block text-xs text-slate-500">{s.totals.nights} nuitée{s.totals.nights > 1 ? 's' : ''}</span>
                 </td>
                 <td data-label="Statut" className="px-4 py-2">
                   <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${STAY_STATUS[s.status].badge}`}>{STAY_STATUS[s.status].label}</span>

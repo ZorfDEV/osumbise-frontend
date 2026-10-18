@@ -207,7 +207,7 @@ export default function GroupFormModal({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
           <p className="text-sm text-slate-600">
-            {nights} nuit{nights > 1 ? 's' : ''} · estimation <span className="font-semibold text-heading">{fcfa(estimate)}</span>
+            {nights} nuitée{nights > 1 ? 's' : ''} · estimation <span className="font-semibold text-heading">{fcfa(estimate)}</span>
             <span className="block text-xs text-slate-500">Hébergement et taxe de séjour, hors consommations</span>
           </p>
           <div className="flex gap-2">

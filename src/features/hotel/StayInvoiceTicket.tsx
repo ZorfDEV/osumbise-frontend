@@ -54,7 +54,7 @@ export default function StayInvoiceTicket({
       <Line left="Arrivée" right={formatDay(stay.checkInDate)} />
       <Line left="Départ" right={formatDay(stay.checkOutDate)} />
       <div className="ticket-rule" />
-      <Line left={`Hébergement ${totals.nights} nuit${totals.nights > 1 ? 's' : ''} x ${money(stay.nightlyRate)}`} right={money(totals.lodging)} />
+      <Line left={`Hébergement ${totals.nights} nuitée${totals.nights > 1 ? 's' : ''} x ${money(stay.nightlyRate)}`} right={money(totals.lodging)} />
       {totals.tax > 0 && <Line left={`Taxe de séjour ${totals.nights} x ${money(stay.taxPerNight)}`} right={money(totals.tax)} />}
       {roomCharges.length > 0 && (
         <>

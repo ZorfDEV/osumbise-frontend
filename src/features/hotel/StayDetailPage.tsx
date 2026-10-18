@@ -408,7 +408,7 @@ export default function StayDetailPage() {
           <div className="space-y-1.5">
             <div className="flex justify-between text-slate-600">
               <span>
-                {totals.nights} nuit{totals.nights > 1 ? 's' : ''} × {fcfa(stay.nightlyRate)}
+                {totals.nights} nuitée{totals.nights > 1 ? 's' : ''} × {fcfa(stay.nightlyRate)}
               </span>
               <span>{fcfa(totals.lodging)}</span>
             </div>
@@ -425,7 +425,7 @@ export default function StayDetailPage() {
               <span>{fcfa(totals.total)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
-              <span>Déjà versé</span>
+              <span>Avance</span>
               <span>− {fcfa(totals.paid)}</span>
             </div>
             <div
@@ -439,7 +439,7 @@ export default function StayDetailPage() {
           </div>
           {stay.status === 'CHECKED_IN' && (
             <p className="mt-3 text-xs text-slate-500">
-              Le montant suit la date de départ prévue ; il s’ajuste aux nuits réelles lors du départ.
+              Le montant suit la date de départ prévue ; il s’ajuste aux nuitées réelles lors du départ.
             </p>
           )}
           <p className="mt-3 text-xs text-slate-500">Créé par {stay.user.name}</p>

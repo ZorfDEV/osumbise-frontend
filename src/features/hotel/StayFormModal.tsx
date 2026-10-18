@@ -192,7 +192,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
           <div className="rounded-lg bg-slate-50 p-4 text-sm sm:col-span-2">
             <div className="flex justify-between text-slate-600">
               <span>
-                {nights} nuit{nights > 1 ? 's' : ''} × {fcfa(Number(rate) || 0)}
+                {nights} nuitée{nights > 1 ? 's' : ''} × {fcfa(Number(rate) || 0)}
               </span>
               <span>{fcfa(nights * (Number(rate) || 0))}</span>
             </div>
