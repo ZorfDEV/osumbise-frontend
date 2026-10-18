@@ -6,6 +6,8 @@ export interface Customer {
   creditLimit: string | null;
   balance: string;
   isActive: boolean;
+  // Établissement où le compte a été créé (comptes communs aux établissements)
+  establishment?: { id: string; name: string };
 }
 
 export interface CustomerPayment {

@@ -72,7 +72,7 @@ export default function StayInvoiceTicket({
           {roomCharges.map((o) => (
             <Line
               key={o.id}
-              left={`${formatDay(o.createdAt, { day: '2-digit', month: '2-digit' })} ${o.table ? `Table ${o.table.label}` : 'Comptoir'}`}
+              left={`${formatDay(o.createdAt, { day: '2-digit', month: '2-digit' })} ${o.establishment && o.establishment.name !== header.name ? `${o.establishment.name} ` : ''}${o.table ? `Table ${o.table.label}` : 'Comptoir'}`}
               right={money(o.roomAmount)}
             />
           ))}

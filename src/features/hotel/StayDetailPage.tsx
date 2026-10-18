@@ -465,7 +465,9 @@ export default function StayDetailPage() {
                     <li key={o.id} className="py-2">
                       <div className="flex justify-between font-medium text-heading">
                         <span>
-                          {formatDay(o.createdAt, { day: '2-digit', month: '2-digit' })} · {o.table ? `Table ${o.table.label}` : 'Comptoir'}
+                          {formatDay(o.createdAt, { day: '2-digit', month: '2-digit' })}
+                          {o.establishment && o.establishment.name !== stay.establishment?.name ? ` · ${o.establishment.name}` : ''} ·{' '}
+                          {o.table ? `Table ${o.table.label}` : 'Comptoir'}
                         </span>
                         <span>{fcfa(roomAmount)}</span>
                       </div>

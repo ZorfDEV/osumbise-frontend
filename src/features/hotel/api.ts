@@ -31,6 +31,16 @@ export const fetchStays = async (params: { status?: StayStatus[]; from?: string;
       params: { ...params, status: params.status?.join(',') || undefined },
     })
   ).data.stays;
+// Clients en séjour dans tous les hôtels du propriétaire (« Sur la chambre »)
+export interface InHouseGuest {
+  id: string;
+  guestName: string;
+  room: { number: string; building: string };
+  group: { name: string } | null;
+  establishment: { id: string; name: string };
+}
+export const fetchInHouseGuests = async (): Promise<InHouseGuest[]> => (await api.get('/hotel/in-house')).data.stays;
+
 export const fetchStay = async (id: string): Promise<StayDetail> => (await api.get(`/hotel/stays/${id}`)).data.stay;
 export const createStay = async (payload: StayPayload): Promise<StayDetail> => (await api.post('/hotel/stays', payload)).data.stay;
 export const updateStay = async (id: string, payload: Partial<StayPayload>): Promise<StayDetail> =>

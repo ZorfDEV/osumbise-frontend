@@ -3,8 +3,8 @@ import { api } from '@/lib/axios';
 import { fetchMyCashSession } from '@/features/cash/api';
 import { useToast } from '@/lib/toast';
 import { payOrder, PaymentLine } from './api';
-import { fetchStays } from '@/features/hotel/api';
-import type { StayListItem } from '@/features/hotel/types';
+import { fetchInHouseGuests, type InHouseGuest } from '@/features/hotel/api';
+import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 
 
 interface Props {
@@ -46,19 +46,22 @@ export default function PaymentModal({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Clients en séjour (hôtel) : consommation imputée à leur chambre
-  const [inHouse, setInHouse] = useState<StayListItem[]>([]);
+  const [inHouse, setInHouse] = useState<InHouseGuest[]>([]);
+  const { current: activeEstablishment } = useActiveEstablishment();
   const [stayId, setStayId] = useState('');
 
   const hasCreditLineWithoutCustomer = lines.some((l) => l.method === 'CREDIT') && !hasCustomer;
   const hasRoomLine = lines.some((l) => l.method === 'ROOM');
   const methods = inHouse.length > 0 ? [...METHODS, ROOM_METHOD] : METHODS;
 
-  // Hors hôtel ou sans droit d'accès à la réception : simplement aucune chambre proposée
+  // Clients en séjour dans les hôtels du propriétaire, y compris quand ce
+  // restaurant est un autre établissement. Aucun hôtel : aucune chambre proposée.
   useEffect(() => {
-    fetchStays({ status: ['CHECKED_IN'] })
-      .then((stays) => setInHouse([...stays].sort((a, b) => a.room.number.localeCompare(b.room.number, 'fr', { numeric: true }))))
+    fetchInHouseGuests()
+      .then(setInHouse)
       .catch(() => setInHouse([]));
   }, []);
+  const otherHotel = (s: InHouseGuest) => s.establishment.id !== activeEstablishment.id;
 
   useEffect(() => {
     // Les encaissements vont dans la session de caisse de la personne connectée
@@ -188,6 +191,8 @@ export default function PaymentModal({
               {inHouse.map((s) => (
                 <option key={s.id} value={s.id}>
                   Chambre {s.room.building ? `${s.room.number} · ${s.room.building}` : s.room.number} — {s.guestName}
+                  {s.group ? ` (${s.group.name})` : ''}
+                  {otherHotel(s) ? ` — ${s.establishment.name}` : ''}
                 </option>
               ))}
             </select>

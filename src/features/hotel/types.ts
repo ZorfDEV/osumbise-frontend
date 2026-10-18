@@ -119,6 +119,7 @@ export interface StayDetail {
     createdAt: string;
     total: string;
     table: { label: string } | null;
+    establishment?: { name: string };
     items: { id: string; quantity: number; unitPrice: string; product: { name: string } }[];
     payments: { method: string; amount: string }[];
   }[];
