@@ -103,6 +103,9 @@ export interface Order {
   discount: string;
   tax: string;
   total: string;
+  // Espèces remises par le client et monnaie rendue
+  cashReceived?: string | null;
+  changeGiven?: string;
   items: OrderItem[];
   payments?: Payment[];
   user?: { name: string } | null;

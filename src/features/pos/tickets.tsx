@@ -77,6 +77,12 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
               right={money(Number(p.amount))}
             />
           ))}
+          {Number(order.changeGiven ?? 0) > 0 && (
+            <>
+              <Line left="Espèces reçues" right={money(Number(order.cashReceived))} />
+              <Line left="Monnaie rendue" right={money(Number(order.changeGiven))} bold />
+            </>
+          )}
         </>
       )}
       <Rule />

@@ -228,6 +228,18 @@ export default function ReceiptPage() {
                 <span>{formatFcfa(Number(p.amount))}</span>
               </div>
             ))}
+            {Number(order.changeGiven ?? 0) > 0 && (
+              <>
+                <div className="flex justify-between text-slate-500">
+                  <span>Espèces reçues</span>
+                  <span>{formatFcfa(Number(order.cashReceived))}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-slate-900">
+                  <span>Monnaie rendue</span>
+                  <span>{formatFcfa(Number(order.changeGiven))}</span>
+                </div>
+              </>
+            )}
           </div>
         )}
 

@@ -75,6 +75,7 @@ export default function PaymentModal({
 
   const totalEntered = lines.reduce((sum, l) => sum + (l.amount || 0), 0);
   const remaining = total - totalEntered;
+  const cashEntered = lines.filter((l) => l.method === 'CASH').reduce((sum, l) => sum + (l.amount || 0), 0);
 
   const updateLine = (index: number, patch: Partial<PaymentLine>) => {
     setLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
@@ -209,14 +210,24 @@ export default function PaymentModal({
           + Ajouter un mode de paiement (paiement mixte)
         </button>
 
-        <p className="mt-4 text-sm text-slate-600">
-          Reste à percevoir :{' '}
-          <span
-            className={remaining > 0 ? 'font-medium text-danger' : 'font-medium text-primary-600'}
-          >
-            {remaining.toLocaleString('fr-FR')} FCFA
-          </span>
-        </p>
+        {remaining >= 0 ? (
+          <p className="mt-4 text-sm text-slate-600">
+            Reste à percevoir :{' '}
+            <span className={remaining > 0 ? 'font-medium text-danger' : 'font-medium text-primary-600'}>
+              {remaining.toLocaleString('fr-FR')} FCFA
+            </span>
+          </p>
+        ) : (
+          <div className="mt-4 flex items-center justify-between rounded-lg bg-success-soft px-4 py-3 text-success-dark">
+            <span className="text-sm font-medium">Monnaie à rendre</span>
+            <span className="text-xl font-bold">{(-remaining).toLocaleString('fr-FR')} FCFA</span>
+          </div>
+        )}
+        {remaining < 0 && cashEntered < -remaining && (
+          <p className="mt-2 text-xs text-danger">
+            Seul un paiement en espèces peut dépasser le total : corrigez les montants.
+          </p>
+        )}
 
         {error && <p className="mt-2 text-sm text-danger">{error}</p>}
 
