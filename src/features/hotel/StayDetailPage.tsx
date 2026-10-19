@@ -26,14 +26,14 @@ const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER'
 // habitué) qui le réglera plus tard, depuis sa fiche Clients.
 function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: () => void; onPaid: (s: StayDetail) => void }) {
   const toast = useToast();
-  const [method, setMethod] = useState<StayPaymentMethod>('CASH');
+  const [method, setMethod] = useState<StayPaymentMethod>(stay.customer ? 'CREDIT' : 'CASH');
   const [amount, setAmount] = useState(String(Math.max(0, stay.totals.balance)));
   const [note, setNote] = useState('');
   const [cashSessionId, setCashSessionId] = useState<string | undefined>();
   const [hasSession, setHasSession] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customers, setCustomers] = useState<Customer[] | null>(null);
-  const [customerId, setCustomerId] = useState('');
+  const [customerId, setCustomerId] = useState(stay.customer?.id ?? '');
   const isCredit = method === 'CREDIT';
   const customer = customers?.find((c) => c.id === customerId);
 
@@ -377,6 +377,11 @@ export default function StayDetailPage() {
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.badge}`}>{st.label}</span>
           </div>
           <p className="text-sm text-slate-500">
+            {stay.customer && (
+              <Link to={`/customers/${stay.customer.id}`} className="mr-1 font-medium text-primary-700 hover:underline">
+                Compte {stay.customer.name} ·
+              </Link>
+            )}
             {stay.group && (
               <Link to={`/hotel/groups/${stay.group.id}`} className="mr-1 font-medium text-primary-700 hover:underline">
                 Groupe {stay.group.name} ·

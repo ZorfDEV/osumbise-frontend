@@ -9,6 +9,8 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 
 const formatFcfa = (v: number) => `${v.toLocaleString('fr-FR')} FCFA`;
 
+const STAY_STATUS_LABELS = { RESERVED: 'Réservé', CHECKED_IN: 'En cours', CHECKED_OUT: 'Terminé', CANCELLED: 'Annulé' } as const;
+
 const METHOD_LABELS: Record<string, string> = {
   CASH: 'Espèces',
   CARD: 'Carte',
@@ -208,6 +210,27 @@ export default function CustomerDetailPage() {
           <p className="text-sm text-slate-500">Rien n’a encore été mis sur ce compte</p>
         )}
       </div>
+
+      {/* Séjours à l'hôtel rattachés au client */}
+      {(customer.stays ?? []).length > 0 && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <h2 className="mb-3 text-sm font-semibold text-heading-muted">Séjours</h2>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {(customer.stays ?? []).map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <Link to={`/hotel/stays/${s.id}`} className="font-medium text-slate-900 hover:underline">
+                  Chambre {s.room.number}
+                  {s.room.building ? ` (${s.room.building})` : ''} — {s.guestName}
+                </Link>
+                <span className="text-xs text-slate-500">
+                  {new Date(s.checkInDate).toLocaleDateString('fr-FR')} → {new Date(s.checkOutDate).toLocaleDateString('fr-FR')} ·{' '}
+                  {STAY_STATUS_LABELS[s.status]} · {s.establishment.name}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Historique des règlements */}
       <div className="rounded-lg border border-slate-200 bg-surface p-4">

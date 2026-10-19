@@ -65,6 +65,9 @@ export interface StayTotals {
 
 export interface StayDetail {
   id: string;
+  customerId?: string | null;
+  // Client enregistré (compte client)
+  customer?: { id: string; name: string; phone: string | null; balance: string; creditLimit: string | null } | null;
   // Réservation de groupe (facture unique)
   group?: { id: string; name: string } | null;
   // En-tête de la facture
@@ -138,6 +141,8 @@ export interface StayPayload {
   notes?: string;
   nightlyRate?: number;
   checkInNow?: boolean;
+  // Client enregistré ; null le détache
+  customerId?: string | null;
 }
 
 export interface RoomPayload {

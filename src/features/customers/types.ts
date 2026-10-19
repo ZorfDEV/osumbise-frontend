@@ -36,7 +36,19 @@ export interface CustomerStayCharge {
   stay: { id: string; guestName: string; room: { number: string; building?: string } };
 }
 
+// Séjour d'hôtel rattaché au client
+export interface CustomerStay {
+  id: string;
+  guestName: string;
+  status: 'RESERVED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELLED';
+  checkInDate: string;
+  checkOutDate: string;
+  room: { number: string; building?: string };
+  establishment: { name: string };
+}
+
 export interface CustomerDetail extends Customer {
+  stays?: CustomerStay[];
   orders: CustomerOrderSummary[];
   payments: CustomerPayment[];
   stayPayments: CustomerStayCharge[];

@@ -4,6 +4,8 @@ import { useToast } from '@/lib/toast';
 import { apiError, createStay, updateStay } from './api';
 import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, nightsBetween, roomName, todayIso } from './labels';
 import type { Room, StayDetail, TaxRate } from './types';
+import { fetchCustomers } from '@/features/customers/api';
+import type { Customer } from '@/features/customers/types';
 
 interface Props {
   rooms: Room[];
@@ -26,6 +28,8 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
   const start = stay ? dayOf(stay.checkInDate) : walkIn ? todayIso() : initialCheckIn ?? todayIso();
 
   const [roomId, setRoomId] = useState(stay?.roomId ?? initialRoomId ?? '');
+  const [customerId, setCustomerId] = useState(stay?.customerId ?? '');
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [guestName, setGuestName] = useState(stay?.guestName ?? '');
   const [guestPhone, setGuestPhone] = useState(stay?.guestPhone ?? '');
   const [guestIdNumber, setGuestIdNumber] = useState(stay?.guestIdNumber ?? '');
@@ -37,6 +41,23 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
   const [notes, setNotes] = useState(stay?.notes ?? '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Clients enregistrés (comptes clients communs aux établissements)
+  useEffect(() => {
+    fetchCustomers()
+      .then((list) => setCustomers(list.filter((c) => c.isActive)))
+      .catch(() => setCustomers([]));
+  }, []);
+
+  // Choisir un client enregistré remplit son nom et son téléphone
+  const pickCustomer = (id: string) => {
+    setCustomerId(id);
+    const c = customers.find((x) => x.id === id);
+    if (c) {
+      setGuestName(c.name);
+      if (c.phone) setGuestPhone(c.phone);
+    }
+  };
 
   const activeRooms = rooms.filter((r) => r.isActive);
   const room = activeRooms.find((r) => r.id === roomId);
@@ -73,6 +94,8 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
       checkOutDate,
       notes: notes.trim() || undefined,
       nightlyRate: rate === '' ? undefined : Number(rate),
+      // Modification : vider le champ détache le client
+      customerId: customerId || (isEdit ? null : undefined),
     };
     setSaving(true);
     try {
@@ -117,6 +140,22 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
                 Cette chambre n’a pas encore été nettoyée.
               </p>
             )}
+          </div>
+
+          <div>
+            <label htmlFor="stay-customer" className="mb-1 block text-sm font-medium text-slate-700">
+              Client enregistré <span className="font-normal text-slate-500">(optionnel)</span>
+            </label>
+            <select id="stay-customer" value={customerId} onChange={(e) => pickCustomer(e.target.value)} className="input w-full">
+              <option value="">Aucun — client de passage</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.phone ? ` — ${c.phone}` : ''}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">Rattache le séjour à son compte : historique, et « Compte client » proposé à l’encaissement.</p>
           </div>
 
           <div>
