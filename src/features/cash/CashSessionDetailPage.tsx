@@ -9,7 +9,8 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { Printer } from 'lucide-react';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
-import { summarizeSession } from './summary';
+import { productTotals, summarizeSession } from './summary';
+import { invoiceNo } from '@/features/pos/invoiceNumber';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   SALE_CASH: 'Vente espèces',
@@ -146,6 +147,40 @@ export default function CashSessionDetailPage() {
         <p className="mb-6 text-sm text-slate-600">
           Solde théorique du tiroir en ce moment : <span className="font-semibold text-heading">{formatFcfa(summary.theoretical)}</span>
         </p>
+      )}
+
+      {(session.orders ?? []).length > 0 && (
+        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-surface p-4 lg:col-span-2">
+            <h2 className="mb-3 text-sm font-semibold text-heading-muted">Factures de la session ({(session.orders ?? []).length})</h2>
+            <ul className="divide-y divide-slate-100 text-sm">
+              {(session.orders ?? []).map((o) => (
+                <li key={o.id} className={`py-2 ${o.status === 'ANNULEE' ? 'opacity-60' : ''}`}>
+                  <div className="flex justify-between gap-3 font-medium text-heading">
+                    <span>
+                      N° {invoiceNo(o)} · {o.table ? `Table ${o.table.label}` : 'Comptoir'}
+                      {o.customer ? ` · ${o.customer.name}` : ''}
+                      {o.status === 'ANNULEE' ? ' · annulée' : ''}
+                    </span>
+                    <span>{formatFcfa(Number(o.total))}</span>
+                  </div>
+                  <p className="text-xs text-slate-500">{o.items.map((i) => `${i.quantity} × ${i.product.name}`).join(', ')}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-surface p-4">
+            <h2 className="mb-3 text-sm font-semibold text-heading-muted">Produits vendus</h2>
+            <ul className="space-y-1.5 text-sm">
+              {productTotals(session.orders).map((p) => (
+                <li key={p.name} className="flex justify-between text-slate-600">
+                  <span>{p.name}</span>
+                  <span className="font-semibold text-heading">{p.quantity}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       )}
 
       <PrintPortal>

@@ -49,4 +49,17 @@ export interface CashSession {
   actualBalance: string | null;
   discrepancy: string | null;
   movements: CashMovement[];
+  // Factures encaissées dans la session (détail du rapport de clôture)
+  orders?: SessionOrder[];
+}
+
+export interface SessionOrder {
+  id: string;
+  number: number | null;
+  status: string;
+  total: string;
+  table: { label: string } | null;
+  customer: { name: string } | null;
+  items: { quantity: number; product: { id: string; name: string } }[];
+  payments: { method: string; amount: string }[];
 }

@@ -2,7 +2,8 @@ import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
-import { summarizeSession } from './summary';
+import { otherMethodsTotal, productTotals, summarizeSession } from './summary';
+import { invoiceNo } from '@/features/pos/invoiceNumber';
 
 // Rapport de fin de service au format ticket thermique : rapport provisoire
 // (session ouverte) ou rapport de clôture (session fermée). Mêmes styles que
@@ -44,7 +45,8 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
       <Line left="Espèces" right={money(s.cashSales)} />
       <Line left="Mobile Money" right={money(s.mobileSales)} />
       <Line left="Carte" right={money(s.cardSales)} />
-      <Line left="TOTAL VENTES FCFA" right={money(s.totalSales)} bold />
+      {otherMethodsTotal(session.orders) > 0 && <Line left="Compte client / chambre / virement" right={money(otherMethodsTotal(session.orders))} />}
+      <Line left="TOTAL VENTES FCFA" right={money(s.totalSales + otherMethodsTotal(session.orders))} bold />
       <Rule />
       <div className="ticket-bold">TIROIR (ESPÈCES)</div>
       <Line left="Fond de caisse" right={money(s.openingBalance)} />
@@ -57,6 +59,32 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
         <>
           <Line left="Solde compté" right={money(Number(session.actualBalance))} bold />
           <Line left="ÉCART" right={money(Number(session.discrepancy))} bold />
+        </>
+      )}
+      {(session.orders ?? []).length > 0 && (
+        <>
+          <Rule />
+          <div className="ticket-bold">DÉTAIL DES FACTURES ({(session.orders ?? []).length})</div>
+          {(session.orders ?? []).map((o) => (
+            <div key={o.id} className="ticket-kitchen-item">
+              <Line
+                left={`N° ${invoiceNo(o)} ${o.table ? `T.${o.table.label}` : 'Comptoir'}${o.status === 'ANNULEE' ? ' (annulée)' : ''}`}
+                right={money(Number(o.total))}
+                bold
+              />
+              {o.items.map((i, idx) => (
+                <div key={idx}>
+                  {'  '}
+                  {i.quantity} x {i.product.name}
+                </div>
+              ))}
+            </div>
+          ))}
+          <Rule />
+          <div className="ticket-bold">PRODUITS VENDUS (TOTAL)</div>
+          {productTotals(session.orders).map((p) => (
+            <Line key={p.name} left={p.name} right={String(p.quantity)} />
+          ))}
         </>
       )}
       <Rule />
