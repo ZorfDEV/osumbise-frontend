@@ -8,6 +8,8 @@ import { fetchCustomers } from '@/features/customers/api';
 import type { Customer } from '@/features/customers/types';
 import { fetchOrders } from './api';
 import type { Order, OrderStatus } from './types';
+import { invoiceNo } from './invoiceNumber';
+import InvoiceSearch from './InvoiceSearch';
 
 // « À encaisser » : ce qui attend un paiement — les commandes servies ou en
 // cours pas encore réglées, et les comptes clients qui doivent de l'argent
@@ -66,6 +68,8 @@ export default function ToCollectPage() {
       <h1 className="mb-1 text-2xl font-semibold text-heading">À encaisser</h1>
       <p className="mb-4 text-sm text-slate-500">Les factures en attente de paiement, à valider quand le client vient régler.</p>
 
+      <InvoiceSearch />
+
       <div className="mb-4 flex flex-wrap gap-2" role="tablist">
         {[
           { v: 'orders' as const, label: `Commandes non payées${orders ? ` (${orders.length})` : ''}`, total: ordersTotal },
@@ -107,7 +111,9 @@ export default function ToCollectPage() {
                   return (
                     <tr key={o.id}>
                       <td data-label="Commande" className="px-4 py-2">
-                        <span className="font-medium text-heading">{o.table ? `Table ${o.table.label}` : 'Comptoir'}</span>
+                        <span className="font-medium text-heading">
+                          N° {invoiceNo(o)} · {o.table ? `Table ${o.table.label}` : 'Comptoir'}
+                        </span>
                         <span className="block text-xs text-slate-500">
                           {o.items.reduce((s, i) => s + i.quantity, 0)} article(s) · {since(o.createdAt)}
                           {o.user ? ` · ${o.user.name}` : ''}

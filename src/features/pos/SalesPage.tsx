@@ -5,10 +5,12 @@ import { api } from '@/lib/axios';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import CancelSaleModal from './CancelSaleModal';
+import { invoiceNo } from './invoiceNumber';
 import type { OrderStatus, PaymentMethod } from './types';
 
 interface Sale {
   id: string;
+  number?: number | null;
   status: OrderStatus;
   total: string;
   updatedAt: string;
@@ -97,7 +99,7 @@ export default function SalesPage() {
                     </td>
                     <td data-label="Vente" className="px-4 py-2">
                       <Link to={`/pos/${s.id}/receipt`} className="font-medium text-slate-900 hover:underline">
-                        #{s.id.slice(0, 8).toUpperCase()} · {s.table ? `Table ${s.table.label}` : 'Comptoir'}
+                        N° {invoiceNo(s)} · {s.table ? `Table ${s.table.label}` : 'Comptoir'}
                       </Link>
                       <span className="block text-xs text-slate-500">
                         {s.user?.name ?? '—'}

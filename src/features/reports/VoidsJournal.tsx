@@ -5,8 +5,9 @@ import { api } from '@/lib/axios';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import type { OrderVoid } from '@/features/pos/types';
+import { invoiceNo } from '@/features/pos/invoiceNumber';
 
-type VoidRow = OrderVoid & { order: { id: string; table: { label: string } | null } };
+type VoidRow = OrderVoid & { order: { id: string; number?: number | null; table: { label: string } | null } };
 
 const fcfa = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} FCFA`;
 const isoDay = (d: Date) => d.toLocaleDateString('en-CA');
@@ -82,7 +83,7 @@ export default function VoidsJournal() {
                       {r.type === 'ORDER' ? 'Commande annulée' : `${r.quantity} × ${r.productName} retiré`}
                     </Link>
                     <span className="block text-xs text-slate-500">
-                      {r.order.table ? `Table ${r.order.table.label}` : 'Comptoir'}
+                      N° {invoiceNo(r.order)} · {r.order.table ? `Table ${r.order.table.label}` : 'Comptoir'}
                       {r.wasPrepared ? ' · déjà préparé (perte de stock)' : ''}
                     </span>
                   </td>

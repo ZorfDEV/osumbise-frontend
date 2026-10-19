@@ -2,6 +2,7 @@ import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import { taxBreakdown, taxLabel } from './taxes';
+import { invoiceNo } from './invoiceNumber';
 import type { Order, OrderItem, PaymentMethod } from './types';
 
 // Tickets pour imprimante thermique : noir sur blanc, police à chasse fixe,
@@ -17,7 +18,6 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 };
 
 const money = (value: number) => `${Math.round(value).toLocaleString('fr-FR')}`;
-const shortId = (id: string) => `#${id.slice(0, 8).toUpperCase()}`;
 const time = (iso?: string) =>
   (iso ? new Date(iso) : new Date()).toLocaleString('fr-FR', {
     day: '2-digit',
@@ -50,7 +50,7 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
       </div>
       <Rule />
       {bill && <div className="ticket-center ticket-bold">ADDITION — NON PAYÉE</div>}
-      <Line left={bill ? 'Facture' : 'Reçu'} right={shortId(order.id)} />
+      <Line left={bill ? 'Facture N°' : 'Reçu N°'} right={invoiceNo(order)} />
       <Line left={order.table ? `Table ${order.table.label}` : 'Comptoir'} right={time(order.updatedAt)} />
       {order.user && <Line left="Servi par" right={order.user.name} />}
       {order.customer && <Line left="Client" right={order.customer.name} />}
@@ -104,7 +104,7 @@ export function KitchenTicket({
     <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
       <div className="ticket-center ticket-title">{isAddition ? '** AJOUT **' : 'BON CUISINE'}</div>
       <div className="ticket-center ticket-huge">{order.table ? `TABLE ${order.table.label}` : 'COMPTOIR'}</div>
-      <Line left={time()} right={shortId(order.id)} />
+      <Line left={time()} right={`N° ${invoiceNo(order)}`} />
       {order.user && <Line left="Serveur" right={order.user.name} />}
       <Rule />
       {items.map(({ item, quantity }) => (

@@ -90,6 +90,8 @@ export interface Payment {
 
 export interface Order {
   id: string;
+  // Numéro de facture de l'établissement (affiché 0001) ; absent hors ligne
+  number?: number | null;
   status: OrderStatus;
   tableId: string | null;
   table: DiningTable | null;

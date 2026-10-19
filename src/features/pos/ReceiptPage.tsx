@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import Alert from '@/components/ui/alert';
 import CancelSaleModal from './CancelSaleModal';
 import { taxBreakdown, taxLabel } from './taxes';
+import { invoiceNo } from './invoiceNumber';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -146,7 +147,7 @@ export default function ReceiptPage() {
         <div className="space-y-0.5 border-t border-dashed border-slate-300 py-3 text-xs">
           <div className="flex justify-between">
             <span>Reçu</span>
-            <span>#{order.id.slice(0, 8).toUpperCase()}</span>
+            <span>N° {invoiceNo(order)}</span>
           </div>
           <div className="flex justify-between">
             <span>{order.table ? `Table ${order.table.label}` : 'Comptoir'}</span>
