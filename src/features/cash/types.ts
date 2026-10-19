@@ -33,6 +33,7 @@ export interface CashSession {
       address: string | null;
       logo: string | null;
       phone?: string | null;
+    email?: string | null;
       postalBox?: string | null;
       nif?: string | null;
       rc?: string | null;

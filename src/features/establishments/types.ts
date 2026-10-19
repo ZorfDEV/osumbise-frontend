@@ -8,6 +8,7 @@ export interface Establishment {
   logo: string | null;
   // Mentions légales facultatives (en-tête des factures)
   phone?: string | null;
+  email?: string | null;
   postalBox?: string | null;
   nif?: string | null;
   rc?: string | null;

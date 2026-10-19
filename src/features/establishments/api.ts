@@ -14,6 +14,7 @@ export interface EstablishmentPayload {
   address?: string;
   // null efface la valeur
   phone?: string | null;
+  email?: string | null;
   postalBox?: string | null;
   nif?: string | null;
   rc?: string | null;

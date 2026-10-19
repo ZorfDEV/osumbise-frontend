@@ -20,10 +20,11 @@ import { useActiveEstablishment } from './ActiveEstablishmentContext';
 import { legalLines } from './legalInfo';
 
 // Mentions légales facultatives, imprimées en tête des factures
-type LegalForm = { phone: string; postalBox: string; nif: string; rc: string };
-const EMPTY_LEGAL: LegalForm = { phone: '', postalBox: '', nif: '', rc: '' };
+type LegalForm = { phone: string; email: string; postalBox: string; nif: string; rc: string };
+const EMPTY_LEGAL: LegalForm = { phone: '', email: '', postalBox: '', nif: '', rc: '' };
 const LEGAL_FIELDS: { key: keyof LegalForm; label: string; placeholder: string }[] = [
   { key: 'phone', label: 'Téléphone', placeholder: 'Ex. +241 77 00 00 00' },
+  { key: 'email', label: 'E-mail', placeholder: 'Ex. contact@monhotel.ga' },
   { key: 'postalBox', label: 'Boîte postale', placeholder: 'Ex. BP 1234 Libreville' },
   { key: 'nif', label: 'N° NIF', placeholder: 'Numéro d’identification fiscale' },
   { key: 'rc', label: 'N° RC', placeholder: 'Registre du commerce (RCCM)' },
@@ -31,6 +32,7 @@ const LEGAL_FIELDS: { key: keyof LegalForm; label: string; placeholder: string }
 // Champ vidé -> null : la mention disparaît des factures
 const legalPayload = (l: LegalForm) => ({
   phone: l.phone.trim() || null,
+  email: l.email.trim() || null,
   postalBox: l.postalBox.trim() || null,
   nif: l.nif.trim() || null,
   rc: l.rc.trim() || null,
@@ -235,7 +237,7 @@ export default function EstablishmentsPage() {
     setEditName(e.name);
     setEditType(e.type);
     setEditAddress(e.address ?? '');
-    setEditLegal({ phone: e.phone ?? '', postalBox: e.postalBox ?? '', nif: e.nif ?? '', rc: e.rc ?? '' });
+    setEditLegal({ phone: e.phone ?? '', email: e.email ?? '', postalBox: e.postalBox ?? '', nif: e.nif ?? '', rc: e.rc ?? '' });
     setEditLogoFile(null);
     setEditLogoRemoved(false);
   };
@@ -481,7 +483,7 @@ export default function EstablishmentsPage() {
                         {TYPE_LABELS[e.type]}
                         {e.address ? ` — ${e.address}` : ''}
                       </p>
-                      {legalLines({ phone: e.phone, postalBox: e.postalBox, nif: e.nif, rc: e.rc }).map((line) => (
+                      {legalLines({ phone: e.phone, email: e.email, postalBox: e.postalBox, nif: e.nif, rc: e.rc }).map((line) => (
                         <p key={line} className="text-xs text-slate-500">
                           {line}
                         </p>

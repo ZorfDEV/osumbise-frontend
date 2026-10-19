@@ -4,6 +4,7 @@
 export interface LegalInfo {
   address?: string | null;
   phone?: string | null;
+  email?: string | null;
   postalBox?: string | null;
   nif?: string | null;
   rc?: string | null;
@@ -14,6 +15,7 @@ const withBp = (value: string) => (/^b\.?\s?p\b/i.test(value) ? value : `BP ${va
 
 export const legalLines = (e: LegalInfo): string[] => {
   const contact = [e.postalBox && withBp(e.postalBox), e.phone && `Tél. ${e.phone}`].filter(Boolean).join(' · ');
+  const email = e.email ? e.email : '';
   const ids = [e.nif && `NIF : ${e.nif}`, e.rc && `RC : ${e.rc}`].filter(Boolean).join(' · ');
-  return [e.address ?? '', contact, ids].filter((line) => line.trim().length > 0);
+  return [e.address ?? '', contact, email, ids].filter((line) => line.trim().length > 0);
 };
