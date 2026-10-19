@@ -6,6 +6,9 @@ import { CustomerDetail } from './types';
 import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { Printer } from 'lucide-react';
+import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
+import CustomerStatementTicket from './CustomerStatementTicket';
 
 const formatFcfa = (v: number) => `${v.toLocaleString('fr-FR')} FCFA`;
 
@@ -29,6 +32,7 @@ export default function CustomerDetailPage() {
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { settings: printSettings } = usePrintSettings();
   // Session de caisse ouverte : un règlement espèces/carte/mobile y entre
   const [cashSessionId, setCashSessionId] = useState<string | undefined>();
 
@@ -123,8 +127,21 @@ export default function CustomerDetailPage() {
               Plafond {formatFcfa(Number(customer.creditLimit))}
             </p>
           )}
+          <button onClick={() => printTicket()} className="btn btn-secondary btn-sm mt-2">
+            <Printer size={14} />
+            Imprimer le relevé
+          </button>
         </div>
       </div>
+
+      <PrintPortal>
+        <CustomerStatementTicket
+          customer={customer}
+          charges={charges}
+          establishment={customer.issuer ?? { name: 'Établissement', logo: null }}
+          paperWidth={printSettings.paperWidth}
+        />
+      </PrintPortal>
 
       {/* Enregistrer un règlement */}
       <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">

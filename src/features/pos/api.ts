@@ -45,6 +45,11 @@ export const fetchOrders = async (params: {
   return res.data.orders;
 };
 
+// Addition demandée : la table passe en bleu sur le plan de salle
+export const setTableStatus = async (tableId: string, status: 'FREE' | 'OCCUPIED' | 'PENDING_ORDER' | 'BILL_REQUESTED') => {
+  await api.patch(`/tables/${tableId}/status`, { status });
+};
+
 export const fetchOrder = async (id: string): Promise<Order> => {
   const res = await api.get(`/orders/${id}`);
   return res.data.order;

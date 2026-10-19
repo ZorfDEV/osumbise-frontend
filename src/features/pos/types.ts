@@ -101,7 +101,7 @@ export interface Order {
   total: string;
   items: OrderItem[];
   payments?: Payment[];
-  user?: { name: string };
+  user?: { name: string } | null;
   establishment?: {
     name: string;
     address: string | null;

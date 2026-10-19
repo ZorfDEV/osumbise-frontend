@@ -48,6 +48,8 @@ export interface CustomerStay {
 }
 
 export interface CustomerDetail extends Customer {
+  // En-tête du relevé imprimé
+  issuer?: { name: string; logo: string | null; address?: string | null; phone?: string | null; email?: string | null; postalBox?: string | null; nif?: string | null; rc?: string | null } | null;
   stays?: CustomerStay[];
   orders: CustomerOrderSummary[];
   payments: CustomerPayment[];

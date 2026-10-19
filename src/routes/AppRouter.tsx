@@ -25,6 +25,7 @@ import CustomerDetailPage from '@/features/customers/CustomerDetailPage';
 import ReportsPage from '@/features/reports/ReportsPage';
 import GroupDetailPage from '@/features/hotel/GroupDetailPage';
 import SalesPage from '@/features/pos/SalesPage';
+import ToCollectPage from '@/features/pos/ToCollectPage';
 import ProtectedRoute from './ProtectedRoute';
 import PlatformAdminRoute from './PlatformAdminRoute';
 import RootRoute from './RootRoute';
@@ -99,6 +100,7 @@ export default function AppRouter() {
             <Route path="/customers/:id" element={<CustomerDetailPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/sales" element={<SalesPage />} />
+            <Route path="/to-collect" element={<ToCollectPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/establishments" element={<EstablishmentsPage />} />
             <Route path="/hotel" element={<RoomsPage />} />

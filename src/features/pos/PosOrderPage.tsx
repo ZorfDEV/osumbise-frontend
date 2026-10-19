@@ -18,6 +18,7 @@ import {
   ShoppingBag,
   Star,
   SearchX,
+  Printer,
   Undo2,
   ChefHat,
   BellRing,
@@ -49,6 +50,9 @@ import Alert from '@/components/ui/alert';
 import type { ToastType } from '@/lib/toast';
 import { Order, OrderItem, Category, Product, OrderStatus } from './types';
 import PaymentModal from './PaymentModal';
+import { ReceiptTicket } from './tickets';
+import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
+import { setTableStatus } from './api';
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   BROUILLON: 'Brouillon',
@@ -205,6 +209,7 @@ export default function PosOrderPage() {
   const confirm = useConfirm();
   const toast = useToast();
   const { user } = useAuth();
+  const { settings: printSettings } = usePrintSettings();
   // Retrait d'article / annulation après envoi en cuisine : responsables seulement
   const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
   const [voidTarget, setVoidTarget] = useState<{ kind: 'item'; item: OrderItem } | { kind: 'order' } | null>(null);
@@ -412,6 +417,15 @@ export default function PosOrderPage() {
       }
     } catch (err) {
       toast.error(apiMessage(err, 'Action impossible'));
+    }
+  };
+
+  // Addition imprimée sans encaisser : le client voit sa facture avant de
+  // payer (ou avant de la mettre sur son compte). La table passe en « Addition ».
+  const handlePrintBill = async () => {
+    await printTicket();
+    if (order.table && isOnline && order.status !== 'BROUILLON') {
+      setTableStatus(order.table.id, 'BILL_REQUESTED').catch(() => undefined);
     }
   };
 
@@ -850,6 +864,16 @@ export default function PosOrderPage() {
               ) : (
                 <p className="text-center text-sm text-slate-500">{STATUS_LABELS[order.status]}</p>
               )}
+
+              {isOpenForVoid && order.items.length > 0 && (
+                <button onClick={handlePrintBill} className="btn btn-secondary mt-2 w-full">
+                  <Printer size={16} />
+                  Imprimer l’addition
+                </button>
+              )}
+              <PrintPortal>
+                <ReceiptTicket order={order} paperWidth={printSettings.paperWidth} bill />
+              </PrintPortal>
 
               {!isOpenForVoid && order.voids?.some((v) => v.type === 'ORDER') && (
                 <p className="mt-2 text-center text-xs text-slate-500">

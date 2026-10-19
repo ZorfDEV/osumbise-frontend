@@ -37,7 +37,8 @@ const Rule = () => <div className="ticket-rule" />;
 
 // --- Ticket client -------------------------------------------------------
 
-export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth: PaperWidth }) {
+// bill = addition imprimée avant l'encaissement (facture non payée)
+export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Order; paperWidth: PaperWidth; bill?: boolean }) {
   return (
     <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
       <div className="ticket-center">
@@ -48,9 +49,11 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
         {order.establishment && legalLines(order.establishment).map((line) => <div key={line}>{line}</div>)}
       </div>
       <Rule />
-      <Line left="Reçu" right={shortId(order.id)} />
+      {bill && <div className="ticket-center ticket-bold">ADDITION — NON PAYÉE</div>}
+      <Line left={bill ? 'Facture' : 'Reçu'} right={shortId(order.id)} />
       <Line left={order.table ? `Table ${order.table.label}` : 'Comptoir'} right={time(order.updatedAt)} />
       {order.user && <Line left="Servi par" right={order.user.name} />}
+      {order.customer && <Line left="Client" right={order.customer.name} />}
       <Rule />
       {order.items.map((item) => (
         <Line key={item.id} left={`${item.quantity} x ${item.product.name}`} right={money(Number(item.unitPrice) * item.quantity)} />
@@ -63,7 +66,7 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
         <Line key={taxLabel(t)} left={taxLabel(t)} right={money(t.amount)} />
       ))}
       <Line left="TOTAL TTC FCFA" right={money(Number(order.total))} bold />
-      {order.payments && order.payments.length > 0 && (
+      {!bill && order.payments && order.payments.length > 0 && (
         <>
           <Rule />
           {order.payments.map((p) => (
@@ -76,7 +79,7 @@ export function ReceiptTicket({ order, paperWidth }: { order: Order; paperWidth:
         </>
       )}
       <Rule />
-      <div className="ticket-center">Merci de votre visite !</div>
+      <div className="ticket-center">{bill ? 'À régler à la caisse. Merci !' : 'Merci de votre visite !'}</div>
       {/* Marge de fin : laisse la place à la coupe du papier */}
       <div className="ticket-feed" />
     </div>

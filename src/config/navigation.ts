@@ -12,6 +12,7 @@ import {
   ReceiptText,
   Users,
   Users2,
+  HandCoins,
   Building2,
   Settings,
   BedDouble,
@@ -63,6 +64,14 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['OWNER', 'ADMIN', 'COOK'],
     icon: ChefHat,
     visibleForTypes: ['BAR', 'RESTAURANT', 'HOTEL'],
+  },
+  {
+    // Factures en attente : commandes non payées et comptes clients à régler
+    to: '/to-collect',
+    label: 'À encaisser',
+    section: 'Vente',
+    roles: ['OWNER', 'ADMIN', 'CASHIER'],
+    icon: HandCoins,
   },
   {
     to: '/customers',
