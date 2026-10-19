@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
 import { ThemePicker } from '@/components/layout/ThemeToggle';
 import PrintSettingsCard from './PrintSettingsCard';
+import { playReadySound, useReadySoundSetting } from '@/lib/readySound';
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -88,6 +89,8 @@ export default function SettingsPage() {
       </div>
 
       <PrintSettingsCard />
+
+      <ReadySoundCard />
 
       <div className="rounded-lg border border-slate-200 bg-surface p-6">
         <h2 className="mb-1 text-sm font-semibold text-heading-muted">Mon profil</h2>
@@ -188,6 +191,28 @@ export default function SettingsPage() {
             {passwordForm.formState.isSubmitting ? 'Mise à jour...' : 'Changer le mot de passe'}
           </button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Carillon quand la cuisine marque une commande prête (réglage de ce poste)
+function ReadySoundCard() {
+  const { enabled, setEnabled } = useReadySoundSetting();
+  return (
+    <div className="rounded-lg border border-slate-200 bg-surface p-6">
+      <h2 className="mb-1 text-sm font-semibold text-heading-muted">Son « commande prête »</h2>
+      <p className="mb-4 text-xs text-slate-500">
+        Choix propre à cet appareil. Un carillon retentit quand la cuisine marque une commande prête (postes de la salle et de la caisse).
+      </p>
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="h-4 w-4" />
+          Jouer un son quand une commande est prête
+        </label>
+        <button type="button" onClick={playReadySound} className="btn btn-secondary btn-sm">
+          Tester le son
+        </button>
       </div>
     </div>
   );
