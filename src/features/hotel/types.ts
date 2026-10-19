@@ -11,6 +11,8 @@ export interface StaySummary {
   checkOutDate: string;
   // Réservation de groupe
   group?: { id: string; name: string } | null;
+  // Séjour en cours : état de la facture
+  billing?: { total: number; paid: number; balance: number } | null;
 }
 
 export interface Room {

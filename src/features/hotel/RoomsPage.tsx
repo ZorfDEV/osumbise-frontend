@@ -18,6 +18,25 @@ type FormState = { walkIn?: boolean; roomId?: string } | null;
 // Filtre du plan, choisi en cliquant sur un badge de la synthèse du jour
 type RoomFilter = RoomStatus | 'ARRIVALS' | 'DEPARTURES' | null;
 
+// État de la facture d'une chambre occupée : payée, avance versée, non payée
+function BillingBadge({ billing }: { billing: { total: number; paid: number; balance: number } }) {
+  const { label, cls, title } =
+    billing.balance <= 0
+      ? { label: 'Payée', cls: 'bg-success-soft text-success-dark', title: `Facture réglée (${fcfa(billing.total)})` }
+      : billing.paid > 0
+        ? {
+            label: `Avance ${fcfa(billing.paid)}`,
+            cls: 'bg-warning-soft text-warning-dark',
+            title: `Reste à payer : ${fcfa(billing.balance)}`,
+          }
+        : { label: 'Non payée', cls: 'bg-danger-soft text-danger-dark', title: `Reste à payer : ${fcfa(billing.balance)}` };
+  return (
+    <span title={title} className={`rounded-full px-1.5 py-0.5 text-[0.65rem] font-semibold ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 export default function RoomsPage() {
   const { user } = useAuth();
   const toast = useToast();
@@ -241,7 +260,10 @@ export default function RoomsPage() {
                           <>
                             <span className="block truncate font-medium text-heading">{c.guestName}</span>
                             {c.group && c.group.name !== c.guestName && <span className="block truncate text-slate-500">{c.group.name}</span>}
-                            <span className="text-slate-600">Départ {formatDay(c.checkOutDate, { day: '2-digit', month: '2-digit' })}</span>
+                            <span className="flex flex-wrap items-center justify-between gap-1">
+                              <span className="text-slate-600">Départ {formatDay(c.checkOutDate, { day: '2-digit', month: '2-digit' })}</span>
+                              {c.billing && <BillingBadge billing={c.billing} />}
+                            </span>
                           </>
                         ) : arrival ? (
                           <span className="block truncate font-medium text-info-dark">Arrivée : {arrival.guestName}</span>
