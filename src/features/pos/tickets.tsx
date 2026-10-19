@@ -54,6 +54,7 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
       <Line left={order.table ? `Table ${order.table.label}` : 'Comptoir'} right={time(order.updatedAt)} />
       {order.user && <Line left="Servi par" right={order.user.name} />}
       {order.customer && <Line left="Client" right={order.customer.name} />}
+      {order.followsOrder && <Line left="Suite de la facture" right={`N° ${invoiceNo(order.followsOrder)}`} />}
       <Rule />
       {order.items.map((item) => (
         <Line key={item.id} left={`${item.quantity} x ${item.product.name}`} right={money(Number(item.unitPrice) * item.quantity)} />

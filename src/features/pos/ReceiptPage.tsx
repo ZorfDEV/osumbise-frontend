@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { Printer } from 'lucide-react';
-import { loadOrder } from './offlineApi';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Plus, Printer } from 'lucide-react';
+import { createOrder, loadOrder } from './offlineApi';
+import { useToast } from '@/lib/toast';
 import { Order, PaymentMethod } from './types';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
@@ -27,6 +28,9 @@ const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;
 
 export default function ReceiptPage() {
   const { orderId } = useParams<{ orderId: string }>();
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [creatingFollowUp, setCreatingFollowUp] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [order, setOrder] = useState<Order | null>(null);
   const { settings } = usePrintSettings();
@@ -93,7 +97,26 @@ export default function ReceiptPage() {
         <Link to="/tables" className="text-sm text-slate-500 hover:text-slate-900">
           ← Retour aux tables
         </Link>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          {/* Le client recommande après avoir payé : nouvelle facture liée à celle-ci */}
+          <button
+            onClick={async () => {
+              setCreatingFollowUp(true);
+              try {
+                const next = await createOrder({ followsOrderId: order.id });
+                navigate(`/pos/${next.id}`);
+              } catch {
+                toast.error('Impossible de créer la nouvelle commande');
+                setCreatingFollowUp(false);
+              }
+            }}
+            disabled={creatingFollowUp}
+            aria-busy={creatingFollowUp}
+            className="btn btn-secondary"
+          >
+            <Plus size={16} />
+            Nouvelle commande pour ce client
+          </button>
           {isManager && (
             <button onClick={() => setCancelling(true)} className="btn btn-secondary">
               Annuler la vente
@@ -149,6 +172,12 @@ export default function ReceiptPage() {
             <span>Reçu</span>
             <span>N° {invoiceNo(order)}</span>
           </div>
+          {order.followsOrder && (
+            <div className="flex justify-between">
+              <span>Suite de la facture</span>
+              <span>N° {invoiceNo(order.followsOrder)}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>{order.table ? `Table ${order.table.label}` : 'Comptoir'}</span>
             <span>

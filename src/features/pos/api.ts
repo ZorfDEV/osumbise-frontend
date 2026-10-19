@@ -59,6 +59,8 @@ export const createOrder = async (payload: {
   tableId?: string;
   customerId?: string;
   establishmentId?: string;
+  // Suite d'une facture déjà payée (même table, même client)
+  followsOrderId?: string;
 }): Promise<Order> => {
   const res = await api.post('/orders', payload);
   return res.data.order;

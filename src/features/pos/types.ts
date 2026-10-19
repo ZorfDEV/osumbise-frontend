@@ -92,6 +92,8 @@ export interface Order {
   id: string;
   // Numéro de facture de l'établissement (affiché 0001) ; absent hors ligne
   number?: number | null;
+  // Suite d'une facture déjà payée
+  followsOrder?: { id: string; number: number | null } | null;
   status: OrderStatus;
   tableId: string | null;
   table: DiningTable | null;

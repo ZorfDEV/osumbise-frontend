@@ -727,7 +727,8 @@ export default function PosOrderPage() {
                 <h2 className="text-lg font-semibold text-heading-muted">
                   {order.table ? `Table ${order.table.label}` : 'Comptoir'}
                 </h2>
-                <p className="mt-0.5 text-xs text-slate-500">Facture N° {invoiceNo(order)} · Statut : {STATUS_LABELS[order.status]}</p>
+                <p className="mt-0.5 text-xs text-slate-500">Facture N° {invoiceNo(order)}
+                  {order.followsOrder ? ` (suite de la N° ${invoiceNo(order.followsOrder)})` : ''} · Statut : {STATUS_LABELS[order.status]}</p>
               </div>
               <span className="shrink-0 text-xs font-medium text-slate-500">{plural(itemCount)}</span>
             </div>
