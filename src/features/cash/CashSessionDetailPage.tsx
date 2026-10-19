@@ -130,14 +130,15 @@ export default function CashSessionDetailPage() {
       </div>
 
       {/* Synthèse du service */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { label: 'Ventes', value: `${summary.salesCount}` },
+          { label: 'Total des ventes', value: formatFcfa(summary.totalSales), strong: true },
           { label: 'Espèces', value: formatFcfa(summary.cashSales) },
           { label: 'Mobile Money', value: formatFcfa(summary.mobileSales) },
           { label: 'Carte', value: formatFcfa(summary.cardSales) },
         ].map((k) => (
-          <div key={k.label} className="rounded-lg border border-slate-200 bg-surface p-3">
+          <div key={k.label} className={`rounded-lg border p-3 ${'strong' in k && k.strong ? 'border-action bg-primary-50' : 'border-slate-200 bg-surface'}`}>
             <p className="text-xs text-slate-500">{k.label}</p>
             <p className="text-lg font-semibold text-heading">{k.value}</p>
           </div>

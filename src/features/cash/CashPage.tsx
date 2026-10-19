@@ -9,6 +9,7 @@ import { ListSkeleton } from '@/components/ui/skeleton';
 import { Wallet } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import Alert from '@/components/ui/alert';
+import DailyCashierSummary from './DailyCashierSummary';
 
 const time = (iso: string) => new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
@@ -157,6 +158,7 @@ export default function CashPage() {
               </div>
             );
           })}
+          {isManager && registers.length > 0 && <DailyCashierSummary />}
           {registers.length === 0 && (
             <EmptyState
               icon={Wallet}
