@@ -20,6 +20,7 @@ export default function EditUserModal({ user, onClose, onSaved }: { user: AppUse
   const [email, setEmail] = useState(user.email);
   const [role, setRole] = useState<AssignableRole>(user.role as AssignableRole);
   const [establishmentId, setEstablishmentId] = useState(user.establishmentId ?? '');
+  const [multi, setMulti] = useState(!!user.multiEstablishment);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -34,6 +35,7 @@ export default function EditUserModal({ user, onClose, onSaved }: { user: AppUse
         email: email.trim().toLowerCase(),
         role,
         ...(isOwner && establishmentId ? { establishmentId } : {}),
+        ...(isOwner ? { multiEstablishment: role === 'ADMIN' && multi } : {}),
       });
       toast.success(`${name.trim()} modifié`);
       onSaved();
@@ -84,7 +86,7 @@ export default function EditUserModal({ user, onClose, onSaved }: { user: AppUse
           {isOwner && establishments.length > 1 && (
             <div>
               <label htmlFor="edit-user-establishment" className="mb-1 block text-sm font-medium text-slate-700">
-                Établissement
+                {multi && role === 'ADMIN' ? 'Établissement de rattachement' : 'Établissement'}
               </label>
               <select id="edit-user-establishment" value={establishmentId} onChange={(e) => setEstablishmentId(e.target.value)} className="input w-full">
                 {establishments.map((e) => (
@@ -94,6 +96,17 @@ export default function EditUserModal({ user, onClose, onSaved }: { user: AppUse
                 ))}
               </select>
             </div>
+          )}
+          {isOwner && role === 'ADMIN' && establishments.length > 1 && (
+            <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-slate-200 p-3 text-sm text-slate-700">
+              <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} className="mt-0.5 h-4 w-4" />
+              <span>
+                <span className="font-medium text-heading">Accès à tous mes établissements</span>
+                <span className="block text-xs text-slate-500">
+                  Il pourra passer d’un établissement à l’autre (hôtel, restaurant…) avec ses droits d’administrateur.
+                </span>
+              </span>
+            </label>
           )}
           {error && <p className="text-sm text-danger">{error}</p>}
         </div>

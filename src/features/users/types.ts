@@ -7,6 +7,7 @@ export interface AppUser {
   role: Role;
   establishmentId: string | null;
   isActive: boolean;
+  multiEstablishment?: boolean;
   establishment?: { name: string } | null;
 }
 

@@ -130,7 +130,9 @@ export default function UsersPage() {
                       </select>
                     )}
                   </td>
-                  <td data-label="Établissement" className="px-4 py-2 text-slate-600">{u.establishment?.name ?? '—'}</td>
+                  <td data-label="Établissement" className="px-4 py-2 text-slate-600">
+                    {u.multiEstablishment ? 'Tous les établissements' : u.establishment?.name ?? '—'}
+                  </td>
                   <td data-label="Statut" className="px-4 py-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-medium ${

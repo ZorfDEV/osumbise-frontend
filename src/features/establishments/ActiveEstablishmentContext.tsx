@@ -37,7 +37,10 @@ const listKey = (userId: string) => `osumbise:establishments:${userId}`;
 
 export function ActiveEstablishmentProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const isOwner = !!user && user.role === 'OWNER' && !user.establishmentId;
+  // Peut choisir son établissement : le propriétaire, ou un administrateur à
+  // qui il a donné accès à tous ses établissements
+  const isOwner =
+    !!user && ((user.role === 'OWNER' && !user.establishmentId) || (user.role === 'ADMIN' && !!user.multiEstablishment));
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [activeId, setActiveIdState] = useState<string | null>(null);
   // Valeur courante lue par reload() sans le recréer à chaque changement
@@ -92,7 +95,11 @@ export function ActiveEstablishmentProvider({ children }: { children: ReactNode 
     setEstablishments(list);
     // On garde le choix précédent s'il existe toujours, sinon le premier
     const stored = read(storageKey(user.id));
-    const current = list.find((e) => e.id === (activeIdRef.current ?? stored)) ?? list[0];
+    // Administrateur : son établissement de rattachement par défaut
+    const current =
+      list.find((e) => e.id === (activeIdRef.current ?? stored)) ??
+      list.find((e) => e.id === user.establishmentId) ??
+      list[0];
     apply(current?.id ?? null);
     setReady(true);
   }, [isOwner, user, apply]);

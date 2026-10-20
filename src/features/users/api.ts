@@ -25,6 +25,7 @@ export interface UpdateUserPayload {
   role?: AssignableRole;
   establishmentId?: string;
   isActive?: boolean;
+  multiEstablishment?: boolean;
 }
 
 export const updateUser = async (id: string, payload: UpdateUserPayload): Promise<AppUser> => {

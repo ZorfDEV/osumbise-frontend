@@ -14,5 +14,7 @@ export interface AuthUser {
   organization: { name: string };
   hasSubscription: boolean;
   isPlatformAdmin: boolean;
+  // Administrateur ayant accès à tous les établissements du propriétaire
+  multiEstablishment?: boolean;
   establishmentType: EstablishmentType | null;
 }
