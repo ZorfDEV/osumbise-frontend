@@ -37,6 +37,20 @@ export const ROOM_STATUS: Record<RoomStatus, { label: string; card: string; dot:
   },
 };
 
+// Statut affiché sur le plan : « Réservée » (bleu) = chambre libre dont le
+// client attendu aujourd'hui (ou avant) n'est pas encore arrivé
+export type RoomDisplayStatus = RoomStatus | 'RESERVED';
+export const ROOM_DISPLAY: Record<RoomDisplayStatus, (typeof ROOM_STATUS)[RoomStatus]> = {
+  ...ROOM_STATUS,
+  RESERVED: {
+    label: 'Réservée',
+    card: 'border-info/40 bg-info-soft/40',
+    dot: 'bg-info',
+    badge: 'bg-info-soft text-info-dark',
+    icon: 'text-info-dark',
+  },
+};
+
 export const STAY_STATUS: Record<StayStatus, { label: string; badge: string; bar: string }> = {
   RESERVED: { label: 'Réservé', badge: 'bg-info-soft text-info-dark', bar: 'bg-info-soft text-info-dark border-info/40' },
   CHECKED_IN: { label: 'En cours', badge: 'bg-success-soft text-success-dark', bar: 'bg-success-soft text-success-dark border-success/40' },

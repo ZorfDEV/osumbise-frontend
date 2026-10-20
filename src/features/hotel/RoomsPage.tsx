@@ -8,7 +8,7 @@ import { getSocket } from '@/lib/socket';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import { apiError, checkInStay, fetchRooms, fetchTaxRates, setRoomStatus } from './api';
-import { CATEGORY_LABELS, dayOf, fcfa, formatDay, ROOM_STATUS, roomName, todayIso } from './labels';
+import { CATEGORY_LABELS, dayOf, fcfa, formatDay, ROOM_DISPLAY, roomName, todayIso, type RoomDisplayStatus } from './labels';
 import StayFormModal from './StayFormModal';
 import GroupFormModal from './GroupFormModal';
 import RoomsSettings from './RoomsSettings';
@@ -16,7 +16,7 @@ import type { Room, RoomStatus, TaxRate } from './types';
 
 type FormState = { walkIn?: boolean; roomId?: string } | null;
 // Filtre du plan, choisi en cliquant sur un badge de la synthèse du jour
-type RoomFilter = RoomStatus | 'ARRIVALS' | 'DEPARTURES' | null;
+type RoomFilter = RoomDisplayStatus | 'ARRIVALS' | 'DEPARTURES' | null;
 
 // État de la facture d'une chambre occupée : payée, avance versée, non payée
 function BillingBadge({ billing }: { billing: { total: number; paid: number; balance: number } }) {
@@ -76,6 +76,8 @@ export default function RoomsPage() {
   const today = todayIso();
   const current = (r: Room) => r.stays.find((s) => s.status === 'CHECKED_IN');
   const arrivalToday = (r: Room) => r.stays.find((s) => s.status === 'RESERVED' && dayOf(s.checkInDate) <= today);
+  // Libre mais client attendu (pas encore arrivé) : affichée « Réservée »
+  const displayStatus = (r: Room): RoomDisplayStatus => (r.status === 'AVAILABLE' && arrivalToday(r) ? 'RESERVED' : r.status);
   const nextReservation = (r: Room) => r.stays.find((s) => s.status === 'RESERVED');
 
   const active = rooms.filter((r) => r.isActive);
@@ -85,13 +87,14 @@ export default function RoomsPage() {
   };
   const matches = (r: Room) =>
     filter === null ||
-    (filter === 'ARRIVALS' ? !!arrivalToday(r) : filter === 'DEPARTURES' ? isDeparture(r) : r.status === filter);
+    (filter === 'ARRIVALS' ? !!arrivalToday(r) : filter === 'DEPARTURES' ? isDeparture(r) : displayStatus(r) === filter);
   const visible = active.filter(matches);
 
   const counts = useMemo(() => {
-    const by = (s: RoomStatus) => active.filter((r) => r.status === s).length;
+    const by = (s: RoomDisplayStatus) => active.filter((r) => displayStatus(r) === s).length;
     return {
       AVAILABLE: by('AVAILABLE'),
+      RESERVED: by('RESERVED'),
       OCCUPIED: by('OCCUPIED'),
       CLEANING: by('CLEANING'),
       OUT_OF_SERVICE: by('OUT_OF_SERVICE'),
@@ -176,10 +179,10 @@ export default function RoomsPage() {
       {/* Synthèse du jour */}
       {!isLoading && active.length > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-2 text-sm" role="group" aria-label="Filtrer les chambres">
-          {(['AVAILABLE', 'OCCUPIED', 'CLEANING', 'OUT_OF_SERVICE'] as RoomStatus[]).map((s) => (
-            <button key={s} {...chipProps(s)} className={chipClass(s, ROOM_STATUS[s].badge)}>
-              <span className={`h-2 w-2 rounded-full ${ROOM_STATUS[s].dot}`} />
-              {ROOM_STATUS[s].label} : {counts[s]}
+          {(['AVAILABLE', 'RESERVED', 'OCCUPIED', 'CLEANING', 'OUT_OF_SERVICE'] as RoomDisplayStatus[]).map((s) => (
+            <button key={s} {...chipProps(s)} className={chipClass(s, ROOM_DISPLAY[s].badge)}>
+              <span className={`h-2 w-2 rounded-full ${ROOM_DISPLAY[s].dot}`} />
+              {ROOM_DISPLAY[s].label} : {counts[s]}
             </button>
           ))}
           <button {...chipProps('ARRIVALS')} className={chipClass('ARRIVALS', 'bg-info-soft text-info-dark')}>
@@ -226,7 +229,7 @@ export default function RoomsPage() {
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
                 {list.map((r) => {
-                  const st = ROOM_STATUS[r.status];
+                  const st = ROOM_DISPLAY[displayStatus(r)];
                   const c = current(r);
                   const arrival = arrivalToday(r);
                   return (
@@ -301,8 +304,8 @@ export default function RoomsPage() {
               </button>
             </div>
 
-            <span className={`mb-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${ROOM_STATUS[selected.status].badge}`}>
-              {ROOM_STATUS[selected.status].label}
+            <span className={`mb-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${ROOM_DISPLAY[displayStatus(selected)].badge}`}>
+              {ROOM_DISPLAY[displayStatus(selected)].label}
             </span>
 
             <div className="space-y-2">
