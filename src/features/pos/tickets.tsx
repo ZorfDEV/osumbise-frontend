@@ -1,7 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
-import { taxBreakdown, taxLabel } from './taxes';
+import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
 import type { Order, OrderItem, PaymentMethod } from './types';
 
@@ -61,9 +61,14 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
       ))}
       <Rule />
       {Number(order.discount) > 0 && <Line left="Sous-total" right={money(Number(order.subtotal))} />}
-      {Number(order.discount) > 0 && <Line left="Remise" right={`-${money(Number(order.discount))}`} />}
+      {Number(order.discount) > 0 && (
+        <Line
+          left={`Remise${order.discountRate != null ? ` ${Number(order.discountRate).toLocaleString('fr-FR')} %` : ''}`}
+          right={`-${money(Number(order.discount))}`}
+        />
+      )}
       <Line left="Total HT" right={money(Number(order.subtotal) - Number(order.discount))} />
-      {taxBreakdown(order.items).map((t) => (
+      {taxBreakdown(order.items, orderDiscount(order).ratio).map((t) => (
         <Line key={taxLabel(t)} left={taxLabel(t)} right={money(t.amount)} />
       ))}
       <Line left="TOTAL TTC FCFA" right={money(Number(order.total))} bold />

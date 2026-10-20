@@ -12,7 +12,7 @@ import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
 import Alert from '@/components/ui/alert';
 import CancelSaleModal from './CancelSaleModal';
-import { taxBreakdown, taxLabel } from './taxes';
+import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -37,6 +37,7 @@ export default function ReceiptPage() {
   const autoPrinted = useRef(false);
   const { user } = useAuth();
   const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
+  const isOwner = user?.role === 'OWNER';
   const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export default function ReceiptPage() {
             <Plus size={16} />
             Nouvelle commande pour ce client
           </button>
-          {isManager && (
+          {isOwner && (
             <button onClick={() => setCancelling(true)} className="btn btn-secondary">
               Annuler la vente
             </button>
@@ -204,11 +205,19 @@ export default function ReceiptPage() {
         </div>
 
         <div className="space-y-1 border-t border-dashed border-slate-300 py-3">
+          {Number(order.discount) > 0 && (
+            <div className="flex justify-between text-slate-500">
+              <span>
+                Remise{order.discountRate != null ? ` (${Number(order.discountRate).toLocaleString('fr-FR')} %)` : ''}
+              </span>
+              <span>− {formatFcfa(Number(order.discount))}</span>
+            </div>
+          )}
           <div className="flex justify-between text-slate-500">
             <span>Total HT</span>
             <span>{formatFcfa(Number(order.subtotal) - Number(order.discount))}</span>
           </div>
-          {taxBreakdown(order.items).map((t) => (
+          {taxBreakdown(order.items, orderDiscount(order).ratio).map((t) => (
             <div key={taxLabel(t)} className="flex justify-between text-slate-500">
               <span>{taxLabel(t)}</span>
               <span>{formatFcfa(t.amount)}</span>

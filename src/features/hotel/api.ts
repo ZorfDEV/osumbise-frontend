@@ -41,6 +41,12 @@ export interface InHouseGuest {
 }
 export const fetchInHouseGuests = async (): Promise<InHouseGuest[]> => (await api.get('/hotel/in-house')).data.stays;
 
+// Remise sur la facture du séjour (propriétaire / administrateur)
+export const setStayDiscount = async (
+  id: string,
+  payload: { mode: 'PERCENT' | 'AMOUNT' | 'NONE'; value?: number; reason?: string }
+): Promise<StayDetail> => (await api.patch(`/hotel/stays/${id}/discount`, payload)).data.stay;
+
 export const fetchStay = async (id: string): Promise<StayDetail> => (await api.get(`/hotel/stays/${id}`)).data.stay;
 export const createStay = async (payload: StayPayload): Promise<StayDetail> => (await api.post('/hotel/stays', payload)).data.stay;
 export const updateStay = async (id: string, payload: Partial<StayPayload>): Promise<StayDetail> =>

@@ -50,6 +50,14 @@ export const setTableStatus = async (tableId: string, status: 'FREE' | 'OCCUPIED
   await api.patch(`/tables/${tableId}/status`, { status });
 };
 
+// Remise sur la facture (propriétaire / administrateur)
+export const setOrderDiscount = async (
+  orderId: string,
+  payload: { mode: 'PERCENT' | 'AMOUNT' | 'NONE'; value?: number; reason?: string }
+): Promise<void> => {
+  await api.patch(`/orders/${orderId}/discount`, payload);
+};
+
 export const fetchOrder = async (id: string): Promise<Order> => {
   const res = await api.get(`/orders/${id}`);
   return res.data.order;

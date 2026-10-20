@@ -5,6 +5,7 @@ import { api } from '@/lib/axios';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import CancelSaleModal from './CancelSaleModal';
+import { useAuth } from '@/features/auth/AuthContext';
 import { invoiceNo } from './invoiceNumber';
 import type { OrderStatus, PaymentMethod } from './types';
 
@@ -36,6 +37,8 @@ const isoDay = (d: Date) => d.toLocaleDateString('en-CA');
 // Historique des ventes encaissées — retrouver une vente (commande de test,
 // réclamation) et l'annuler. Propriétaire et administrateur.
 export default function SalesPage() {
+  // Annuler une vente encaissée : propriétaire uniquement
+  const isOwner = useAuth().user?.role === 'OWNER';
   const [from, setFrom] = useState(() => isoDay(new Date()));
   const [to, setTo] = useState(() => isoDay(new Date()));
   const [sales, setSales] = useState<Sale[] | null>(null);
@@ -118,7 +121,7 @@ export default function SalesPage() {
                       {fcfa(Number(s.total))}
                     </td>
                     <td data-label="" className="px-4 py-2 text-right">
-                      {!cancelled && (
+                      {!cancelled && isOwner && (
                         <button onClick={() => setCancelling(s)} className="text-xs font-medium text-slate-500 hover:text-danger">
                           Annuler la vente
                         </button>

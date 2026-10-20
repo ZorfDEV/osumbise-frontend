@@ -19,6 +19,7 @@ export default function HotelReportCard({ hotel }: { hotel: HotelReport }) {
     { label: 'Hébergement facturé', value: fcfa(hotel.lodging) },
     { label: 'Taxe de séjour', value: fcfa(hotel.stayTax) },
     { label: 'Prestations (pressing, room service…)', value: fcfa(hotel.services ?? 0) },
+    { label: 'Remises accordées', value: `− ${fcfa(hotel.discounts ?? 0)}` },
     { label: 'Avances conservées (annulations)', value: fcfa(hotel.cancellationFees) },
     { label: 'Total hébergement facturé', value: fcfa(hotel.billed), strong: true },
   ];

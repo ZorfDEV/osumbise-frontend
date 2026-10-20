@@ -17,6 +17,7 @@ export interface HotelReport {
   lodging: number;
   stayTax: number;
   services?: number;
+  discounts?: number;
   cancellationFees: number;
   billed: number;
   received: Record<string, number>;

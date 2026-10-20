@@ -42,7 +42,9 @@ import { useConfirm } from '@/lib/confirm';
 import { useAuth } from '@/features/auth/AuthContext';
 import { cancelOrder, voidOrderItem } from './api';
 import VoidReasonModal from './VoidReasonModal';
-import { taxBreakdown, taxLabel } from './taxes';
+import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
+import DiscountModal from './DiscountModal';
+import { setOrderDiscount } from './api';
 import { useToast } from '@/lib/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
@@ -213,6 +215,9 @@ export default function PosOrderPage() {
   const { settings: printSettings } = usePrintSettings();
   // Retrait d'article / annulation après envoi en cuisine : responsables seulement
   const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
+  // Annulation de facture et remise : propriétaire uniquement
+  const isOwner = user?.role === 'OWNER';
+  const [discounting, setDiscounting] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ kind: 'item'; item: OrderItem } | { kind: 'order' } | null>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -818,11 +823,26 @@ export default function PosOrderPage() {
             </div>
 
             <div className="space-y-1.5 border-t border-slate-100 px-4 py-3 text-sm">
+              {Number(order.discount) > 0 && (
+                <>
+                  <div className="flex justify-between text-slate-500">
+                    <span>Sous-total</span>
+                    <span>{formatFcfa(Number(order.subtotal))}</span>
+                  </div>
+                  <div className="flex justify-between font-medium text-success-dark" title={order.discountReason ?? undefined}>
+                    <span>
+                      Remise{order.discountRate != null ? ` (${Number(order.discountRate).toLocaleString('fr-FR')} %)` : ''}
+                      {order.discountReason ? ` · ${order.discountReason}` : ''}
+                    </span>
+                    <span>− {formatFcfa(Number(order.discount))}</span>
+                  </div>
+                </>
+              )}
               <div className="flex justify-between text-slate-500">
                 <span>Total HT</span>
                 <span>{formatFcfa(Number(order.subtotal) - Number(order.discount))}</span>
               </div>
-              {taxBreakdown(order.items).map((t) => (
+              {taxBreakdown(order.items, orderDiscount(order).ratio).map((t) => (
                 <div key={taxLabel(t)} className="flex justify-between text-slate-500">
                   <span>{taxLabel(t)}</span>
                   <span>{formatFcfa(t.amount)}</span>
@@ -832,6 +852,11 @@ export default function PosOrderPage() {
                 <span>Total TTC</span>
                 <span>{formatFcfa(total)}</span>
               </div>
+              {isOwner && isOpenForVoid && isOnline && order.items.length > 0 && (
+                <button onClick={() => setDiscounting(true)} className="text-xs font-medium text-primary-700 hover:underline">
+                  {Number(order.discount) > 0 ? 'Modifier la remise' : 'Appliquer une remise'}
+                </button>
+              )}
             </div>
 
             <div className="border-t border-slate-100 p-4">
@@ -887,7 +912,10 @@ export default function PosOrderPage() {
                   Retirer un article ou annuler : demandez au responsable.
                 </p>
               )}
-              {(order.status === 'BROUILLON' || canVoid) && (
+              {isOpenForVoid && !isOwner && isManager && order.status !== 'BROUILLON' && (
+                <p className="mt-2 text-center text-xs text-slate-500">Annuler la commande : demandez au propriétaire.</p>
+              )}
+              {(order.status === 'BROUILLON' || (canVoid && isOwner)) && (
                 <button
                   onClick={handleCancel}
                   className="mt-2 w-full py-2 text-center text-xs font-medium text-slate-500 transition hover:text-danger"
@@ -931,6 +959,21 @@ export default function PosOrderPage() {
           </button>
         )}
       </div>
+
+      {discounting && (
+        <DiscountModal
+          base={Number(order.subtotal)}
+          baseLabel="Total HT avant remise"
+          current={{ amount: Number(order.discount), rate: order.discountRate != null ? Number(order.discountRate) : null, reason: order.discountReason ?? null }}
+          onClose={() => setDiscounting(false)}
+          onSubmit={async (payload) => {
+            await setOrderDiscount(order.id, payload);
+            toast.success(payload.mode === 'NONE' ? 'Remise retirée' : 'Remise appliquée');
+            setDiscounting(false);
+            reloadOrder();
+          }}
+        />
+      )}
 
       {voidTarget && (
         <VoidReasonModal

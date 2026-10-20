@@ -101,6 +101,9 @@ export interface Order {
   customer?: { id: string; name: string; balance: string } | null;
   subtotal: string;
   discount: string;
+  // Remise en % (sinon montant fixe) et son motif
+  discountRate?: string | null;
+  discountReason?: string | null;
   tax: string;
   total: string;
   // Espèces remises par le client et monnaie rendue

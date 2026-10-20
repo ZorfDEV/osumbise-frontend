@@ -60,6 +60,8 @@ export interface StayTotals {
   charges: number;
   // Prestations de l'hôtel (pressing, room service…)
   services: number;
+  // Remise accordée (hors taxe de séjour)
+  discount: number;
   total: number;
   paid: number;
   balance: number;
@@ -107,6 +109,8 @@ export interface StayDetail {
   checkedOutAt: string | null;
   nightlyRate: string;
   taxPerNight: string;
+  discountRate?: string | null;
+  discountReason?: string | null;
   status: StayStatus;
   notes: string | null;
   user: { name: string };

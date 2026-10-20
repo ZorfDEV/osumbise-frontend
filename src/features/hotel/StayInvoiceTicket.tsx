@@ -79,6 +79,12 @@ export default function StayInvoiceTicket({
         </>
       )}
       <div className="ticket-rule" />
+      {(totals.discount ?? 0) > 0 && (
+        <Line
+          left={`Remise${stay.discountRate != null ? ` ${Number(stay.discountRate).toLocaleString('fr-FR')} %` : ''}`}
+          right={`-${money(totals.discount)}`}
+        />
+      )}
       <Line left="TOTAL FCFA" right={money(totals.total)} bold />
       {stay.payments.length > 0 && (
         <>

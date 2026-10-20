@@ -17,6 +17,9 @@ import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_S
 import StayFormModal from './StayFormModal';
 import StayInvoiceTicket from './StayInvoiceTicket';
 import StayChargesCard from './StayChargesCard';
+import DiscountModal from '@/features/pos/DiscountModal';
+import { useAuth } from '@/features/auth/AuthContext';
+import { setStayDiscount } from './api';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
@@ -262,6 +265,9 @@ export default function StayDetailPage() {
   const [editing, setEditing] = useState(false);
   const [paying, setPaying] = useState(false);
   const [cancellingWithAdvance, setCancellingWithAdvance] = useState(false);
+  const [discounting, setDiscounting] = useState(false);
+  const { user } = useAuth();
+  const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
@@ -542,10 +548,24 @@ export default function StayDetailPage() {
                 <span>{fcfa(totals.services)}</span>
               </div>
             )}
+            {(totals.discount ?? 0) > 0 && (
+              <div className="flex justify-between font-medium text-success-dark" title={stay.discountReason ?? undefined}>
+                <span>
+                  Remise{stay.discountRate != null ? ` (${Number(stay.discountRate).toLocaleString('fr-FR')} %)` : ''}
+                  {stay.discountReason ? ` · ${stay.discountReason}` : ''}
+                </span>
+                <span>− {fcfa(totals.discount)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-slate-200 pt-1.5 font-semibold text-heading">
               <span>Total</span>
               <span>{fcfa(totals.total)}</span>
             </div>
+            {user?.role === 'OWNER' && stay.status !== 'CANCELLED' && (
+              <button onClick={() => setDiscounting(true)} className="text-xs font-medium text-primary-700 hover:underline">
+                {(totals.discount ?? 0) > 0 ? 'Modifier la remise' : 'Appliquer une remise'}
+              </button>
+            )}
             <div className="flex justify-between text-slate-600">
               <span>Avance</span>
               <span>− {fcfa(totals.paid)}</span>
@@ -594,6 +614,20 @@ export default function StayDetailPage() {
       <PrintPortal>
         <StayInvoiceTicket stay={stay} establishment={{ name: establishment.name, logo: establishment.logo }} paperWidth={settings.paperWidth} />
       </PrintPortal>
+
+      {discounting && (
+        <DiscountModal
+          base={totals.lodging + totals.charges + (totals.services ?? 0)}
+          baseLabel="Hébergement, consommations et prestations (hors taxe de séjour)"
+          current={{ amount: totals.discount ?? 0, rate: stay.discountRate != null ? Number(stay.discountRate) : null, reason: stay.discountReason ?? null }}
+          onClose={() => setDiscounting(false)}
+          onSubmit={async (payload) => {
+            const updated = await setStayDiscount(stay.id, payload);
+            setStay(updated);
+            setDiscounting(false);
+          }}
+        />
+      )}
 
       {cancellingWithAdvance && (
         <CancelWithAdvanceDialog

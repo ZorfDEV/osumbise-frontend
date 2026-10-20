@@ -22,10 +22,14 @@ const recalculateLocalTotals = (order: Order) => {
     0
   );
   // Même calcul que le serveur (order.service.ts) : taxe ajoutée, arrondie au franc
-  const tax = taxTotal(order.items);
+  const discount = order.discountRate != null
+    ? Math.round((subtotal * Number(order.discountRate)) / 100)
+    : Math.min(Number(order.discount), subtotal);
+  const tax = taxTotal(order.items, subtotal > 0 ? (subtotal - discount) / subtotal : 1);
   order.subtotal = String(subtotal);
+  order.discount = String(discount);
   order.tax = String(tax);
-  order.total = String(subtotal - Number(order.discount) + tax);
+  order.total = String(subtotal - discount + tax);
 };
 
 // --- Lecture ---------------------------------------------------------------
