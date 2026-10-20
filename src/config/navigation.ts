@@ -136,7 +136,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
 
   // Gestion
-  { to: '/expenses', label: 'Dépenses', section: 'Gestion', roles: ['OWNER', 'ADMIN', 'CASHIER'], icon: Receipt },
+  { to: '/expenses', label: 'Dépenses', section: 'Gestion', roles: ['OWNER', 'ADMIN'], icon: Receipt },
   { to: '/users', label: 'Utilisateurs', section: 'Gestion', roles: ['OWNER', 'ADMIN'], icon: Users },
   { to: '/establishments', label: 'Établissements', section: 'Gestion', roles: ['OWNER'], icon: Building2 },
   { to: '/settings', label: 'Paramètres', section: 'Gestion', roles: ALL_ROLES, icon: Settings },

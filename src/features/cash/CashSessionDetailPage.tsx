@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { fetchCashSession, closeCashSession, createCashMovement } from './api';
 import { CashSession, CashMovementType } from './types';
 import { useConfirm } from '@/lib/confirm';
+import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -28,8 +29,10 @@ export default function CashSessionDetailPage() {
   const confirm = useConfirm();
   const toast = useToast();
   const [session, setSession] = useState<CashSession | null>(null);
+  // Dépense : propriétaire et administrateur uniquement
+  const canAddExpense = useAuth().user?.role !== 'CASHIER';
   const [movementType, setMovementType] = useState<'EXPENSE' | 'REFUND' | 'ADJUSTMENT'>(
-    'EXPENSE'
+    canAddExpense ? 'EXPENSE' : 'REFUND'
   );
   const [amount, setAmount] = useState<number>(0);
   const [note, setNote] = useState('');
@@ -261,7 +264,7 @@ export default function CashSessionDetailPage() {
                 onChange={(e) => setMovementType(e.target.value as typeof movementType)}
                 className="input px-2"
               >
-                <option value="EXPENSE">Dépense</option>
+                {canAddExpense && <option value="EXPENSE">Dépense</option>}
                 <option value="REFUND">Remboursement</option>
                 <option value="ADJUSTMENT">Ajustement</option>
               </select>
