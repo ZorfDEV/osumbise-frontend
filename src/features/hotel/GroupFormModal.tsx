@@ -65,7 +65,8 @@ export default function GroupFormModal({
     if (name.trim().length < 2) return setError('Indiquez le nom du groupe ou de l’entreprise.');
     const ids = Object.keys(selected);
     if (ids.length === 0) return setError('Choisissez au moins une chambre.');
-    if (!checkInNow && checkOutDate <= checkInDate) return setError('La date de départ doit être après la date d’arrivée.');
+    if (!checkInNow && checkInDate < todayIso()) return setError('Impossible de réserver à une date passée : choisissez aujourd’hui ou une date à venir.');
+    if (checkOutDate <= (checkInNow ? todayIso() : checkInDate)) return setError('La date de départ doit être après la date d’arrivée.');
     setSaving(true);
     try {
       const group = await createStayGroup({
@@ -135,13 +136,13 @@ export default function GroupFormModal({
               <label htmlFor="group-in" className="mb-1 block text-sm font-medium text-slate-700">
                 Arrivée
               </label>
-              <input id="group-in" type="date" value={checkInNow ? todayIso() : checkInDate} disabled={checkInNow} onChange={(e) => setCheckInDate(e.target.value)} className="input w-full" />
+              <input id="group-in" type="date" min={todayIso()} value={checkInNow ? todayIso() : checkInDate} disabled={checkInNow} onChange={(e) => setCheckInDate(e.target.value)} className="input w-full" />
             </div>
             <div>
               <label htmlFor="group-out" className="mb-1 block text-sm font-medium text-slate-700">
                 Départ
               </label>
-              <input id="group-out" type="date" value={checkOutDate} onChange={(e) => setCheckOutDate(e.target.value)} className="input w-full" />
+              <input id="group-out" type="date" min={addDaysIso(checkInNow ? todayIso() : checkInDate, 1)} value={checkOutDate} onChange={(e) => setCheckOutDate(e.target.value)} className="input w-full" />
             </div>
             <label className="flex items-center gap-2 text-sm text-slate-700 sm:col-span-2">
               <input type="checkbox" checked={checkInNow} onChange={(e) => setCheckInNow(e.target.checked)} className="h-4 w-4" />

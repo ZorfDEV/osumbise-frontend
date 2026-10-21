@@ -300,8 +300,10 @@ export default function StaysPage() {
                             <button
                               key={d}
                               onClick={() => setForm({ roomId: r.id, checkIn: d })}
+                              // Jours passés : pas de réservation possible
+                              disabled={d < today}
                               aria-label={`Réserver la chambre ${roomName(r)} le ${formatDay(d)}`}
-                              className={`min-h-[3rem] border-r border-slate-100 hover:bg-primary-50 ${d === today ? 'bg-primary-50/50' : ''}`}
+                              className={`min-h-[3rem] border-r border-slate-100 ${d < today ? 'cursor-not-allowed bg-slate-50' : 'hover:bg-primary-50'} ${d === today ? 'bg-primary-50/50' : ''}`}
                             />
                           ))}
                         </div>

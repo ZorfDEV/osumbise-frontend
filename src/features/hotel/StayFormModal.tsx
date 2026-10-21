@@ -80,6 +80,12 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
     setError(null);
     if (!roomId) return setError('Choisissez une chambre.');
     if (guestName.trim().length < 2) return setError('Indiquez le nom du client.');
+    // Pas de réservation dans le passé (une réservation existante peut garder sa date)
+    const checkInChanged = !isEdit || checkInDate !== dayOf(stay.checkInDate);
+    if (!isCheckedIn && checkInChanged && checkInDate < todayIso()) {
+      return setError('Impossible de réserver à une date passée : choisissez aujourd’hui ou une date à venir.');
+    }
+    if (checkOutDate <= checkInDate) return setError('La date de départ doit être après la date d’arrivée.');
     if (room && adults + children > room.capacity) {
       return setError(`La chambre ${roomName(room)} accueille ${room.capacity} personne(s) au maximum.`);
     }
@@ -199,6 +205,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               id="stay-in"
               type="date"
               value={checkInDate}
+              min={isEdit && dayOf(stay.checkInDate) < todayIso() ? dayOf(stay.checkInDate) : todayIso()}
               onChange={(e) => setCheckInDate(e.target.value)}
               disabled={walkIn || isCheckedIn}
               className="input w-full"
@@ -212,7 +219,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               id="stay-out"
               type="date"
               value={checkOutDate}
-              min={addDaysIso(checkInDate, 1)}
+              min={addDaysIso(checkInDate < todayIso() && isCheckedIn ? todayIso() : checkInDate, 1)}
               onChange={(e) => setCheckOutDate(e.target.value)}
               className="input w-full"
             />
