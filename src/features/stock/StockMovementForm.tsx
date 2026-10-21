@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createEntry, createLoss, createAdjustment } from './api';
 import { Product } from '@/features/products/types';
 import { useToast } from '@/lib/toast';
+import ProductPicker from '@/features/products/ProductPicker';
 
 type Mode = 'ENTREE' | 'PERTE' | 'CASSE' | 'AJUSTEMENT';
 
@@ -63,19 +64,10 @@ export default function StockMovementForm({ mode, products, onDone, onCancel }: 
       <h3 className="text-sm font-semibold text-slate-900 sm:col-span-3">{MODE_LABELS[mode]}</h3>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Produit</label>
-        <select
-          value={productId}
-          onChange={(e) => setProductId(e.target.value)}
-          className="input w-full"
-        >
-          <option value="">— Choisir —</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} ({Number(p.stockCurrent)} {p.unit})
-            </option>
-          ))}
-        </select>
+        <label htmlFor="stock-product" className="mb-1 block text-sm font-medium text-slate-700">
+          Produit
+        </label>
+        <ProductPicker id="stock-product" products={products} value={productId} onChange={setProductId} />
       </div>
 
       <div>

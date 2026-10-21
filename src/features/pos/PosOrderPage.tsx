@@ -479,7 +479,7 @@ export default function PosOrderPage() {
   const normalizedSearch = searchQuery.trim().toLowerCase();
   // Une recherche porte sur tout le catalogue, quelle que soit la catégorie
   const filteredProducts = normalizedSearch
-    ? products.filter((p) => p.name.toLowerCase().includes(normalizedSearch))
+    ? products.filter((p) => p.name.toLowerCase().includes(normalizedSearch) || (!!p.sku && p.sku.toLowerCase().includes(normalizedSearch)))
     : selectedCategoryId === FREQUENT_CATEGORY
       ? frequentProducts
       : products.filter((p) => !selectedCategoryId || p.categoryId === selectedCategoryId);

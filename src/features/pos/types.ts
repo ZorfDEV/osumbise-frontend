@@ -10,6 +10,8 @@ export interface Product {
   id: string;
   name: string;
   sellingPrice: string;
+  // Code produit (SKU / code-barres), recherché comme le nom
+  sku?: string | null;
   // Taxe optionnelle (%)
   tva?: string;
   css?: string;

@@ -8,6 +8,8 @@ const productFormSchema = z
   .object({
     categoryId: z.string().uuid('Choisis une catégorie'),
     name: z.string().min(2, 'Le nom est requis'),
+    // Code produit (SKU / code-barres), facultatif : recherche au stock et au POS
+    sku: z.string().trim().max(60).optional(),
     sellingPrice: z.number().nonnegative(),
     cost: z.number().nonnegative().optional(),
     // Taxe optionnelle : champ vidé -> 0 (aucune taxe)
@@ -148,6 +150,13 @@ export default function ProductForm({
           className="input w-full"
         />
         {errors.name && <p className="mt-1 text-xs text-danger">{errors.name.message}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="product-sku" className="mb-1 block text-sm font-medium text-slate-700">
+          Code produit <span className="font-normal text-slate-500">(optionnel)</span>
+        </label>
+        <input id="product-sku" {...register('sku')} className="input w-full" placeholder="Ex. BIE-65 ou code-barres" />
       </div>
 
       <div>

@@ -98,6 +98,7 @@ export default function ProductDetailPage() {
             defaultValues={{
               categoryId: product.categoryId,
               name: product.name,
+              sku: product.sku ?? '',
               sellingPrice: Number(product.sellingPrice),
               cost: Number(product.cost),
               tva: Number(product.tva ?? 0),

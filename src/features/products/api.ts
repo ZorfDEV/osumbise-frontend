@@ -37,6 +37,7 @@ export const fetchProduct = async (id: string): Promise<ProductDetail> => {
 export interface ProductPayload {
   categoryId?: string;
   name?: string;
+  sku?: string;
   sellingPrice?: number;
   cost?: number;
   tva?: number;
