@@ -82,10 +82,15 @@ export default function CashPage() {
 
   const handleCreateRegister = async () => {
     if (!newName.trim()) return;
-    await createCashRegister({ name: newName.trim(), establishmentId });
-    setNewName('');
-    setShowForm(false);
-    load();
+    try {
+      await createCashRegister({ name: newName.trim(), establishmentId });
+      toast.success(`Caisse « ${newName.trim()} » créée`);
+      setNewName('');
+      setShowForm(false);
+      load();
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Création impossible');
+    }
   };
 
   const handleOpen = async (registerId: string) => {
@@ -105,7 +110,7 @@ export default function CashPage() {
     <div className="max-w-2xl">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-heading">Caisse</h1>
-        {isManager && (
+        {(isManager || user?.role === 'CASHIER') && (
           <button onClick={() => setShowForm((s) => !s)} className="btn btn-primary">
             {showForm ? 'Annuler' : 'Nouvelle caisse'}
           </button>
@@ -129,7 +134,9 @@ export default function CashPage() {
       )}
 
       {!isManager && (
-        <p className="mb-4 text-xs text-slate-500">Au plus 2 sessions par jour. Indiquez l’heure de fin de votre service à l’ouverture.</p>
+        <p className="mb-4 text-xs text-slate-500">
+          Au plus 2 sessions et 2 nouvelles caisses par jour. Indiquez l’heure de fin de votre service à l’ouverture.
+        </p>
       )}
 
       {locking && (
@@ -252,12 +259,8 @@ export default function CashPage() {
             <EmptyState
               icon={Wallet}
               title="Aucune caisse configurée"
-              description={
-                isManager
-                  ? 'Créez une caisse pour ouvrir une session et suivre les encaissements en espèces.'
-                  : 'Le responsable doit d’abord créer une caisse.'
-              }
-              action={isManager ? { label: 'Créer une caisse', onClick: () => setShowForm(true) } : undefined}
+              description="Créez une caisse pour ouvrir une session et suivre les encaissements en espèces."
+              action={{ label: 'Créer une caisse', onClick: () => setShowForm(true) }}
             />
           )}
         </div>
