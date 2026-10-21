@@ -95,6 +95,12 @@ export default function StayInvoiceTicket({
               right={Number(p.amount) < 0 ? `+${money(-Number(p.amount))}` : `-${money(p.amount)}`}
             />
           ))}
+          {stay.payments.filter((p) => Number(p.changeGiven ?? 0) > 0).map((p) => (
+            <div key={`change-${p.id}`}>
+              <Line left="Espèces reçues" right={money(p.cashReceived ?? 0)} />
+              <Line left="Monnaie rendue" right={money(p.changeGiven ?? 0)} bold />
+            </div>
+          ))}
         </>
       )}
       <Line left={totals.balance > 0 ? 'RESTE À PAYER' : 'SOLDÉ'} right={money(Math.max(0, totals.balance))} bold />

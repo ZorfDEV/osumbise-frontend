@@ -74,6 +74,12 @@ function GroupPaymentDialog({ group, onClose, onPaid }: { group: StayGroupDetail
           Reste à payer : <span className="font-semibold text-heading">{fcfa(Math.max(0, group.totals.balance))}</span>
           <span className="block text-xs text-slate-500">Le montant est réparti automatiquement sur les chambres du groupe.</span>
         </p>
+        {method === 'CASH' && Number(amount) > group.totals.balance && group.totals.balance > 0 && (
+          <div className="mb-3 flex items-center justify-between rounded-lg bg-success-soft px-4 py-3 text-success-dark">
+            <span className="text-sm font-medium">Monnaie à rendre</span>
+            <span className="text-xl font-bold">{fcfa(Number(amount) - group.totals.balance)}</span>
+          </div>
+        )}
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">
             {METHODS.map((m) => (

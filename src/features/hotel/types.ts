@@ -123,6 +123,9 @@ export interface StayDetail {
     user: { name: string };
     // Méthode CREDIT : compte client débité
     customer?: { id: string; name: string } | null;
+    // Espèces remises et monnaie rendue
+    cashReceived?: string | null;
+    changeGiven?: string;
   }[];
   orders: {
     id: string;

@@ -73,6 +73,12 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
               right={Number(p.amount) < 0 ? `+${money(-Number(p.amount))}` : `-${money(p.amount)}`}
             />
           ))}
+          {payments.filter((p) => Number(p.changeGiven ?? 0) > 0).map((p) => (
+            <div key={`change-${p.id}`}>
+              <Line left="Espèces reçues" right={money(p.cashReceived ?? 0)} />
+              <Line left="Monnaie rendue" right={money(p.changeGiven ?? 0)} bold />
+            </div>
+          ))}
         </>
       )}
       <Rule />

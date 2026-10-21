@@ -71,7 +71,14 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
         cashSessionId: isCredit ? undefined : cashSessionId,
         customerId: isCredit ? customerId : undefined,
       });
-      toast.success(isCredit ? `${fcfa(value)} mis sur le compte de ${customer?.name ?? 'ce client'}` : `Versement de ${fcfa(value)} enregistré`);
+      const change = method === 'CASH' && value > stay.totals.balance ? value - Math.max(0, stay.totals.balance) : 0;
+      toast.success(
+        isCredit
+          ? `${fcfa(value)} mis sur le compte de ${customer?.name ?? 'ce client'}`
+          : change > 0
+            ? `Versement de ${fcfa(value - change)} enregistré — monnaie à rendre : ${fcfa(change)}`
+            : `Versement de ${fcfa(value)} enregistré`
+      );
       onPaid(updated);
     } catch (err) {
       toast.error(apiError(err, 'Impossible d’enregistrer le versement'));
@@ -93,6 +100,12 @@ function PaymentDialog({ stay, onClose, onPaid }: { stay: StayDetail; onClose: (
           Reste à payer : <span className="font-semibold text-heading">{fcfa(Math.max(0, stay.totals.balance))}</span>
           <span className="block text-xs text-slate-500">Acompte : saisissez un montant partiel.</span>
         </p>
+        {method === 'CASH' && Number(amount) > Math.max(0, stay.totals.balance) && stay.totals.balance > 0 && (
+          <div className="mb-3 flex items-center justify-between rounded-lg bg-success-soft px-4 py-3 text-success-dark">
+            <span className="text-sm font-medium">Monnaie à rendre</span>
+            <span className="text-xl font-bold">{fcfa(Number(amount) - stay.totals.balance)}</span>
+          </div>
+        )}
         {!hasSession && !isCredit && (
           <p className="mb-3 rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
             Vous n’avez pas de session de caisse ouverte : le versement sera enregistré sur le séjour, sans entrer en caisse.
@@ -508,6 +521,7 @@ export default function StayDetailPage() {
                       <span className="block text-xs text-slate-500">
                         {new Date(p.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })} · {p.user.name}
                         {p.note ? ` · ${p.note}` : ''}
+                        {Number(p.changeGiven ?? 0) > 0 ? ` · reçu ${fcfa(p.cashReceived ?? 0)}, rendu ${fcfa(p.changeGiven ?? 0)}` : ''}
                       </span>
                     </span>
                     <span className="font-medium text-heading">{fcfa(p.amount)}</span>
