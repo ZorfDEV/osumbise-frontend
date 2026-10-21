@@ -17,6 +17,7 @@ import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_S
 import StayFormModal from './StayFormModal';
 import StayInvoiceTicket from './StayInvoiceTicket';
 import StayChargesCard from './StayChargesCard';
+import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import DiscountModal from '@/features/pos/DiscountModal';
 import { useAuth } from '@/features/auth/AuthContext';
 import { setStayDiscount } from './api';
@@ -406,7 +407,7 @@ export default function StayDetailPage() {
                 Groupe {stay.group.name} ·
               </Link>
             )}
-            Chambre {roomName(stay.room)} · {CATEGORY_LABELS[stay.room.category]} · {stay.adults} adulte{stay.adults > 1 ? 's' : ''}
+            Facture N° {hotelInvoiceNo(stay)} · Chambre {roomName(stay.room)} · {CATEGORY_LABELS[stay.room.category]} · {stay.adults} adulte{stay.adults > 1 ? 's' : ''}
             {stay.children > 0 ? `, ${stay.children} enfant${stay.children > 1 ? 's' : ''}` : ''}
           </p>
         </div>

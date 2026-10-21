@@ -41,6 +41,8 @@ export interface TaxRate {
 
 export interface StayListItem {
   id: string;
+  // Numéro de facture de l'hôtel (H0001)
+  number?: number | null;
   roomId: string;
   room: { id: string; number: string; building?: string; category: RoomCategory };
   guestName: string;
@@ -72,6 +74,8 @@ export interface StayTotals {
 
 export interface StayDetail {
   id: string;
+  // Numéro de facture de l'hôtel (H0001)
+  number?: number | null;
   customerId?: string | null;
   // Client enregistré (compte client)
   customer?: { id: string; name: string; phone: string | null; balance: string; creditLimit: string | null } | null;

@@ -1,6 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
+import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
 import type { StayDetail } from './types';
 
@@ -47,7 +48,7 @@ export default function StayInvoiceTicket({
         <div>FACTURE DE SÉJOUR</div>
       </div>
       <div className="ticket-rule" />
-      <Line left="Facture" right={`#${stay.id.slice(0, 8).toUpperCase()}`} />
+      <Line left="Facture N°" right={hotelInvoiceNo(stay)} />
       <Line left="Client" right={stay.guestName} />
       {stay.guestPhone && <Line left="Téléphone" right={stay.guestPhone} />}
       <Line left="Chambre" right={`${roomName(stay.room)} (${CATEGORY_LABELS[stay.room.category]})`} />

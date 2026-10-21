@@ -114,6 +114,8 @@ export interface Order {
   user?: { name: string } | null;
   establishment?: {
     name: string;
+    // Préfixe du numéro de facture (R, E, G)
+    type?: string;
     address: string | null;
     logo: string | null;
     phone?: string | null;

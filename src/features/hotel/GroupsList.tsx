@@ -5,6 +5,7 @@ import { ListSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
 import { fetchStayGroups, type StayGroupListItem } from './groupApi';
 import { formatDay } from './labels';
+import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 
 // Onglet « Groupes » de la page Séjours : réservations de groupe récentes
 export default function GroupsList({ onCreate }: { onCreate: () => void }) {
@@ -56,6 +57,7 @@ export default function GroupsList({ onCreate }: { onCreate: () => void }) {
               <tr key={g.id}>
                 <td data-label="Groupe" className="px-4 py-2">
                   <Link to={`/hotel/groups/${g.id}`} className="font-medium text-heading hover:underline">
+                    {g.number ? `${hotelInvoiceNo(g)} · ` : ''}
                     {g.name}
                   </Link>
                   {g.customer && <span className="block text-xs text-slate-500">{g.customer.name}</span>}

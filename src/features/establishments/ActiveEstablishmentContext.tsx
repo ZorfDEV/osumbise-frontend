@@ -4,6 +4,7 @@ import { ALL_ESTABLISHMENTS, api, setActiveEstablishmentId } from '@/lib/axios';
 import { AppLoader } from '@/components/ui/skeleton';
 import { refreshOfflineCache } from '@/lib/offlineCache';
 import type { Establishment, EstablishmentType } from './types';
+import { setInvoiceEstablishmentType } from '@/features/pos/invoiceNumber';
 
 // Établissement "actif" d'un propriétaire (OWNER) : il n'est rattaché à aucun
 // établissement fixe et choisit, dans la Topbar, celui sur lequel il travaille.
@@ -141,6 +142,9 @@ export function ActiveEstablishmentProvider({ children }: { children: ReactNode 
       reload,
     };
   }, [establishments, activeId, isOwner, user, apply, reload]);
+
+  // Préfixe des numéros de facture (R, E, G) selon l'établissement actif
+  setInvoiceEstablishmentType(value.current.type);
 
   if (!ready) return <AppLoader />;
 

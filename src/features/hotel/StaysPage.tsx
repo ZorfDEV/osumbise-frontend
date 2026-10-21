@@ -12,6 +12,7 @@ import { addDaysIso, CATEGORY_LABELS, dayOf, formatDay, nightsBetween, roomName,
 import StayFormModal from './StayFormModal';
 import GroupFormModal from './GroupFormModal';
 import GroupsList from './GroupsList';
+import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import type { Room, StayListItem, StayStatus, TaxRate } from './types';
 
 type View = 'list' | 'planning' | 'groups';
@@ -81,7 +82,14 @@ export default function StaysPage() {
         .filter((s) =>
           filter !== 'today' ? true : (s.status === 'RESERVED' && dayOf(s.checkInDate) <= today) || (s.status === 'CHECKED_IN' && dayOf(s.checkOutDate) <= today)
         )
-        .filter((s) => !q || normalizeText(s.guestName).includes(q) || normalizeText(s.room.number).includes(q) || (!!s.guestPhone && s.guestPhone.includes(q)))
+        .filter(
+          (s) =>
+            !q ||
+            normalizeText(s.guestName).includes(q) ||
+            normalizeText(s.room.number).includes(q) ||
+            (!!s.guestPhone && s.guestPhone.includes(q)) ||
+            (!!s.number && normalizeText(hotelInvoiceNo(s)).replace(/^h0*/, 'h').includes(q.replace(/^h0*/, 'h')))
+        )
         .sort((a, b) =>
           sort === 'name'
             ? a.guestName.localeCompare(b.guestName, 'fr')
@@ -154,7 +162,7 @@ export default function StaysPage() {
             id="stays"
             query={query}
             onQueryChange={setQuery}
-            placeholder="Rechercher un client, une chambre, un téléphone"
+            placeholder="Rechercher un client, une chambre, un téléphone, une facture (H0012)"
             sort={sort}
             onSortChange={setSort}
             sortOptions={[
@@ -192,6 +200,7 @@ export default function StaysPage() {
                           {s.guestPhone && <span className="block text-xs text-slate-500">{s.guestPhone}</span>}
                         </td>
                         <td data-label="Chambre" className="px-4 py-2 text-slate-600">
+                          {s.number ? `${hotelInvoiceNo(s)} · ` : ''}
                           {roomName(s.room)} · {CATEGORY_LABELS[s.room.category]}
                           {s.group ? ` · Groupe ${s.group.name}` : ''}
                         </td>

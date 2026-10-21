@@ -5,6 +5,7 @@ import type { StayDetail, StayPaymentMethod, StayStatus, StayTotals } from './ty
 
 export interface StayGroupListItem {
   id: string;
+  number?: number | null;
   name: string;
   createdAt: string;
   customer: { name: string } | null;
@@ -13,6 +14,7 @@ export interface StayGroupListItem {
 
 export interface StayGroupDetail {
   id: string;
+  number?: number | null;
   name: string;
   contactPhone: string | null;
   notes: string | null;

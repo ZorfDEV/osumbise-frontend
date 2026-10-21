@@ -1,6 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
+import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
 import type { StayGroupDetail } from './groupApi';
 
@@ -33,7 +34,7 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
         <div>FACTURE DE GROUPE</div>
       </div>
       <Rule />
-      <Line left="Facture" right={`#${group.id.slice(0, 8).toUpperCase()}`} />
+      <Line left="Facture N°" right={hotelInvoiceNo(group)} />
       <Line left="Client" right={group.customer?.name ?? group.name} />
       {group.customer && <Line left="Groupe" right={group.name} />}
       {group.contactPhone && <Line left="Téléphone" right={group.contactPhone} />}

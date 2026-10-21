@@ -14,6 +14,7 @@ import { apiError } from './api';
 import { addStayGroupPayment, checkInStayGroup, checkOutStayGroup, fetchStayGroup, type StayGroupDetail } from './groupApi';
 import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import GroupInvoiceTicket from './GroupInvoiceTicket';
+import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import type { StayPaymentMethod } from './types';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
@@ -231,7 +232,7 @@ export default function GroupDetailPage() {
             {group.name}
           </h1>
           <p className="text-sm text-slate-500">
-            {totals.rooms} chambre{totals.rooms > 1 ? 's' : ''}
+            Facture N° {hotelInvoiceNo(group)} · {totals.rooms} chambre{totals.rooms > 1 ? 's' : ''}
             {group.customer ? ` · payé par ${group.customer.name}` : ''}
             {group.contactPhone ? ` · ${group.contactPhone}` : ''}
           </p>
