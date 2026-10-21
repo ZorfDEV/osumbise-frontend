@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import CommandPalette from './CommandPalette';
 import OrderReadyNotifier from './OrderReadyNotifier';
+import UpdatePrompt from './UpdatePrompt';
 import {
   ActiveEstablishmentProvider,
   useActiveEstablishment,
@@ -92,6 +93,7 @@ function AppShell() {
       </div>
       <CommandPalette key={scopeKey} open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
       <OrderReadyNotifier />
+      <UpdatePrompt />
     </div>
   );
 }

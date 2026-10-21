@@ -7,7 +7,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // Mise à jour proposée (bandeau UpdatePrompt) plutôt qu'imposée : un
+      // rechargement automatique couperait un encaissement en cours
+      registerType: 'prompt',
       // Ne met en cache QUE l'app shell (JS/CSS/HTML) : /api et /socket.io
       // doivent toujours être tentés en direct, jamais servis depuis le
       // cache du Service Worker — c'est offlineApi.ts qui gère leur secours
