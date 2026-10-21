@@ -25,6 +25,9 @@ export interface Room {
   capacity: number;
   nightlyRate: string;
   status: RoomStatus;
+  // Hors service : motif et date
+  outOfServiceReason?: string | null;
+  outOfServiceAt?: string | null;
   notes: string | null;
   isActive: boolean;
   // Séjours réservés ou en cours dont le départ n'est pas passé (3 max)

@@ -16,8 +16,9 @@ export const fetchRooms = async (): Promise<Room[]> => (await api.get('/hotel/ro
 export const createRoom = async (payload: RoomPayload): Promise<Room> => (await api.post('/hotel/rooms', payload)).data.room;
 export const updateRoom = async (id: string, payload: Partial<RoomPayload> & { isActive?: boolean }): Promise<Room> =>
   (await api.patch(`/hotel/rooms/${id}`, payload)).data.room;
-export const setRoomStatus = async (id: string, status: Exclude<RoomStatus, 'OCCUPIED'>): Promise<Room> =>
-  (await api.patch(`/hotel/rooms/${id}/status`, { status })).data.room;
+// reason : obligatoire pour OUT_OF_SERVICE
+export const setRoomStatus = async (id: string, status: Exclude<RoomStatus, 'OCCUPIED'>, reason?: string): Promise<Room> =>
+  (await api.patch(`/hotel/rooms/${id}/status`, { status, reason })).data.room;
 
 // --- Taxe de séjour ---
 export const fetchTaxRates = async (): Promise<TaxRate[]> => (await api.get('/hotel/tax-rates')).data.rates;

@@ -37,6 +37,72 @@ function BillingBadge({ billing }: { billing: { total: number; paid: number; bal
   );
 }
 
+const OUT_OF_SERVICE_REASONS = ['Panne de climatisation', 'Plomberie', 'Électricité', 'Travaux / rénovation', 'Nettoyage approfondi', 'Autre'];
+
+// Mise hors service : motif obligatoire (liste + précision)
+function OutOfServiceModal({ room, onClose, onConfirm }: { room: Room; onClose: () => void; onConfirm: (reason: string) => Promise<void> }) {
+  const [preset, setPreset] = useState('');
+  const [detail, setDetail] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const reason = preset === 'Autre' ? detail.trim() : [preset, detail.trim()].filter(Boolean).join(' — ');
+  const valid = !!preset && (preset !== 'Autre' || detail.trim().length >= 3);
+
+  const submit = async () => {
+    if (!valid) return setError(preset === 'Autre' ? 'Précisez le motif.' : 'Choisissez un motif.');
+    setSaving(true);
+    try {
+      await onConfirm(reason);
+    } catch (err) {
+      setError(apiError(err, 'Mise hors service impossible'));
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Mettre hors service">
+      <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-heading">Mettre la chambre {roomName(room)} hors service</h2>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
+            <X size={20} />
+          </button>
+        </div>
+        <p className="mb-4 text-sm text-slate-600">La chambre ne pourra plus être attribuée tant qu’elle n’est pas remise en service.</p>
+        <fieldset className="mb-4">
+          <legend className="mb-2 text-sm font-medium text-slate-700">Motif (obligatoire)</legend>
+          <div className="flex flex-wrap gap-2">
+            {OUT_OF_SERVICE_REASONS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                aria-pressed={preset === r}
+                onClick={() => setPreset(r)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${preset === r ? 'border-action bg-primary-50 text-primary-800 ring-1 ring-action' : 'border-slate-200 text-slate-600'}`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <label htmlFor="oos-detail" className="mb-1 block text-sm font-medium text-slate-700">
+          Précision {preset === 'Autre' ? '(obligatoire)' : '(optionnel)'}
+        </label>
+        <input id="oos-detail" value={detail} onChange={(e) => setDetail(e.target.value)} maxLength={150} className="input w-full" placeholder="Ex. fuite sous le lavabo, technicien prévu jeudi" />
+        {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+        <div className="mt-5 flex gap-2">
+          <button onClick={onClose} className="btn btn-secondary flex-1">
+            Annuler
+          </button>
+          <button onClick={submit} disabled={saving || !valid} aria-busy={saving} className="btn btn-danger flex-1">
+            Mettre hors service
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RoomsPage() {
   const { user } = useAuth();
   const toast = useToast();
@@ -50,6 +116,7 @@ export default function RoomsPage() {
   const [form, setForm] = useState<FormState>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [groupForm, setGroupForm] = useState(false);
+  const [outOfService, setOutOfService] = useState<Room | null>(null);
   const [busy, setBusy] = useState(false);
   const [filter, setFilter] = useState<RoomFilter>(null);
 
@@ -270,6 +337,8 @@ export default function RoomsPage() {
                           </>
                         ) : arrival ? (
                           <span className="block truncate font-medium text-info-dark">Arrivée : {arrival.guestName}</span>
+                        ) : r.status === 'OUT_OF_SERVICE' && r.outOfServiceReason ? (
+                          <span className="block truncate text-slate-600" title={r.outOfServiceReason}>{r.outOfServiceReason}</span>
                         ) : (
                           <span className="text-slate-500">{fcfa(r.nightlyRate)}/nuitée</span>
                         )}
@@ -307,6 +376,12 @@ export default function RoomsPage() {
             <span className={`mb-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${ROOM_DISPLAY[displayStatus(selected)].badge}`}>
               {ROOM_DISPLAY[displayStatus(selected)].label}
             </span>
+            {selected.status === 'OUT_OF_SERVICE' && selected.outOfServiceReason && (
+              <p className="-mt-2 mb-4 text-sm text-slate-600">
+                Motif : <span className="font-medium text-heading">{selected.outOfServiceReason}</span>
+                {selected.outOfServiceAt ? ` · depuis le ${formatDay(selected.outOfServiceAt, { day: '2-digit', month: '2-digit' })}` : ''}
+              </p>
+            )}
 
             <div className="space-y-2">
               {(() => {
@@ -379,7 +454,7 @@ export default function RoomsPage() {
                     )}
                     {!c && selected.status !== 'OUT_OF_SERVICE' && (
                       <button
-                        onClick={() => run(() => setRoomStatus(selected.id, 'OUT_OF_SERVICE'), `Chambre ${selected.number} hors service`)}
+                        onClick={() => setOutOfService(selected)}
                         disabled={busy}
                         className="btn btn-secondary w-full justify-start"
                       >
@@ -403,6 +478,19 @@ export default function RoomsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {outOfService && (
+        <OutOfServiceModal
+          room={outOfService}
+          onClose={() => setOutOfService(null)}
+          onConfirm={async (reason) => {
+            await setRoomStatus(outOfService.id, 'OUT_OF_SERVICE', reason);
+            toast.success(`Chambre ${roomName(outOfService)} hors service`);
+            setOutOfService(null);
+            load();
+          }}
+        />
       )}
 
       {groupForm && (
