@@ -16,9 +16,11 @@ export const createCashRegister = async (payload: {
 
 export const openCashSession = async (
   registerId: string,
-  openingBalance: number
+  openingBalance: number,
+  // Fin de service prévue (obligatoire pour une caissière)
+  plannedCloseAt?: string
 ): Promise<CashSession> => {
-  const res = await api.post(`/cash-registers/${registerId}/sessions`, { openingBalance });
+  const res = await api.post(`/cash-registers/${registerId}/sessions`, { openingBalance, plannedCloseAt });
   return res.data.session;
 };
 
@@ -27,6 +29,11 @@ export const openCashSession = async (
 export const fetchMyCashSession = async (): Promise<{ id: string; cashRegister: { name: string } } | null> => {
   const res = await api.get('/cash-sessions/mine');
   return res.data.session;
+};
+
+// Verrouiller / déverrouiller une caisse (propriétaire)
+export const lockCashRegister = async (id: string, locked: boolean, reason?: string): Promise<void> => {
+  await api.patch(`/cash-registers/${id}/lock`, { locked, reason });
 };
 
 export const fetchCashSession = async (id: string): Promise<CashSession> => {

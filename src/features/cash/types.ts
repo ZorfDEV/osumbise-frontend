@@ -2,7 +2,11 @@ export interface CashRegister {
   id: string;
   name: string;
   // Le backend ne renvoie que la session ouverte (le cas échéant), déjà filtrée
-  sessions: { id: string; openedAt: string; openedById: string; openedBy?: { name: string } }[];
+  sessions: { id: string; openedAt: string; plannedCloseAt?: string | null; openedById: string; openedBy?: { name: string } }[];
+  // Verrouillée par le propriétaire : aucune ouverture de session possible
+  isLocked?: boolean;
+  lockedReason?: string | null;
+  lockedAt?: string | null;
 }
 
 export type CashMovementType =
@@ -43,6 +47,8 @@ export interface CashSession {
   openedBy?: { name: string };
   closedBy?: { name: string } | null;
   openedAt: string;
+  // Fin de service prévue, indiquée à l'ouverture
+  plannedCloseAt?: string | null;
   openingBalance: string;
   closedAt: string | null;
   theoreticalBalance: string | null;

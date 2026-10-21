@@ -116,7 +116,8 @@ export default function CashSessionDetailPage() {
             {session.cashRegister?.name ?? 'Session de caisse'}
           </h1>
           <p className="text-sm text-slate-500">
-            {session.openedBy ? `${session.openedBy.name} · ` : ''}ouverte le {new Date(session.openedAt).toLocaleString('fr-FR')} — fond de caisse{' '}
+            {session.openedBy ? `${session.openedBy.name} · ` : ''}ouverte le {new Date(session.openedAt).toLocaleString('fr-FR')}
+            {session.plannedCloseAt ? ` · fin prévue à ${new Date(session.plannedCloseAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}` : ''} — fond de caisse{' '}
             {formatFcfa(Number(session.openingBalance))}
           </p>
           {session.closedAt && (

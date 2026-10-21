@@ -38,6 +38,7 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
       <Line left="Caisse" right={session.cashRegister?.name ?? '—'} />
       <Line left="Caissier" right={session.openedBy?.name ?? '—'} />
       <Line left="Ouverture" right={dateTime(session.openedAt)} />
+      {session.plannedCloseAt && <Line left="Fin prévue" right={dateTime(session.plannedCloseAt)} />}
       {session.closedAt && <Line left="Clôture" right={dateTime(session.closedAt)} />}
       {session.closedBy && session.closedBy.name !== session.openedBy?.name && <Line left="Clôturée par" right={session.closedBy.name} />}
       <Rule />
