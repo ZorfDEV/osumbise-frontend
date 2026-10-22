@@ -5,7 +5,7 @@ import { fetchTables, createTable, updateTable, deleteTable } from './api';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin, Plus, Pencil, Trash2 } from 'lucide-react';
 import { DiningTableIcon } from '@/components/ui/icons';
 import EmptyState from '@/components/ui/empty-state';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
@@ -202,7 +202,7 @@ export default function TablesManagePage() {
                   <td data-label="Statut" className="px-4 py-2 text-slate-600">{TABLE_STATUS_LABELS[t.status]}</td>
                   <td data-label="" className="px-4 py-2 text-right">
                     {editingId === t.id ? (
-                      <div className="flex justify-end gap-3">
+                      <div className="flex justify-end gap-2">
                         <button
                           onClick={saveEdit}
                           className="text-xs font-medium text-slate-900 hover:underline"
@@ -218,16 +218,12 @@ export default function TablesManagePage() {
                       </div>
                     ) : (
                       <div className="flex justify-end gap-3">
-                        <button
-                          onClick={() => startEdit(t)}
-                          className="text-xs font-medium text-slate-500 hover:text-slate-900"
-                        >
+                        <button onClick={() => startEdit(t)} className="btn btn-edit btn-sm">
+                          <Pencil size={14} />
                           Modifier
                         </button>
-                        <button
-                          onClick={() => handleDelete(t)}
-                          className="text-xs font-medium text-slate-500 hover:text-danger"
-                        >
+                        <button onClick={() => handleDelete(t)} className="btn btn-danger btn-sm">
+                          <Trash2 size={14} />
                           Supprimer
                         </button>
                       </div>

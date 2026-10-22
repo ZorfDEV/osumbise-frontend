@@ -16,6 +16,7 @@ import ProductForm, { PRODUCT_TYPE_LABELS } from './ProductForm';
 import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { Pencil, Trash2, RotateCcw, Plus } from 'lucide-react';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -45,8 +46,9 @@ export default function ProductDetailPage() {
 
   const handleToggleActive = async () => {
     if (!id) return;
+    if (product.isActive && !window.confirm(`Supprimer le produit « ${product.name} » ?`)) return;
     await updateProduct(id, { isActive: !product.isActive });
-    toast.success(product.isActive ? 'Produit désactivé' : 'Produit réactivé');
+    toast.success(product.isActive ? 'Produit supprimé' : 'Produit réactivé');
     reload();
   };
 
@@ -131,12 +133,23 @@ export default function ProductDetailPage() {
         <>
           <div className="mb-1 flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-heading">{product.name}</h1>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="text-sm font-medium text-slate-500 hover:text-slate-900"
-            >
-              Modifier
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={() => setIsEditing(true)} className="btn btn-edit btn-sm">
+                <Pencil size={14} />
+                Modifier
+              </button>
+              {product.isActive ? (
+                <button onClick={handleToggleActive} className="btn btn-danger btn-sm">
+                  <Trash2 size={14} />
+                  Supprimer
+                </button>
+              ) : (
+                <button onClick={handleToggleActive} className="btn btn-primary btn-sm">
+                  <RotateCcw size={14} />
+                  Réactiver
+                </button>
+              )}
+            </div>
           </div>
           <p className="mb-6 text-sm text-slate-500">{product.category?.name}</p>
 
@@ -277,27 +290,18 @@ export default function ProductDetailPage() {
                 onClick={handleAddIngredient}
                 className="btn btn-primary px-3"
               >
+                <Plus size={16} />
                 Ajouter
               </button>
             </div>
             {error && <p className="mt-2 text-sm text-danger">{error}</p>}
           </div>
 
-          <div className="mt-4">
-            <button
-              onClick={handleToggleActive}
-              className="text-sm font-medium text-slate-500 hover:text-danger"
-            >
-              {product.isActive ? 'Supprimer ce produit' : 'Réactiver ce produit'}
-            </button>
-            {product.isActive && (
-              <p className="mt-1 text-xs text-slate-500">
-                "Supprimer" désactive le produit plutôt que de l’effacer : ses ventes et
-                mouvements de stock passés doivent rester consultables dans l’historique. Il
-                disparaît du POS mais reste réactivable ici à tout moment.
-              </p>
-            )}
-          </div>
+          <p className="mt-4 text-xs text-slate-500">
+            {product.isActive
+              ? '« Supprimer » retire le produit du POS et de la liste ; ses ventes et mouvements de stock passés restent dans l’historique, et il reste réactivable.'
+              : 'Ce produit est supprimé : il n’apparaît plus au POS. « Réactiver » le remet en vente.'}
+          </p>
         </>
       )}
     </div>

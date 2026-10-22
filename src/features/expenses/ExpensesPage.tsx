@@ -10,7 +10,7 @@ import {
 import { ExpenseCategory, Expense } from './types';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Receipt } from 'lucide-react';
+import { Receipt, Plus } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 
@@ -136,6 +136,7 @@ export default function ExpensesPage() {
             onClick={handleAddCategory}
             className="btn btn-primary px-3"
           >
+            <Plus size={16} />
             Ajouter
           </button>
           <button

@@ -221,7 +221,7 @@ export default function RoomsSettings({
                       </button>
                     </td>
                     <td data-label="" className="px-3 py-2 text-right">
-                      <button onClick={() => startEdit(r)} aria-label={`Modifier la chambre ${r.number}`} className="btn btn-secondary btn-sm">
+                      <button onClick={() => startEdit(r)} aria-label={`Modifier la chambre ${r.number}`} className="btn btn-edit btn-sm">
                         <Pencil size={14} />
                         Modifier
                       </button>

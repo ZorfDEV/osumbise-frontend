@@ -5,7 +5,7 @@ import { fetchCategories, createCategory, updateCategory, deleteCategory } from 
 import { Category } from './types';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Tags } from 'lucide-react';
+import { Tags, Pencil, Trash2, Plus } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 
@@ -119,6 +119,7 @@ export default function CategoriesPage() {
           onClick={handleCreate}
           className="btn btn-primary"
         >
+          <Plus size={16} />
           Ajouter
         </button>
       </div>
@@ -166,7 +167,7 @@ export default function CategoriesPage() {
                   </td>
                   <td data-label="" className="px-4 py-2 text-right">
                     {editingId === c.id ? (
-                      <div className="flex justify-end gap-3">
+                      <div className="flex justify-end gap-2">
                         <button
                           onClick={saveEdit}
                           className="text-xs font-medium text-slate-900 hover:underline"
@@ -182,16 +183,12 @@ export default function CategoriesPage() {
                       </div>
                     ) : (
                       <div className="flex justify-end gap-3">
-                        <button
-                          onClick={() => startEdit(c)}
-                          className="text-xs font-medium text-slate-500 hover:text-slate-900"
-                        >
+                        <button onClick={() => startEdit(c)} className="btn btn-edit btn-sm">
+                          <Pencil size={14} />
                           Modifier
                         </button>
-                        <button
-                          onClick={() => handleDelete(c)}
-                          className="text-xs font-medium text-slate-500 hover:text-danger"
-                        >
+                        <button onClick={() => handleDelete(c)} className="btn btn-danger btn-sm">
+                          <Trash2 size={14} />
                           Supprimer
                         </button>
                       </div>

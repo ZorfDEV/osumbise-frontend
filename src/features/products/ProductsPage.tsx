@@ -7,6 +7,7 @@ import {
   createCategory,
   fetchProducts,
   createProduct,
+  updateProduct,
   uploadProductImage,
   resolveProductImageUrl,
 } from './api';
@@ -14,7 +15,7 @@ import { Category, Product, Unit } from './types';
 import ProductForm, { PRODUCT_TYPE_LABELS } from './ProductForm';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Package } from 'lucide-react';
+import { Package, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
 import { Pagination, usePagination } from '@/components/ui/pagination';
@@ -44,6 +45,8 @@ export default function ProductsPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<ProductSort>('name');
+  // Produits supprimés (désactivés) : masqués sauf demande
+  const [showDeleted, setShowDeleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -82,8 +85,33 @@ export default function ProductsPage() {
     load();
   };
 
+  // Suppression = désactivation (ventes et mouvements passés conservés),
+  // annulable quelques secondes comme pour les catégories
+  const handleDelete = (p: Product) => {
+    setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, isActive: false } : x)));
+    toast.undoable(`Produit « ${p.name} » supprimé`, {
+      onUndo: () => setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, isActive: true } : x))),
+      onCommit: async () => {
+        try {
+          await updateProduct(p.id, { isActive: false });
+        } catch {
+          toast.error('Suppression impossible');
+          load();
+        }
+      },
+    });
+  };
+
+  const handleRestore = async (p: Product) => {
+    await updateProduct(p.id, { isActive: true });
+    toast.success(`Produit « ${p.name} » réactivé`);
+    load();
+  };
+
+  const deletedCount = products.filter((p) => !p.isActive).length;
   const q = normalizeText(query);
   const filtered = products
+    .filter((p) => showDeleted || p.isActive)
     .filter((p) => !selectedCategoryId || p.categoryId === selectedCategoryId)
     .filter((p) => !q || normalizeText(p.name).includes(q) || (!!p.sku && normalizeText(p.sku).includes(q)))
     .sort((a, b) => {
@@ -100,7 +128,7 @@ export default function ProductsPage() {
     });
   const isFiltering = !!q || !!selectedCategoryId;
 
-  const pager = usePagination(filtered, { resetKey: `${query}|${selectedCategoryId}|${sort}` });
+  const pager = usePagination(filtered, { resetKey: `${query}|${selectedCategoryId}|${sort}|${showDeleted}` });
 
   return (
     <div>
@@ -108,8 +136,9 @@ export default function ProductsPage() {
         <h1 className="text-2xl font-semibold text-heading">Produits</h1>
         <button
           onClick={() => setShowForm((s) => !s)}
-          className="btn btn-primary"
+          className={showForm ? 'btn btn-secondary' : 'btn btn-primary'}
         >
+          {!showForm && <Plus size={16} />}
           {showForm ? 'Annuler' : 'Nouveau produit'}
         </button>
       </div>
@@ -174,6 +203,12 @@ export default function ProductsPage() {
         >
           + Nouvelle catégorie
         </button>
+        {deletedCount > 0 && (
+          <label className="ml-auto flex items-center gap-1 text-xs text-slate-500">
+            <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
+            Afficher les produits supprimés ({deletedCount})
+          </label>
+        )}
         <Link
           to="/categories"
           className="whitespace-nowrap text-xs font-medium text-slate-500 underline hover:text-slate-700"
@@ -198,6 +233,7 @@ export default function ProductsPage() {
             }}
             className="btn btn-primary px-3"
           >
+            <Plus size={16} />
             Ajouter
           </button>
           <button
@@ -225,6 +261,7 @@ export default function ProductsPage() {
                 <th className="px-4 py-2 font-medium">Prix</th>
                 <th className="px-4 py-2 font-medium">Stock</th>
                 <th className="px-4 py-2 font-medium">Statut</th>
+                <th className="px-4 py-2" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -288,14 +325,35 @@ export default function ProductsPage() {
                         p.isActive ? 'bg-success-soft text-success-dark' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
-                      {p.isActive ? 'Actif' : 'Désactivé'}
+                      {p.isActive ? 'Actif' : 'Supprimé'}
                     </span>
+                  </td>
+                  <td data-label="" className="px-4 py-2">
+                    <div className="flex justify-end gap-2">
+                      {p.isActive ? (
+                        <>
+                          <Link to={`/products/${p.id}`} className="btn btn-edit btn-sm">
+                            <Pencil size={14} />
+                            Modifier
+                          </Link>
+                          <button onClick={() => handleDelete(p)} className="btn btn-danger btn-sm">
+                            <Trash2 size={14} />
+                            Supprimer
+                          </button>
+                        </>
+                      ) : (
+                        <button onClick={() => handleRestore(p)} className="btn btn-primary btn-sm">
+                          <RotateCcw size={14} />
+                          Réactiver
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={7}>
                     {products.length === 0 ? (
                       <EmptyState compact icon={Package} title="Aucun produit pour l’instant" description="Ajoutez vos produits pour pouvoir les vendre au point de vente." action={{ label: 'Créer un produit', onClick: () => setShowForm(true) }} />
                     ) : (

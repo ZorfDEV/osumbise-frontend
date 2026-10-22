@@ -6,7 +6,7 @@ import { fetchSuppliers, createSupplier, updateSupplier, deleteSupplier } from '
 import { Supplier } from './types';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Truck } from 'lucide-react';
+import { Truck, Pencil, Trash2 } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import { Pagination, usePagination } from '@/components/ui/pagination';
 
@@ -235,17 +235,13 @@ export default function SuppliersPage() {
                         'Aucun détail'}
                     </p>
                   </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => startEdit(s)}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-900"
-                    >
+                  <div className="flex gap-2">
+                    <button onClick={() => startEdit(s)} className="btn btn-edit btn-sm">
+                      <Pencil size={14} />
                       Modifier
                     </button>
-                    <button
-                      onClick={() => handleDelete(s)}
-                      className="text-xs font-medium text-slate-500 hover:text-danger"
-                    >
+                    <button onClick={() => handleDelete(s)} className="btn btn-danger btn-sm">
+                      <Trash2 size={14} />
                       Supprimer
                     </button>
                   </div>

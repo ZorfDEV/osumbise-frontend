@@ -435,7 +435,7 @@ export default function StayDetailPage() {
             Imprimer la facture
           </button>
           {canEdit && (
-            <button onClick={() => setEditing(true)} className="btn btn-secondary">
+            <button onClick={() => setEditing(true)} className="btn btn-edit">
               <Pencil size={16} />
               Modifier
             </button>

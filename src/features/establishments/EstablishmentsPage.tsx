@@ -14,7 +14,7 @@ import { fetchSubscription } from '@/features/billing/api';
 import PaySubscriptionButton from '@/features/billing/PaySubscriptionButton';
 import { Subscription } from '@/features/billing/types';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Building2, ImagePlus, Trash2 } from 'lucide-react';
+import { Building2, ImagePlus, Trash2, Pencil } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import { useActiveEstablishment } from './ActiveEstablishmentContext';
 import { legalLines } from './legalInfo';
@@ -136,7 +136,7 @@ function LogoPicker({
             </button>
           )}
           {!file && shown && onRemove && (
-            <button type="button" onClick={onRemove} className="btn btn-secondary btn-sm text-danger">
+            <button type="button" onClick={onRemove} className="btn btn-danger btn-sm">
               <Trash2 size={14} />
               Retirer le logo
             </button>
@@ -490,7 +490,8 @@ export default function EstablishmentsPage() {
                       ))}
                     </div>
                   </div>
-                  <button onClick={() => startEdit(e)} className="btn btn-secondary btn-sm">
+                  <button onClick={() => startEdit(e)} className="btn btn-edit btn-sm">
+                    <Pencil size={14} />
                     Modifier
                   </button>
                 </div>

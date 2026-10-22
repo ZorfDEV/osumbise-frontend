@@ -32,7 +32,7 @@ export default function StayChargesCard({ stay, onChanged }: { stay: StayDetail;
           Prestations (pressing, room service…)
         </h2>
         {editable && (
-          <button onClick={() => setAdding(true)} className="btn btn-secondary btn-sm">
+          <button onClick={() => setAdding(true)} className="btn btn-primary btn-sm">
             <Plus size={14} />
             Ajouter
           </button>

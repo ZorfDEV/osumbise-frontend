@@ -8,6 +8,7 @@ import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { Pagination, usePagination } from '@/components/ui/pagination';
+import { Pencil } from 'lucide-react';
 
 const ASSIGNABLE_ROLES: AssignableRole[] = ['ADMIN', 'CASHIER', 'SERVER', 'STOCK_KEEPER', 'COOK'];
 
@@ -174,10 +175,8 @@ export default function UsersPage() {
                       u.role !== 'OWNER' &&
                       u.id !== currentUser?.id && (
                         <div className="flex justify-end gap-3">
-                          <button
-                            onClick={() => setEditing(u)}
-                            className="text-xs font-medium text-primary-700 hover:underline"
-                          >
+                          <button onClick={() => setEditing(u)} className="btn btn-edit btn-sm">
+                            <Pencil size={14} />
                             Modifier
                           </button>
                           <button

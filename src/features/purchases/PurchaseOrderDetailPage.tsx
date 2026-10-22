@@ -14,6 +14,7 @@ import { useConfirm } from '@/lib/confirm';
 import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
+import { Trash2, Plus } from 'lucide-react';
 
 const STATUS_LABELS: Record<PurchaseOrderStatus, string> = {
   BROUILLON: 'Brouillon',
@@ -162,10 +163,8 @@ export default function PurchaseOrderDetailPage() {
                 </td>
                 {isEditable && (
                   <td data-label="" className="px-4 py-2 text-right">
-                    <button
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="text-xs text-slate-500 hover:text-danger"
-                    >
+                    <button onClick={() => handleRemoveItem(item.id)} className="btn btn-danger btn-sm">
+                      <Trash2 size={14} />
                       Retirer
                     </button>
                   </td>
@@ -225,6 +224,7 @@ export default function PurchaseOrderDetailPage() {
               onClick={handleAddItem}
               className="btn btn-primary px-3"
             >
+              <Plus size={16} />
               Ajouter
             </button>
           </div>

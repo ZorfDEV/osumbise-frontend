@@ -7,7 +7,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
-import { Printer } from 'lucide-react';
+import { Printer, Plus } from 'lucide-react';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
 import { productTotals, summarizeSession } from './summary';
@@ -286,6 +286,7 @@ export default function CashSessionDetailPage() {
                 onClick={handleAddMovement}
                 className="btn btn-primary px-3"
               >
+                <Plus size={16} />
                 Ajouter
               </button>
             </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shirt } from 'lucide-react';
+import { Shirt, Plus } from 'lucide-react';
 import { useToast } from '@/lib/toast';
 import { apiError } from './api';
 import { fcfa } from './labels';
@@ -90,6 +90,7 @@ export default function HotelServicesSettings() {
           <input id="service-price" type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} className="input w-32" />
         </div>
         <button onClick={add} disabled={saving} aria-busy={saving} className="btn btn-primary">
+          <Plus size={16} />
           Ajouter
         </button>
       </div>
