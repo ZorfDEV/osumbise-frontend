@@ -1,8 +1,13 @@
-export type MovementType = 'ENTREE' | 'SORTIE_VENTE' | 'PERTE' | 'CASSE' | 'AJUSTEMENT';
+export type MovementType = 'ENTREE' | 'SORTIE_VENTE' | 'PERTE' | 'CASSE' | 'AJUSTEMENT' | 'TRANSFERT' | 'CORRECTION';
+// Stock touché : vente (bar, rayon) ou réserve (magasin)
+export type StockLocation = 'SALES' | 'RESERVE';
 
 export interface StockMovement {
   id: string;
   type: MovementType;
+  location?: StockLocation;
+  // Entrée déjà corrigée (une seule correction possible)
+  corrected?: boolean;
   quantity: string;
   stockBefore: string;
   stockAfter: string;
@@ -17,6 +22,7 @@ export interface StockAlert {
   name: string;
   unit: string;
   stockCurrent: string;
+  stockReserve?: string;
   stockMin: string;
   severity: 'RUPTURE' | 'FAIBLE';
 }

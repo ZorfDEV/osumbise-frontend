@@ -162,8 +162,12 @@ export default function ProductDetailPage() {
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Stock actuel</p>
+              <p className="text-xs text-slate-500">Stock de vente</p>
               <p className="font-medium text-slate-900">{Number(product.stockCurrent)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Réserve (magasin)</p>
+              <p className="font-medium text-slate-900">{Number(product.stockReserve ?? 0)}</p>
             </div>
             <div>
               <p className="text-xs text-slate-500">Seuil d’alerte</p>

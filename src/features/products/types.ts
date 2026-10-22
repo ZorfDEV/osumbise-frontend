@@ -23,6 +23,8 @@ export interface Product {
   css?: string;
   unit: Unit;
   stockCurrent: string;
+  // Réserve (magasin), déstockée vers la vente
+  stockReserve?: string;
   stockMin: string;
   isActive: boolean;
   categoryId: string;
