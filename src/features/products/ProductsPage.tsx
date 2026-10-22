@@ -134,6 +134,15 @@ export default function ProductsPage() {
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold text-heading">Produits</h1>
+        <div className="flex flex-wrap gap-2">
+        {/* Même couleur que le statut « Actif » */}
+        <button
+          onClick={() => setShowCategoryForm((s) => !s)}
+          className="btn bg-success-soft text-success-dark hover:brightness-95"
+        >
+          <Plus size={16} />
+          Nouvelle catégorie
+        </button>
         <button
           onClick={() => setShowForm((s) => !s)}
           className={showForm ? 'btn btn-secondary' : 'btn btn-primary'}
@@ -141,6 +150,7 @@ export default function ProductsPage() {
           {!showForm && <Plus size={16} />}
           {showForm ? 'Annuler' : 'Nouveau produit'}
         </button>
+        </div>
       </div>
 
       {showForm && (
@@ -197,12 +207,6 @@ export default function ProductsPage() {
             {c.name}
           </button>
         ))}
-        <button
-          onClick={() => setShowCategoryForm((s) => !s)}
-          className="whitespace-nowrap rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs font-medium text-slate-500 hover:border-slate-400 hover:text-slate-700"
-        >
-          + Nouvelle catégorie
-        </button>
         {deletedCount > 0 && (
           <label className="ml-auto flex items-center gap-1 text-xs text-slate-500">
             <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
