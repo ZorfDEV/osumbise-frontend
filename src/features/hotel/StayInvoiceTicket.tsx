@@ -51,6 +51,8 @@ export default function StayInvoiceTicket({
       </div>
       <div className="ticket-rule" />
       <Line left="Facture N°" right={hotelInvoiceNo(stay)} />
+      {/* Date d'édition de la facture (jour de l'impression) */}
+      <Line left="Date:" right={new Date().toLocaleDateString('fr-FR')} />
       <Line left="Créée par" right={stay.user.name} />
       {user && <Line left="Éditée par" right={user.name} />}
       <Line left="Client" right={stay.guestName} />
@@ -96,7 +98,7 @@ export default function StayInvoiceTicket({
           {stay.payments.map((p) => (
             <Line
               key={p.id}
-              left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${Number(p.amount) < 0 ? 'Remboursement' : p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}`}
+              left={Number(p.amount) < 0 ? 'Remboursement' : p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}
               right={Number(p.amount) < 0 ? `+${money(-Number(p.amount))}` : `-${money(p.amount)}`}
             />
           ))}
