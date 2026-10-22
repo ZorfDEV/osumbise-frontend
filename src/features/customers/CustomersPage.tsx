@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
+import { canUsePos } from '@/config/navigation';
+import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 import { api } from '@/lib/axios';
 import { fetchCustomers, createCustomer, updateCustomer } from './api';
 import { createOrder } from '@/features/pos/offlineApi';
@@ -15,6 +17,8 @@ const formatFcfa = (v: number) => `${v.toLocaleString('fr-FR')} FCFA`;
 
 export default function CustomersPage() {
   const { user } = useAuth();
+  // Caissière d'hôtel : pas de nouvelle vente au point de vente
+  const posAllowed = canUsePos(user, useActiveEstablishment().current.type);
   const toast = useToast();
   const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -91,12 +95,14 @@ export default function CustomersPage() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-heading">Clients</h1>
         <div className="flex gap-2">
+          {posAllowed && (
           <button
             onClick={() => handleNewSale()}
             className="btn btn-secondary"
           >
             Nouvelle vente (comptant)
           </button>
+          )}
           <button
             onClick={() => setShowForm((s) => !s)}
             className="btn btn-primary"
@@ -215,12 +221,14 @@ export default function CustomersPage() {
                   </td>
                   <td data-label="" className="px-4 py-2 text-right">
                     <div className="flex justify-end gap-3">
+                      {posAllowed && (
                       <button
                         onClick={() => handleNewSale(c.id)}
                         className="text-xs font-medium text-primary-600 hover:underline"
                       >
                         Vendre
                       </button>
+                      )}
                       <Link
                         to={`/customers/${c.id}`}
                         className="text-xs font-medium text-slate-500 hover:text-slate-900"

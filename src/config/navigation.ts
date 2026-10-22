@@ -39,6 +39,9 @@ export interface NavItem {
   // uniquement pour les types listés (ex. Tables/Cuisine n'ont pas de sens
   // pour un Grossiste, qui n'a ni service à table ni cuisine).
   visibleForTypes?: EstablishmentType[];
+  // Masqué pour ces rôles dans ces types d'établissement (ex. la caissière
+  // d'un hôtel vend des chambres, pas au point de vente)
+  hiddenFor?: { roles: Role[]; types: EstablishmentType[] };
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -56,6 +59,28 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['OWNER', 'ADMIN', 'SERVER', 'CASHIER'],
     icon: ShoppingCart,
     visibleForTypes: ['BAR', 'RESTAURANT', 'HOTEL', 'EPICERIE'],
+    hiddenFor: { roles: ['CASHIER'], types: ['HOTEL'] },
+  },
+
+  // Hébergement (hôtels uniquement). Juste après le point de vente dans cette
+  // liste : la page d'accueil (première entrée visible) d'un caissier d'hôtel
+  // est Chambres, celle d'un caissier de bar/restaurant reste le point de
+  // vente ; le menu affiche la section Hébergement en tête (NAV_SECTIONS).
+  {
+    to: '/hotel',
+    label: 'Chambres',
+    section: 'Hébergement',
+    roles: ['OWNER', 'ADMIN', 'CASHIER'],
+    icon: BedDouble,
+    visibleForTypes: ['HOTEL'],
+  },
+  {
+    to: '/hotel/stays',
+    label: 'Séjours',
+    section: 'Hébergement',
+    roles: ['OWNER', 'ADMIN', 'CASHIER'],
+    icon: CalendarDays,
+    visibleForTypes: ['HOTEL'],
   },
   {
     to: '/kitchen',
@@ -87,26 +112,6 @@ export const NAV_ITEMS: NavItem[] = [
     section: 'Vente',
     roles: ['OWNER', 'ADMIN', 'CASHIER'],
     icon: Wallet,
-  },
-
-  // Hébergement (hôtels uniquement). Placé après la vente dans cette liste :
-  // la page d'accueil d'un caissier reste le point de vente ; le menu, lui,
-  // affiche la section Hébergement en tête (ordre de NAV_SECTIONS).
-  {
-    to: '/hotel',
-    label: 'Chambres',
-    section: 'Hébergement',
-    roles: ['OWNER', 'ADMIN', 'CASHIER'],
-    icon: BedDouble,
-    visibleForTypes: ['HOTEL'],
-  },
-  {
-    to: '/hotel/stays',
-    label: 'Séjours',
-    section: 'Hébergement',
-    roles: ['OWNER', 'ADMIN', 'CASHIER'],
-    icon: CalendarDays,
-    visibleForTypes: ['HOTEL'],
   },
 
   // Catalogue
@@ -142,6 +147,17 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/settings', label: 'Paramètres', section: 'Gestion', roles: ALL_ROLES, icon: Settings },
 ];
 
+// Point de vente (nouvelles ventes) accessible ? Même règle que le lien
+// « Point de vente » du menu : refusé à la caissière d'un hôtel, qui vend
+// des chambres. Sert aussi à bloquer l'adresse /tables et les boutons « Vendre ».
+export const canUsePos = (
+  user: AuthUser | null | undefined,
+  establishmentType: EstablishmentType | null = user?.establishmentType ?? null
+) => {
+  const pos = NAV_ITEMS.find((item) => item.to === '/tables');
+  return !!pos && isNavItemVisible(pos, user, establishmentType);
+};
+
 // Règle unique de visibilité d'une entrée (menu, page d'accueil, recherche).
 // `establishmentType` : type de l'établissement en cours — celui choisi par un
 // propriétaire dans la Topbar, sinon celui du compte (useActiveEstablishment).
@@ -152,4 +168,5 @@ export const isNavItemVisible = (
 ) =>
   !!user &&
   item.roles.includes(user.role) &&
-  (!item.visibleForTypes || !establishmentType || item.visibleForTypes.includes(establishmentType));
+  (!item.visibleForTypes || !establishmentType || item.visibleForTypes.includes(establishmentType)) &&
+  !(item.hiddenFor && establishmentType && item.hiddenFor.roles.includes(user.role) && item.hiddenFor.types.includes(establishmentType));

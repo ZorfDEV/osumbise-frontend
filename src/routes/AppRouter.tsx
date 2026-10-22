@@ -30,6 +30,7 @@ import ProtectedRoute from './ProtectedRoute';
 import PlatformAdminRoute from './PlatformAdminRoute';
 import RootRoute from './RootRoute';
 import HomeRoute from './HomeRoute';
+import PosRoute from './PosRoute';
 import AppLayout from '@/components/layout/AppLayout';
 import PlatformAdminLayout from '@/features/platformAdmin/PlatformAdminLayout';
 import PlatformDashboardPage from '@/features/platformAdmin/PlatformDashboardPage';
@@ -81,8 +82,12 @@ export default function AppRouter() {
 
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<HomeRoute />} />
-            <Route path="/tables" element={<TablesPage />} />
-            <Route path="/tables/manage" element={<TablesManagePage />} />
+            {/* Point de vente : bloqué pour la caissière d'un hôtel. Les factures
+                existantes (/pos/:orderId) restent ouvertes : À encaisser y mène */}
+            <Route element={<PosRoute />}>
+              <Route path="/tables" element={<TablesPage />} />
+              <Route path="/tables/manage" element={<TablesManagePage />} />
+            </Route>
             <Route path="/pos/:orderId" element={<PosOrderPage />} />
             <Route path="/pos/:orderId/receipt" element={<ReceiptPage />} />
             <Route path="/kitchen" element={<KitchenPage />} />
