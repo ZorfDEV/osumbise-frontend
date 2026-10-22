@@ -271,6 +271,7 @@ export default function ProductsPage() {
                     ) : (
                       `${Number(p.sellingPrice).toLocaleString('fr-FR')} FCFA`
                     )}
+                    {p.priceIncludesTax && <span className="ml-1 text-xs text-slate-500">TTC</span>}
                   </td>
                   <td data-label="Stock" className="px-4 py-2 text-slate-600">
                     {Number(p.stockCurrent)} {UNIT_LABELS[p.unit]}

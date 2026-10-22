@@ -2,7 +2,7 @@ import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
-import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
+import { orderTotals, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
 import type { Order, OrderItem, PaymentMethod } from './types';
 
@@ -73,7 +73,7 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
         />
       )}
       <Line left="Total HT" right={money(Number(order.subtotal) - Number(order.discount))} />
-      {taxBreakdown(order.items, orderDiscount(order).ratio).map((t) => (
+      {orderTotals(order).lines.map((t) => (
         <Line key={taxLabel(t)} left={taxLabel(t)} right={money(t.amount)} />
       ))}
       <Line left="TOTAL TTC FCFA" right={money(Number(order.total))} bold />

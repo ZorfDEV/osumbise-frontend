@@ -12,7 +12,7 @@ import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
 import Alert from '@/components/ui/alert';
 import CancelSaleModal from './CancelSaleModal';
-import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
+import { orderTotals, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -223,7 +223,7 @@ export default function ReceiptPage() {
             <span>Total HT</span>
             <span>{formatFcfa(Number(order.subtotal) - Number(order.discount))}</span>
           </div>
-          {taxBreakdown(order.items, orderDiscount(order).ratio).map((t) => (
+          {orderTotals(order).lines.map((t) => (
             <div key={taxLabel(t)} className="flex justify-between text-slate-500">
               <span>{taxLabel(t)}</span>
               <span>{formatFcfa(t.amount)}</span>

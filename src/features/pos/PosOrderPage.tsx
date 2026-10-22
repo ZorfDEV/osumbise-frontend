@@ -42,7 +42,7 @@ import { useConfirm } from '@/lib/confirm';
 import { useAuth } from '@/features/auth/AuthContext';
 import { cancelOrder, voidOrderItem } from './api';
 import VoidReasonModal from './VoidReasonModal';
-import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
+import { orderTotals, taxLabel } from './taxes';
 import DiscountModal from './DiscountModal';
 import { setOrderDiscount } from './api';
 import { useToast } from '@/lib/toast';
@@ -358,6 +358,7 @@ export default function PosOrderPage() {
         effectivePrice: product.effectivePrice,
         tva: product.tva,
         css: product.css,
+        priceIncludesTax: product.priceIncludesTax,
         preparationArea: product.preparationArea,
       },
       quantity
@@ -774,11 +775,17 @@ export default function PosOrderPage() {
                       {formatFcfa(Number(item.unitPrice))} × {item.quantity} ={' '}
                       <span className="font-medium text-slate-700">{formatFcfa(Number(item.unitPrice) * item.quantity)}</span>
                       {item.product.preparationArea === 'BAR' && <span className="ml-1 text-slate-500">· Bar</span>}
-                      {Number(item.taxRate ?? 0) > 0 && (
-                        <span className="ml-1 text-slate-500">+ TVA {Number(item.taxRate).toLocaleString('fr-FR')} %</span>
-                      )}
-                      {Number(item.cssRate ?? 0) > 0 && (
-                        <span className="ml-1 text-slate-500">+ CSS {Number(item.cssRate).toLocaleString('fr-FR')} %</span>
+                      {item.priceIncludesTax && Number(item.taxRate ?? 0) + Number(item.cssRate ?? 0) > 0 ? (
+                        <span className="ml-1 text-slate-500">· TTC</span>
+                      ) : (
+                        <>
+                          {Number(item.taxRate ?? 0) > 0 && (
+                            <span className="ml-1 text-slate-500">+ TVA {Number(item.taxRate).toLocaleString('fr-FR')} %</span>
+                          )}
+                          {Number(item.cssRate ?? 0) > 0 && (
+                            <span className="ml-1 text-slate-500">+ CSS {Number(item.cssRate).toLocaleString('fr-FR')} %</span>
+                          )}
+                        </>
                       )}
                     </p>
                   </div>
@@ -842,7 +849,7 @@ export default function PosOrderPage() {
                 <span>Total HT</span>
                 <span>{formatFcfa(Number(order.subtotal) - Number(order.discount))}</span>
               </div>
-              {taxBreakdown(order.items, orderDiscount(order).ratio).map((t) => (
+              {orderTotals(order).lines.map((t) => (
                 <div key={taxLabel(t)} className="flex justify-between text-slate-500">
                   <span>{taxLabel(t)}</span>
                   <span>{formatFcfa(t.amount)}</span>

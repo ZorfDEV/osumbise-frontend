@@ -2,7 +2,7 @@ import { getDb } from '@/lib/db';
 import { enqueueAction } from '@/lib/offlineSync';
 import * as api from './api';
 import { Order } from './types';
-import { taxTotal } from './taxes';
+import { computeOrderTotals } from './taxes';
 
 const isLocalId = (id: string) => id.startsWith('local-');
 
@@ -17,19 +17,22 @@ const saveOrderLocally = async (order: Order) => {
 };
 
 const recalculateLocalTotals = (order: Order) => {
-  const subtotal = order.items.reduce(
-    (sum, item) => sum + item.quantity * Number(item.unitPrice),
-    0
+  // Même calcul que le serveur (orderTotals.ts) : prix HT ou prix TTC fixe,
+  // remise, TVA et CSS arrondies au franc
+  const { subtotal, discount, tax, total } = computeOrderTotals(
+    order.items.map((i) => ({
+      quantity: i.quantity,
+      unitPrice: Number(i.unitPrice),
+      taxRate: Number(i.taxRate ?? 0),
+      cssRate: Number(i.cssRate ?? 0),
+      priceIncludesTax: !!i.priceIncludesTax,
+    })),
+    { amount: Number(order.discount), rate: order.discountRate != null ? Number(order.discountRate) : null }
   );
-  // Même calcul que le serveur (order.service.ts) : taxe ajoutée, arrondie au franc
-  const discount = order.discountRate != null
-    ? Math.round((subtotal * Number(order.discountRate)) / 100)
-    : Math.min(Number(order.discount), subtotal);
-  const tax = taxTotal(order.items, subtotal > 0 ? (subtotal - discount) / subtotal : 1);
   order.subtotal = String(subtotal);
   order.discount = String(discount);
   order.tax = String(tax);
-  order.total = String(subtotal - discount + tax);
+  order.total = String(total);
 };
 
 // --- Lecture ---------------------------------------------------------------
@@ -100,6 +103,7 @@ export const addOrderItem = async (
     effectivePrice?: number;
     tva?: string;
     css?: string;
+    priceIncludesTax?: boolean;
     preparationArea?: 'KITCHEN' | 'BAR';
   },
   quantity: number
@@ -130,6 +134,7 @@ export const addOrderItem = async (
       unitPrice: String(product.effectivePrice ?? product.sellingPrice),
       taxRate: product.tva ?? '0',
       cssRate: product.css ?? '0',
+      priceIncludesTax: !!product.priceIncludesTax,
       note: null,
       product: { name: product.name, preparationArea: product.preparationArea },
     });

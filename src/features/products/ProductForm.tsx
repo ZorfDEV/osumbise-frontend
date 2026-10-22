@@ -17,6 +17,8 @@ const productFormSchema = z
       (v) => (typeof v === 'number' && Number.isNaN(v) ? 0 : v),
       z.number().min(0, 'Entre 0 et 100').max(100, 'Entre 0 et 100').optional()
     ),
+    // Prix TTC fixe : le prix saisi est celui payé par le client, taxes incluses
+    priceIncludesTax: z.boolean().optional(),
     tva: z.preprocess(
       (v) => (typeof v === 'number' && Number.isNaN(v) ? 0 : v),
       z.number().min(0, 'Entre 0 et 100').max(100, 'Entre 0 et 100').optional()
@@ -97,7 +99,8 @@ export default function ProductForm({
     const area = categories.find((c) => c.id === categoryId)?.preparationArea;
     if (area) setValue('preparationArea', area);
   }, [categoryId, categories, defaultValues?.preparationArea, setValue]);
-  const priceHt = Number(watch('sellingPrice')) || 0;
+  const price = Number(watch('sellingPrice')) || 0;
+  const priceIncludesTax = !!watch('priceIncludesTax');
   const taxRate = Number(watch('tva')) || 0;
   const cssRate = Number(watch('css')) || 0;
   const tagField = register('tag', { valueAsNumber: true });
@@ -194,7 +197,7 @@ export default function ProductForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">
-          Prix de vente HT (FCFA)
+          {priceIncludesTax ? 'Prix de vente TTC (FCFA)' : 'Prix de vente HT (FCFA)'}
         </label>
         <input
           type="number"
@@ -205,6 +208,15 @@ export default function ProductForm({
         {errors.sellingPrice && (
           <p className="mt-1 text-xs text-danger">{errors.sellingPrice.message}</p>
         )}
+        <label className="mt-2 flex items-start gap-2 text-sm text-slate-700">
+          <input type="checkbox" className="mt-0.5" {...register('priceIncludesTax')} />
+          <span>
+            Prix TTC fixe (taxes incluses)
+            <span className="block text-xs text-slate-500">
+              Le client paie exactement ce prix ; la facture en déduit le HT, la TVA et la CSS.
+            </span>
+          </span>
+        </label>
       </div>
 
       <div>
@@ -254,11 +266,21 @@ export default function ProductForm({
         </datalist>
         {errors.css ? (
           <p className="mt-1 text-xs text-danger">{errors.css.message}</p>
+        ) : taxRate + cssRate > 0 && priceIncludesTax ? (
+          <p className="mt-1 text-xs text-slate-500">
+            Sur la facture :{' '}
+            <span className="font-medium text-slate-700">
+              HT {(price - Math.round((price * taxRate) / (100 + taxRate + cssRate)) - Math.round((price * cssRate) / (100 + taxRate + cssRate))).toLocaleString('fr-FR')}
+              {taxRate > 0 && ` + TVA ${Math.round((price * taxRate) / (100 + taxRate + cssRate)).toLocaleString('fr-FR')}`}
+              {cssRate > 0 && ` + CSS ${Math.round((price * cssRate) / (100 + taxRate + cssRate)).toLocaleString('fr-FR')}`}
+              {` = ${Math.round(price).toLocaleString('fr-FR')} FCFA TTC`}
+            </span>
+          </p>
         ) : taxRate + cssRate > 0 ? (
           <p className="mt-1 text-xs text-slate-500">
             Prix TTC payé par le client :{' '}
             <span className="font-medium text-slate-700">
-              {Math.round(priceHt * (1 + (taxRate + cssRate) / 100)).toLocaleString('fr-FR')} FCFA
+              {Math.round(price * (1 + (taxRate + cssRate) / 100)).toLocaleString('fr-FR')} FCFA
             </span>
           </p>
         ) : (

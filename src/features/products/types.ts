@@ -21,6 +21,8 @@ export interface Product {
   tva: string;
   // Contribution spéciale de solidarité (%)
   css?: string;
+  // Prix TTC fixe : sellingPrice est taxes incluses (TVA et CSS déduites sur la facture)
+  priceIncludesTax?: boolean;
   unit: Unit;
   stockCurrent: string;
   // Réserve (magasin), déstockée vers la vente

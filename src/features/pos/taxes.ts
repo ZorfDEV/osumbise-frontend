@@ -1,48 +1,129 @@
-// Détail des taxes d'une commande, pour le panier et la facture :
-// Total HT, puis une ligne par taxe et par taux (TVA 18 %, CSS 1 %…),
-// puis Total TTC. Même calcul que le serveur (order.service.ts) : chaque
-// taxe est calculée sur la base HT des articles à ce taux, arrondie au franc.
+// Totaux d'une commande, pour le panier et la facture : Total HT, puis une
+// ligne par taxe et par taux (TVA 18 %, CSS 1 %…), puis Total TTC.
+// MÊME calcul que le serveur (osumbise-backend/src/services/orderTotals.ts) :
+//
+// - Article à prix HT : TVA et CSS s'ajoutent au prix.
+// - Article à prix TTC fixe : le prix payé est fixe ; TVA et CSS sont calculées
+//   À L'INTÉRIEUR du prix et le HT s'en déduit, si bien que le total TTC tombe
+//   pile sur le prix affiché (25 000 reste 25 000).
+// Chaque taxe est arrondie au franc par groupe de taux. Une remise en % est
+// appliquée telle quelle aux prix ; une remise en montant, au prorata du HT.
 
 export interface TaxLine {
-  label: string;
+  label: 'TVA' | 'CSS';
   rate: number;
   amount: number;
 }
 
-type TaxedItem = { quantity: number; unitPrice: string; taxRate?: string; cssRate?: string };
+export interface TotalsItem {
+  quantity: number;
+  unitPrice: number;
+  taxRate: number;
+  cssRate: number;
+  priceIncludesTax: boolean;
+}
 
-// ratio = (HT après remise) / HT : les taxes portent sur le montant remisé
-export const taxBreakdown = (items: TaxedItem[], ratio = 1): TaxLine[] => {
-  const bases = new Map<string, { label: string; rate: number; base: number }>();
-  const add = (label: string, rate: number, base: number) => {
-    if (!rate) return;
-    const key = `${label}-${rate}`;
-    const current = bases.get(key) ?? { label, rate, base: 0 };
-    current.base += base;
-    bases.set(key, current);
-  };
-  for (const item of items) {
-    const base = item.quantity * Number(item.unitPrice) * ratio;
-    add('TVA', Number(item.taxRate ?? 0), base);
-    add('CSS', Number(item.cssRate ?? 0), base);
+export const computeOrderTotals = (items: TotalsItem[], discountCfg: { amount: number; rate: number | null }) => {
+  // Bases : prix HT (taxes ajoutées) ou prix TTC (taxes incluses, total des taux)
+  const added = new Map<string, { label: TaxLine['label']; rate: number; base: number }>();
+  const included = new Map<string, { label: TaxLine['label']; rate: number; total: number; base: number }>();
+  let htAdded = 0;
+  let grossIncluded = 0;
+  for (const it of items) {
+    const gross = it.quantity * it.unitPrice;
+    const totalRate = it.taxRate + it.cssRate;
+    const kinds: [TaxLine['label'], number][] = [
+      ['TVA', it.taxRate],
+      ['CSS', it.cssRate],
+    ];
+    if (it.priceIncludesTax) {
+      grossIncluded += gross;
+      for (const [label, rate] of kinds) {
+        if (!rate) continue;
+        const key = `${label}-${rate}-${totalRate}`;
+        const g = included.get(key) ?? { label, rate, total: totalRate, base: 0 };
+        g.base += gross;
+        included.set(key, g);
+      }
+    } else {
+      htAdded += gross;
+      for (const [label, rate] of kinds) {
+        if (!rate) continue;
+        const key = `${label}-${rate}`;
+        const g = added.get(key) ?? { label, rate, base: 0 };
+        g.base += gross;
+        added.set(key, g);
+      }
+    }
   }
-  return [...bases.values()]
-    .map((b) => ({ label: b.label, rate: b.rate, amount: Math.round((b.base * b.rate) / 100) }))
+
+  const includedTax = (ratio: number) =>
+    [...included.values()].map((g) => ({
+      label: g.label,
+      rate: g.rate,
+      amount: Math.round((g.base * ratio * g.rate) / (100 + g.total)),
+    }));
+  const addedTax = (ratio: number) =>
+    [...added.values()].map((g) => ({ label: g.label, rate: g.rate, amount: Math.round((g.base * ratio * g.rate) / 100) }));
+  const sum = (lines: { amount: number }[]) => lines.reduce((s, l) => s + l.amount, 0);
+
+  // HT avant remise : prix HT + (prix TTC fixes − taxes qu'ils contiennent)
+  const subtotal = htAdded + grossIncluded - sum(includedTax(1));
+
+  // Remise : en %, appliquée telle quelle aux prix (un TTC fixe remisé de 10 %
+  // tombe pile sur 90 % du prix) ; en montant, au prorata du HT
+  const requested =
+    discountCfg.rate !== null ? Math.round((subtotal * discountCfg.rate) / 100) : Math.min(discountCfg.amount, subtotal);
+  const ratio = discountCfg.rate !== null ? 1 - discountCfg.rate / 100 : subtotal > 0 ? (subtotal - requested) / subtotal : 1;
+
+  // Lignes de taxe (une par taxe et par taux), après remise
+  const addedAfter = addedTax(ratio);
+  const includedAfter = includedTax(ratio);
+  const merged = new Map<string, TaxLine>();
+  for (const t of [...addedAfter, ...includedAfter]) {
+    const key = `${t.label}-${t.rate}`;
+    const m = merged.get(key) ?? { label: t.label, rate: t.rate, amount: 0 };
+    m.amount += t.amount;
+    merged.set(key, m);
+  }
+  const lines = [...merged.values()]
+    .filter((l) => l.amount !== 0)
     .sort((a, b) => (a.label === b.label ? b.rate - a.rate : a.label === 'TVA' ? -1 : 1));
+  const tax = sum(lines);
+
+  // Remise en montant : enregistrée telle quelle (elle sert de base au
+  // prochain recalcul, elle ne doit pas varier d'un franc à chaque fois)
+  if (discountCfg.rate === null) {
+    return { subtotal, discount: requested, tax, total: subtotal - requested + tax, lines };
+  }
+
+  // Remise en % : la part à prix TTC fixe garde un TTC rond, dont on déduit
+  // ses taxes ; la remise affichée est l'écart avec le HT d'origine
+  const htIncludedAfter = Math.round(grossIncluded * ratio) - sum(includedAfter);
+  const htAddedAfter = Math.round(htAdded * ratio);
+  const discount = subtotal - (htAddedAfter + htIncludedAfter);
+
+  return { subtotal, discount, tax, total: htAddedAfter + htIncludedAfter + tax, lines };
 };
 
-export const taxTotal = (items: TaxedItem[], ratio = 1) => taxBreakdown(items, ratio).reduce((sum, t) => sum + t.amount, 0);
-
-// Remise d'une commande : montant et rapport HT remisé / HT
-export const orderDiscount = (order: { subtotal: string; discount: string; discountRate?: string | null }) => {
-  const subtotal = Number(order.subtotal);
-  const amount = Number(order.discount);
-  return {
-    amount,
-    rate: order.discountRate != null ? Number(order.discountRate) : null,
-    ratio: subtotal > 0 ? (subtotal - amount) / subtotal : 1,
-  };
+type TaxedOrder = {
+  discount: string;
+  discountRate?: string | null;
+  items: { quantity: number; unitPrice: string; taxRate?: string; cssRate?: string; priceIncludesTax?: boolean }[];
 };
+
+// Totaux d'une commande telle que renvoyée par l'API (ou le cache hors ligne)
+export const orderTotals = (order: TaxedOrder) =>
+  computeOrderTotals(
+    order.items.map((i) => ({
+      quantity: i.quantity,
+      unitPrice: Number(i.unitPrice),
+      taxRate: Number(i.taxRate ?? 0),
+      cssRate: Number(i.cssRate ?? 0),
+      priceIncludesTax: !!i.priceIncludesTax,
+    })),
+    { amount: Number(order.discount), rate: order.discountRate != null ? Number(order.discountRate) : null }
+  );
 
 // « TVA 18 % » / « CSS 1 % »
 export const taxLabel = (t: TaxLine) => `${t.label} ${t.rate.toLocaleString('fr-FR')} %`;

@@ -15,6 +15,8 @@ export interface Product {
   // Taxe optionnelle (%)
   tva?: string;
   css?: string;
+  // Prix TTC fixe : sellingPrice est taxes incluses
+  priceIncludesTax?: boolean;
   // Cuisine (plats) ou bar (boissons servies par le serveur)
   preparationArea?: 'KITCHEN' | 'BAR';
   categoryId: string;
@@ -65,6 +67,8 @@ export interface OrderItem {
   taxRate?: string;
   // CSS (%) figée sur la ligne
   cssRate?: string;
+  // unitPrice est un prix TTC (taxes incluses), figé à l'ajout
+  priceIncludesTax?: boolean;
   note: string | null;
   product: { name: string; preparationArea?: 'KITCHEN' | 'BAR' };
 }
