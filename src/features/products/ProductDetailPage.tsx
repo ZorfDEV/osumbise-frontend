@@ -170,7 +170,7 @@ export default function ProductDetailPage() {
               )}
             </div>
             <div>
-              <p className="text-xs text-slate-500">Coût d’achat</p>
+              <p className="text-xs text-slate-500">Prix d’achat</p>
               <p className="font-medium text-slate-900">
                 {Number(product.cost).toLocaleString('fr-FR')} FCFA
               </p>

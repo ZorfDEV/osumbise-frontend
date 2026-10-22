@@ -290,7 +290,7 @@ export default function ProductForm({
 
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">
-          Coût d’achat (FCFA)
+          Prix d’achat (FCFA)
         </label>
         <input
           type="number"
