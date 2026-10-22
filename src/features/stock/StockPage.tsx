@@ -7,7 +7,7 @@ import StockMovementForm from './StockMovementForm';
 import { correctMovement } from './api';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Archive } from 'lucide-react';
+import { Archive, Pencil } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
 import { Pagination, usePagination } from '@/components/ui/pagination';
@@ -60,7 +60,7 @@ export default function StockPage() {
     if (correctReason.trim().length < 3) return toast.error('La justification est obligatoire');
     try {
       await correctMovement(correcting.id, { quantity: Number(correctQty), reason: correctReason.trim() });
-      toast.success('Entrée corrigée');
+      toast.success('Entrée modifiée');
       setCorrecting(null);
       load();
     } catch (err) {
@@ -143,9 +143,9 @@ export default function StockPage() {
       )}
 
       {correcting && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Corriger une entrée">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Modifier une entrée">
           <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
-            <h2 className="mb-1 text-lg font-semibold text-heading">Corriger l’entrée</h2>
+            <h2 className="mb-1 text-lg font-semibold text-heading">Modifier l’entrée</h2>
             <p className="mb-4 text-sm text-slate-600">
               {correcting.product.name} · {Number(correcting.quantity)} {correcting.product.unit} saisis le{' '}
               {new Date(correcting.createdAt).toLocaleDateString('fr-FR')}. Le stock est rectifié de l’écart ; l’entrée d’origine reste dans l’historique.
@@ -169,7 +169,7 @@ export default function StockPage() {
                 Annuler
               </button>
               <button onClick={submitCorrection} disabled={correctReason.trim().length < 3} className="btn btn-primary flex-1">
-                Corriger
+                Modifier
               </button>
             </div>
           </div>
@@ -282,12 +282,13 @@ export default function StockPage() {
                           setCorrectQty(String(Number(m.quantity)));
                           setCorrectReason('');
                         }}
-                        className="text-xs font-medium text-primary-700 hover:underline"
+                        className="btn btn-edit btn-sm"
                       >
-                        Corriger
+                        <Pencil size={14} />
+                        Modifier
                       </button>
                     )}
-                    {m.type === 'ENTREE' && m.corrected && <span className="text-xs text-slate-400">Corrigée</span>}
+                    {m.type === 'ENTREE' && m.corrected && <span className="text-xs text-slate-400">Modifiée</span>}
                   </td>
                 </tr>
               ))}
