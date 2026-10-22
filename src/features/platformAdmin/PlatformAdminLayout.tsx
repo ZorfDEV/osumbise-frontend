@@ -1,5 +1,6 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
+import { LogOut } from 'lucide-react';
 
 export default function PlatformAdminLayout() {
   const { logout } = useAuth();
@@ -39,7 +40,8 @@ export default function PlatformAdminLayout() {
             >
               ← Retour à l’app
             </button>
-            <button onClick={() => logout()} className="text-sm text-primary-300 hover:text-white">
+            <button onClick={() => logout()} className="btn btn-danger btn-sm">
+              <LogOut size={14} />
               Déconnexion
             </button>
           </div>

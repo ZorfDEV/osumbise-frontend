@@ -91,7 +91,7 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
           onClick={() => logout()}
           aria-label="Déconnexion"
           title="Déconnexion"
-          className="flex h-9 shrink-0 items-center gap-2 rounded-md px-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          className="btn btn-danger btn-sm h-9 shrink-0 px-2 sm:px-3"
         >
           <LogOut size={18} />
           <span className="hidden sm:inline">Déconnexion</span>
