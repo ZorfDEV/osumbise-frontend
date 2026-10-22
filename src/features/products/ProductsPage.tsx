@@ -15,7 +15,7 @@ import { Category, Product, Unit } from './types';
 import ProductForm, { PRODUCT_TYPE_LABELS } from './ProductForm';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
-import { Package, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
+import { Package, Tags, Plus, Pencil, Trash2, RotateCcw } from 'lucide-react';
 import EmptyState from '@/components/ui/empty-state';
 import ListToolbar, { normalizeText } from '@/components/ui/list-toolbar';
 import { Pagination, usePagination } from '@/components/ui/pagination';
@@ -135,6 +135,11 @@ export default function ProductsPage() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold text-heading">Produits</h1>
         <div className="flex flex-wrap gap-2">
+        {/* Même couleur que le badge « Ajustement » du stock */}
+        <Link to="/categories" className="btn bg-warning-soft text-warning-dark hover:brightness-95">
+          <Tags size={16} />
+          Gérer les catégories
+        </Link>
         {/* Même couleur que le statut « Actif » */}
         <button
           onClick={() => setShowCategoryForm((s) => !s)}
@@ -213,12 +218,6 @@ export default function ProductsPage() {
             Afficher les produits supprimés ({deletedCount})
           </label>
         )}
-        <Link
-          to="/categories"
-          className="whitespace-nowrap text-xs font-medium text-slate-500 underline hover:text-slate-700"
-        >
-          Gérer les catégories
-        </Link>
       </div>
 
       {showCategoryForm && (
