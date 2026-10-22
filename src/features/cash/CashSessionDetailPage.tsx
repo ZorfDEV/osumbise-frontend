@@ -10,7 +10,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { Printer, Plus } from 'lucide-react';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
-import { productTotals, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
@@ -185,6 +185,36 @@ export default function CashSessionDetailPage() {
               ))}
             </ul>
           </div>
+        </div>
+      )}
+
+      {session.hotel && session.hotel.rooms.length > 0 && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <h2 className="mb-3 text-sm font-semibold text-heading-muted">Chambres vendues (nuitées)</h2>
+          <ul className="space-y-1.5 text-sm">
+            {session.hotel.rooms.map((r) => (
+              <li key={`${r.category}-${r.nightlyRate}`} className="flex justify-between text-slate-600">
+                <span>
+                  {ROOM_CATEGORY_SHORT[r.category] ?? r.category} : {r.nights} × {formatFcfa(r.nightlyRate)}
+                </span>
+                <span className="font-semibold text-heading">{formatFcfa(r.amount)}</span>
+              </li>
+            ))}
+            <li className="flex justify-between border-t border-slate-100 pt-1.5 font-semibold text-heading">
+              <span>Total</span>
+              <span>{formatFcfa(hotelRoomsTotal(session.hotel))}</span>
+            </li>
+          </ul>
+          {session.hotel.payments.length > 0 && (
+            <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm">
+              {session.hotel.payments.map((p) => (
+                <li key={p.method} className="flex justify-between text-slate-600">
+                  <span>{HOTEL_METHOD_LABELS[p.method] ?? p.method}</span>
+                  <span className="font-semibold text-heading">{formatFcfa(p.amount)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

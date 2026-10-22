@@ -58,3 +58,15 @@ export const summarizeSession = (session: CashSession) => {
         : openingBalance + cashSales + expenses + refunds + adjustments,
   };
 };
+
+// Rapport de clôture, partie hôtel : « STD : 2 × 35 500 = 71 000 »
+export const ROOM_CATEGORY_SHORT: Record<string, string> = { STANDARD: 'STD', VIP: 'VIP', SUITE: 'SUITE' };
+export const HOTEL_METHOD_LABELS: Record<string, string> = {
+  CASH: 'Espèces',
+  MOBILE_MONEY: 'Mobile Money',
+  CARD: 'Carte',
+  TRANSFER: 'Virement',
+  CREDIT: 'Compte client',
+};
+export const hotelRoomsTotal = (hotel?: { rooms: { amount: number }[] }) =>
+  (hotel?.rooms ?? []).reduce((sum, r) => sum + r.amount, 0);

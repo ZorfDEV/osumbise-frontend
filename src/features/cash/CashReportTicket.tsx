@@ -2,7 +2,7 @@ import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
-import { otherMethodsTotal, productTotals, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsTotal, otherMethodsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -50,6 +50,28 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
       <Line left="Carte" right={money(s.cardSales)} />
       {otherMethodsTotal(session.orders) > 0 && <Line left="Compte client / chambre / virement" right={money(otherMethodsTotal(session.orders))} />}
       <Line left="TOTAL VENTES FCFA" right={money(s.totalSales + otherMethodsTotal(session.orders))} bold />
+      {session.hotel && session.hotel.rooms.length > 0 && (
+        <>
+          <Rule />
+          <div className="ticket-bold">CHAMBRES VENDUES (NUITÉES)</div>
+          {session.hotel.rooms.map((r) => (
+            <Line
+              key={`${r.category}-${r.nightlyRate}`}
+              left={`${ROOM_CATEGORY_SHORT[r.category] ?? r.category} : ${r.nights} × ${money(r.nightlyRate)}`}
+              right={money(r.amount)}
+            />
+          ))}
+          <Line left="TOTAL CHAMBRES FCFA" right={money(hotelRoomsTotal(session.hotel))} bold />
+          {session.hotel.payments.length > 0 && (
+            <>
+              <div className="ticket-bold">ENCAISSÉ (HÔTEL)</div>
+              {session.hotel.payments.map((p) => (
+                <Line key={p.method} left={(HOTEL_METHOD_LABELS[p.method] ?? p.method).toUpperCase()} right={money(p.amount)} />
+              ))}
+            </>
+          )}
+        </>
+      )}
       <Rule />
       <div className="ticket-bold">TIROIR (ESPÈCES)</div>
       <Line left="Fond de caisse" right={money(s.openingBalance)} />

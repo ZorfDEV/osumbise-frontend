@@ -57,6 +57,14 @@ export interface CashSession {
   movements: CashMovement[];
   // Factures encaissées dans la session (détail du rapport de clôture)
   orders?: SessionOrder[];
+  // Hôtel : chambres des séjours encaissés dans la session (nuitées × tarif,
+  // par catégorie) et versements par mode de paiement
+  hotel?: SessionHotel;
+}
+
+export interface SessionHotel {
+  rooms: { category: 'STANDARD' | 'VIP' | 'SUITE'; nightlyRate: number; nights: number; amount: number }[];
+  payments: { method: string; amount: number }[];
 }
 
 export interface SessionOrder {
