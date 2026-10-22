@@ -111,6 +111,8 @@ export interface Order {
   // Espèces remises par le client et monnaie rendue
   cashReceived?: string | null;
   changeGiven?: string;
+  // Personne qui a encaissé
+  paidByName?: string | null;
   items: OrderItem[];
   payments?: Payment[];
   user?: { name: string } | null;

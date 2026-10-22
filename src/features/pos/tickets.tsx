@@ -1,6 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
+import { useAuth } from '@/features/auth/AuthContext';
 import { orderDiscount, taxBreakdown, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
 import type { Order, OrderItem, PaymentMethod } from './types';
@@ -39,6 +40,8 @@ const Rule = () => <div className="ticket-rule" />;
 
 // bill = addition imprimée avant l'encaissement (facture non payée)
 export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Order; paperWidth: PaperWidth; bill?: boolean }) {
+  // Personne qui imprime : signataire de l'addition
+  const { user } = useAuth();
   return (
     <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
       <div className="ticket-center">
@@ -53,6 +56,8 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
       <Line left={bill ? 'Facture N°' : 'Reçu N°'} right={invoiceNo(order)} />
       <Line left={order.table ? `Table ${order.table.label}` : 'Comptoir'} right={time(order.updatedAt)} />
       {order.user && <Line left="Servi par" right={order.user.name} />}
+      {!bill && order.paidByName && <Line left="Encaissé par" right={order.paidByName} />}
+      {bill && user && <Line left="Édité par" right={user.name} />}
       {order.customer && <Line left="Client" right={order.customer.name} />}
       {order.followsOrder && <Line left="Suite de la facture" right={`N° ${invoiceNo(order.followsOrder)}`} />}
       <Rule />

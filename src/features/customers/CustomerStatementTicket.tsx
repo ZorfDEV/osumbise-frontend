@@ -1,6 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
+import { useAuth } from '@/features/auth/AuthContext';
 import type { CustomerDetail } from './types';
 
 // Relevé de compte d'un client à crédit : ce qui a été mis sur son compte,
@@ -28,6 +29,7 @@ export default function CustomerStatementTicket({
   establishment: { name: string; logo: string | null; address?: string | null; phone?: string | null; email?: string | null; postalBox?: string | null; nif?: string | null; rc?: string | null };
   paperWidth: PaperWidth;
 }) {
+  const { user } = useAuth();
   return (
     <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
       <div className="ticket-center">
@@ -42,6 +44,7 @@ export default function CustomerStatementTicket({
       <Line left="Client" right={customer.name} />
       {customer.phone && <Line left="Téléphone" right={customer.phone} />}
       <Line left="Édité le" right={day(new Date().toISOString())} />
+      {user && <Line left="Édité par" right={user.name} />}
       <Rule />
       <div className="ticket-bold">Mis sur le compte</div>
       {charges.length === 0 && <div>Aucune opération</div>}

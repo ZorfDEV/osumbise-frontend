@@ -191,6 +191,12 @@ export default function ReceiptPage() {
               <span>{order.user.name}</span>
             </div>
           )}
+          {order.paidByName && (
+            <div className="flex justify-between">
+              <span>Encaissé par</span>
+              <span>{order.paidByName}</span>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1 border-t border-dashed border-slate-300 py-3">

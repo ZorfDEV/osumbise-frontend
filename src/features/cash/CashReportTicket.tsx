@@ -4,6 +4,7 @@ import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
 import { otherMethodsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
+import { useAuth } from '@/features/auth/AuthContext';
 
 // Rapport de fin de service au format ticket thermique : rapport provisoire
 // (session ouverte) ou rapport de clôture (session fermée). Mêmes styles que
@@ -23,6 +24,7 @@ const Rule = () => <div className="ticket-rule" />;
 
 export default function CashReportTicket({ session, paperWidth }: { session: CashSession; paperWidth: PaperWidth }) {
   const s = summarizeSession(session);
+  const { user } = useAuth();
   const establishment = session.cashRegister?.establishment;
   const closed = !!session.closedAt;
 
@@ -89,7 +91,10 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
         </>
       )}
       <Rule />
-      <div className="ticket-center">Imprimé le {dateTime(new Date().toISOString())}</div>
+      <div className="ticket-center">
+        Imprimé le {dateTime(new Date().toISOString())}
+        {user ? ` par ${user.name}` : ''}
+      </div>
       {closed && (
         <>
           <br />

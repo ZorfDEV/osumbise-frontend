@@ -1,6 +1,7 @@
 import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
+import { useAuth } from '@/features/auth/AuthContext';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
 import type { StayDetail } from './types';
@@ -28,6 +29,7 @@ export default function StayInvoiceTicket({
   paperWidth: PaperWidth;
 }) {
   const { totals } = stay;
+  const { user } = useAuth();
   // Établissement du séjour (avec ses mentions légales), à défaut l'actif
   const header = stay.establishment ?? { ...establishment, address: null };
   const roomCharges = stay.orders
@@ -50,6 +52,8 @@ export default function StayInvoiceTicket({
       <div className="ticket-rule" />
       <Line left="Facture N°" right={hotelInvoiceNo(stay)} />
       <Line left="Client" right={stay.guestName} />
+      <Line left="Réservé par" right={stay.user.name} />
+      {user && <Line left="Édité par" right={user.name} />}
       {stay.guestPhone && <Line left="Téléphone" right={stay.guestPhone} />}
       <Line left="Chambre" right={`${roomName(stay.room)} (${CATEGORY_LABELS[stay.room.category]})`} />
       <Line left="Arrivée" right={formatDay(stay.checkInDate)} />
