@@ -51,9 +51,9 @@ export default function StayInvoiceTicket({
       </div>
       <div className="ticket-rule" />
       <Line left="Facture N°" right={hotelInvoiceNo(stay)} />
+      <Line left="Créée par" right={stay.user.name} />
+      {user && <Line left="Éditée par" right={user.name} />}
       <Line left="Client" right={stay.guestName} />
-      <Line left="Réservé par" right={stay.user.name} />
-      {user && <Line left="Édité par" right={user.name} />}
       {stay.guestPhone && <Line left="Téléphone" right={stay.guestPhone} />}
       <Line left="Chambre" right={`${roomName(stay.room)} (${CATEGORY_LABELS[stay.room.category]})`} />
       <Line left="Arrivée" right={formatDay(stay.checkInDate)} />
