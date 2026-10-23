@@ -5,7 +5,6 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
 import type { StayDetail } from './types';
-import { pct } from './types';
 
 // Facture de séjour au format ticket thermique (mêmes styles que les reçus
 // du POS : .ticket dans index.css). Montants sans "FCFA" par ligne, la
@@ -93,14 +92,7 @@ export default function StayInvoiceTicket({
           right={`-${money(totals.discount)}`}
         />
       )}
-      {(totals.vat ?? 0) + (totals.css ?? 0) > 0 && (
-        <>
-          <Line left="Total HT" right={money(totals.total - (totals.vat ?? 0) - (totals.css ?? 0))} />
-          {(totals.vat ?? 0) > 0 && <Line left={`TVA ${pct(totals.taxRate ?? 0)}`} right={money(totals.vat ?? 0)} />}
-          {(totals.css ?? 0) > 0 && <Line left={`CSS ${pct(totals.cssRate ?? 0)}`} right={money(totals.css ?? 0)} />}
-        </>
-      )}
-      <Line left={(totals.vat ?? 0) + (totals.css ?? 0) > 0 ? 'TOTAL TTC FCFA' : 'TOTAL FCFA'} right={money(totals.total)} bold />
+      <Line left="TOTAL FCFA" right={money(totals.total)} bold />
       {stay.payments.length > 0 && (
         <>
           {stay.payments.map((p) => (

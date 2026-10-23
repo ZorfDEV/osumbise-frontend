@@ -6,7 +6,6 @@ import { apiError } from './api';
 import { createStayGroup, type StayGroupDetail } from './groupApi';
 import { addDaysIso, CATEGORY_LABELS, fcfa, nightsBetween, roomName, todayIso } from './labels';
 import type { Room, TaxRate } from './types';
-import { lodgingTaxes } from './types';
 
 type Line = { guestName: string; adults: number };
 
@@ -43,11 +42,12 @@ export default function GroupFormModal({
 
   const bookable = rooms.filter((r) => r.isActive && r.status !== 'OUT_OF_SERVICE');
   const nights = nightsBetween(checkInNow ? todayIso() : checkInDate, checkOutDate);
+  const taxOf = (r: Room) => taxRates.find((t) => t.category === r.category)?.taxPerNight ?? 0;
   const estimate = useMemo(
     () =>
       Object.keys(selected).reduce((sum, id) => {
         const r = rooms.find((x) => x.id === id);
-        return r ? sum + lodgingTaxes(nights * Number(r.nightlyRate), taxRates.find((t) => t.category === r.category)).total : sum;
+        return r ? sum + nights * (Number(r.nightlyRate) + taxOf(r)) : sum;
       }, 0),
     [selected, nights, rooms, taxRates]
   );
@@ -209,7 +209,7 @@ export default function GroupFormModal({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
           <p className="text-sm text-slate-600">
             {nights} nuitée{nights > 1 ? 's' : ''} · estimation <span className="font-semibold text-heading">{fcfa(estimate)}</span>
-            <span className="block text-xs text-slate-500">Hébergement TTC (TVA et CSS comprises), hors consommations</span>
+            <span className="block text-xs text-slate-500">Hébergement et taxe de séjour, hors consommations</span>
           </p>
           <div className="flex gap-2">
             <button onClick={onClose} className="btn btn-secondary">

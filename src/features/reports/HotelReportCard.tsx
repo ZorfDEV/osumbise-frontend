@@ -17,9 +17,7 @@ export default function HotelReportCard({ hotel }: { hotel: HotelReport }) {
   const rows: { label: string; value: string; strong?: boolean }[] = [
     { label: `Séjours terminés (${hotel.nights} nuitée${hotel.nights > 1 ? 's' : ''})`, value: String(hotel.checkedOutStays) },
     { label: 'Hébergement facturé', value: fcfa(hotel.lodging) },
-    { label: 'TVA hébergement', value: fcfa(hotel.stayVat ?? 0) },
-    { label: 'CSS hébergement', value: fcfa(hotel.stayCss ?? 0) },
-    ...(hotel.stayTax ? [{ label: 'Taxe de séjour (ancienne)', value: fcfa(hotel.stayTax) }] : []),
+    { label: 'Taxe de séjour', value: fcfa(hotel.stayTax) },
     { label: 'Prestations (pressing, room service…)', value: fcfa(hotel.services ?? 0) },
     { label: 'Remises accordées', value: `− ${fcfa(hotel.discounts ?? 0)}` },
     { label: 'Avances conservées (annulations)', value: fcfa(hotel.cancellationFees) },

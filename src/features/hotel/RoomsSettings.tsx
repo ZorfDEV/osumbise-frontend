@@ -79,10 +79,10 @@ export default function RoomsSettings({
     setSavingTax(true);
     try {
       await saveTaxRates(taxes);
-      toast.success('TVA et CSS enregistrées');
+      toast.success('Taxe de séjour enregistrée');
       onChanged();
     } catch (err) {
-      toast.error(apiError(err, 'Impossible d’enregistrer les taxes'));
+      toast.error(apiError(err, 'Impossible d’enregistrer la taxe de séjour'));
     } finally {
       setSavingTax(false);
     }
@@ -234,50 +234,37 @@ export default function RoomsSettings({
         )}
       </div>
 
-      {/* TVA et CSS par type de chambre */}
+      {/* Taxe de séjour */}
       <div className="rounded-lg border border-slate-200 bg-surface p-5">
-        <h2 className="mb-1 text-sm font-semibold text-heading-muted">TVA et CSS des chambres</h2>
+        <h2 className="mb-1 text-sm font-semibold text-heading-muted">Taxe de séjour</h2>
         <p className="mb-3 text-xs text-slate-500">
-          Ajoutées au prix HT de la nuitée : prix TTC = prix HT + TVA + CSS. Laissez 0 si la chambre n’est pas taxée.
-          Appliquées aux nouvelles réservations (les séjours déjà enregistrés gardent leurs taxes).
+          Montant par nuitée et par chambre, selon le type. Appliquée aux nouvelles réservations (les séjours déjà
+          enregistrés gardent leur taxe).
         </p>
         <div className="space-y-3">
-          <div className="grid grid-cols-[1fr_5.5rem_5.5rem] gap-2 text-xs font-medium text-slate-500">
-            <span />
-            <span className="text-right">TVA %</span>
-            <span className="text-right">CSS %</span>
-          </div>
           {taxes.map((t) => (
-            <div key={t.category} className="grid grid-cols-[1fr_5.5rem_5.5rem] items-center gap-2">
-              <span className="text-sm font-medium text-slate-700">{CATEGORY_LABELS[t.category]}</span>
-              {(['tva', 'css'] as const).map((k) => (
+            <div key={t.category} className="flex items-center justify-between gap-3">
+              <label htmlFor={`tax-${t.category}`} className="text-sm font-medium text-slate-700">
+                {CATEGORY_LABELS[t.category]}
+              </label>
+              <div className="flex items-center gap-2">
                 <input
-                  key={k}
-                  aria-label={`${k === 'tva' ? 'TVA' : 'CSS'} ${CATEGORY_LABELS[t.category]} (%)`}
+                  id={`tax-${t.category}`}
                   type="number"
                   min={0}
-                  max={100}
-                  step="0.01"
-                  list={`room-${k}-rates`}
-                  value={t[k]}
+                  value={t.taxPerNight}
                   onChange={(e) =>
-                    setTaxes((list) => list.map((x) => (x.category === t.category ? { ...x, [k]: Number(e.target.value) || 0 } : x)))
+                    setTaxes((list) => list.map((x) => (x.category === t.category ? { ...x, taxPerNight: Number(e.target.value) } : x)))
                   }
-                  className="input w-full text-right"
+                  className="input w-28 text-right"
                 />
-              ))}
+                <span className="text-xs text-slate-500">FCFA</span>
+              </div>
             </div>
           ))}
-          <datalist id="room-tva-rates">
-            <option value="18">TVA 18 %</option>
-            <option value="10">Taux réduit 10 %</option>
-          </datalist>
-          <datalist id="room-css-rates">
-            <option value="1">CSS 1 %</option>
-          </datalist>
         </div>
         <button onClick={saveTaxes} disabled={savingTax} aria-busy={savingTax} className="btn btn-primary mt-4 w-full">
-          Enregistrer les taxes
+          Enregistrer la taxe
         </button>
       </div>
 

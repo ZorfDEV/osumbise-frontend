@@ -5,7 +5,6 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
 import type { StayGroupDetail } from './groupApi';
-import { pct } from './types';
 
 // Facture unique d'un groupe : chaque chambre détaillée (nuits, taxe de
 // séjour, consommations), puis le total, les versements et le reste à payer.
@@ -59,8 +58,6 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
           {s.totals.charges > 0 && <Line left="Consommations" right={money(s.totals.charges)} />}
           {s.totals.services > 0 && <Line left="Prestations" right={money(s.totals.services)} />}
           {s.totals.discount > 0 && <Line left="Remise" right={`-${money(s.totals.discount)}`} />}
-          {(s.totals.vat ?? 0) > 0 && <Line left={`TVA ${pct(s.totals.taxRate ?? 0)}`} right={money(s.totals.vat ?? 0)} />}
-          {(s.totals.css ?? 0) > 0 && <Line left={`CSS ${pct(s.totals.cssRate ?? 0)}`} right={money(s.totals.css ?? 0)} />}
           <Line left="Sous-total" right={money(s.totals.total)} bold />
           <Rule />
         </div>
@@ -70,14 +67,7 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
       {totals.charges > 0 && <Line left="Consommations" right={money(totals.charges)} />}
       {totals.services > 0 && <Line left="Prestations" right={money(totals.services)} />}
       {totals.discount > 0 && <Line left="Remises" right={`-${money(totals.discount)}`} />}
-      {(totals.vat ?? 0) + (totals.css ?? 0) > 0 && (
-        <>
-          <Line left="Total HT" right={money(totals.total - (totals.vat ?? 0) - (totals.css ?? 0))} />
-          {(totals.vat ?? 0) > 0 && <Line left="TVA" right={money(totals.vat ?? 0)} />}
-          {(totals.css ?? 0) > 0 && <Line left="CSS" right={money(totals.css ?? 0)} />}
-        </>
-      )}
-      <Line left={(totals.vat ?? 0) + (totals.css ?? 0) > 0 ? 'TOTAL TTC FCFA' : 'TOTAL FCFA'} right={money(totals.total)} bold />
+      <Line left="TOTAL FCFA" right={money(totals.total)} bold />
       {payments.length > 0 && (
         <>
           <Rule />
