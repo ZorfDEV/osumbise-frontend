@@ -44,10 +44,11 @@ export const ROOM_DISPLAY: Record<RoomDisplayStatus, (typeof ROOM_STATUS)[RoomSt
   ...ROOM_STATUS,
   RESERVED: {
     label: 'Réservée',
-    card: 'border-info/40 bg-info-soft/40',
-    dot: 'bg-info',
-    badge: 'bg-info-soft text-info-dark',
-    icon: 'text-info-dark',
+    // Couleurs définies dans index.css (.room-reserved-*)
+    card: 'room-reserved-card',
+    dot: 'room-reserved-dot',
+    badge: 'room-reserved-badge',
+    icon: 'room-reserved-icon',
   },
 };
 

@@ -684,3 +684,20 @@
   object-fit: contain;
   filter: grayscale(1) contrast(1.4);
 }
+
+/* Plan des chambres : statut « Réservée » (contour, texte, icône / fond) */
+.room-reserved-card {
+  border-color: oklch(54.6% 0.245 262.881);
+  background-color: oklch(70.7% 0.165 254.624);
+}
+.room-reserved-icon {
+  color: oklch(54.6% 0.245 262.881);
+}
+.room-reserved-dot {
+  background-color: oklch(54.6% 0.245 262.881);
+}
+.room-reserved-badge {
+  border: 1px solid oklch(54.6% 0.245 262.881);
+  background-color: #fff;
+  color: oklch(54.6% 0.245 262.881);
+}
