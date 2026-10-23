@@ -22,6 +22,7 @@ import DiscountModal from '@/features/pos/DiscountModal';
 import { useAuth } from '@/features/auth/AuthContext';
 import { setStayDiscount } from './api';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
+import { pct } from './types';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
 
@@ -549,10 +550,12 @@ export default function StayDetailPage() {
               </span>
               <span>{fcfa(totals.lodging)}</span>
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>Taxe de séjour</span>
-              <span>{fcfa(totals.tax)}</span>
-            </div>
+            {totals.tax > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Taxe de séjour</span>
+                <span>{fcfa(totals.tax)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-slate-600">
               <span>Consommations</span>
               <span>{fcfa(totals.charges)}</span>
@@ -572,8 +575,28 @@ export default function StayDetailPage() {
                 <span>− {fcfa(totals.discount)}</span>
               </div>
             )}
+            {(totals.vat ?? 0) + (totals.css ?? 0) > 0 && (
+              <>
+                <div className="flex justify-between border-t border-slate-200 pt-1.5 text-slate-600">
+                  <span>Total HT</span>
+                  <span>{fcfa(totals.total - (totals.vat ?? 0) - (totals.css ?? 0))}</span>
+                </div>
+                {(totals.vat ?? 0) > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>TVA {pct(totals.taxRate ?? 0)} (hébergement)</span>
+                    <span>{fcfa(totals.vat ?? 0)}</span>
+                  </div>
+                )}
+                {(totals.css ?? 0) > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>CSS {pct(totals.cssRate ?? 0)} (hébergement)</span>
+                    <span>{fcfa(totals.css ?? 0)}</span>
+                  </div>
+                )}
+              </>
+            )}
             <div className="flex justify-between border-t border-slate-200 pt-1.5 font-semibold text-heading">
-              <span>Total</span>
+              <span>{(totals.vat ?? 0) + (totals.css ?? 0) > 0 ? 'Total TTC' : 'Total'}</span>
               <span>{fcfa(totals.total)}</span>
             </div>
             {user?.role === 'OWNER' && stay.status !== 'CANCELLED' && (
@@ -633,7 +656,7 @@ export default function StayDetailPage() {
       {discounting && (
         <DiscountModal
           base={totals.lodging + totals.charges + (totals.services ?? 0)}
-          baseLabel="Hébergement, consommations et prestations (hors taxe de séjour)"
+          baseLabel="Hébergement, consommations et prestations (hors taxes)"
           current={{ amount: totals.discount ?? 0, rate: stay.discountRate != null ? Number(stay.discountRate) : null, reason: stay.discountReason ?? null }}
           onClose={() => setDiscounting(false)}
           onSubmit={async (payload) => {

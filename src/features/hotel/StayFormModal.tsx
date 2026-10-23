@@ -6,6 +6,7 @@ import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, nightsBetween, roomName, toda
 import type { Room, StayDetail, TaxRate } from './types';
 import { fetchCustomers } from '@/features/customers/api';
 import type { Customer } from '@/features/customers/types';
+import { lodgingTaxes, pct } from './types';
 
 interface Props {
   rooms: Room[];
@@ -73,8 +74,10 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
   }, [checkInDate, checkOutDate]);
 
   const nights = nightsBetween(checkInDate, checkOutDate);
-  const taxPerNight = room ? taxRates.find((t) => t.category === room.category)?.taxPerNight ?? 0 : 0;
-  const estimate = useMemo(() => nights * (Number(rate) || 0) + nights * taxPerNight, [nights, rate, taxPerNight]);
+  const roomTax = room ? taxRates.find((t) => t.category === room.category) : undefined;
+  const lodgingHt = nights * (Number(rate) || 0);
+  const taxes = useMemo(() => lodgingTaxes(lodgingHt, roomTax), [lodgingHt, roomTax]);
+  const estimate = taxes.total;
 
   const submit = async () => {
     setError(null);
@@ -239,7 +242,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
             <input id="stay-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="input w-full" placeholder="Lit bébé, arrivée tardive…" />
           </div>
 
-          {/* Estimation : nuits × (tarif + taxe de séjour), hors consommations */}
+          {/* Estimation : nuits × tarif HT + TVA + CSS, hors consommations */}
           <div className="rounded-lg bg-slate-50 p-4 text-sm sm:col-span-2">
             <div className="flex justify-between text-slate-600">
               <span>
@@ -247,14 +250,20 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               </span>
               <span>{fcfa(nights * (Number(rate) || 0))}</span>
             </div>
-            <div className="flex justify-between text-slate-600">
-              <span>
-                Taxe de séjour ({nights} × {fcfa(taxPerNight)})
-              </span>
-              <span>{fcfa(nights * taxPerNight)}</span>
-            </div>
+            {taxes.vat > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>TVA {pct(roomTax?.tva ?? 0)}</span>
+                <span>{fcfa(taxes.vat)}</span>
+              </div>
+            )}
+            {taxes.css > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>CSS {pct(roomTax?.css ?? 0)}</span>
+                <span>{fcfa(taxes.css)}</span>
+              </div>
+            )}
             <div className="mt-1 flex justify-between border-t border-slate-200 pt-1 font-semibold text-heading">
-              <span>Estimation (hors consommations)</span>
+              <span>Estimation TTC (hors consommations)</span>
               <span>{fcfa(estimate)}</span>
             </div>
           </div>

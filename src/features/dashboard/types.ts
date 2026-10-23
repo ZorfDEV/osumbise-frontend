@@ -16,6 +16,9 @@ export interface HotelReport {
   nights: number;
   lodging: number;
   stayTax: number;
+  // TVA et CSS sur l'hébergement
+  stayVat?: number;
+  stayCss?: number;
   services?: number;
   discounts?: number;
   cancellationFees: number;

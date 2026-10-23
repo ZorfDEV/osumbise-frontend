@@ -34,10 +34,22 @@ export interface Room {
   stays: StaySummary[];
 }
 
+// TVA et CSS (%) ajoutées au prix HT de la nuitée, par type de chambre
 export interface TaxRate {
   category: RoomCategory;
-  taxPerNight: number;
+  tva: number;
+  css: number;
 }
+
+// TVA et CSS d'une nuitée HT (arrondies au franc, comme le serveur)
+export const lodgingTaxes = (lodging: number, rate?: TaxRate) => {
+  const vat = Math.round((lodging * (rate?.tva ?? 0)) / 100);
+  const css = Math.round((lodging * (rate?.css ?? 0)) / 100);
+  return { vat, css, total: lodging + vat + css };
+};
+
+// « 18 % »
+export const pct = (n: number | string) => `${Number(n).toLocaleString('fr-FR')} %`;
 
 export interface StayListItem {
   id: string;
@@ -60,8 +72,15 @@ export interface StayListItem {
 
 export interface StayTotals {
   nights: number;
+  // Hébergement HT
   lodging: number;
+  // Ancienne taxe de séjour fixe (séjours enregistrés avant TVA/CSS)
   tax: number;
+  // TVA et CSS sur l'hébergement (après remise)
+  vat?: number;
+  css?: number;
+  taxRate?: number;
+  cssRate?: number;
   charges: number;
   // Prestations de l'hôtel (pressing, room service…)
   services: number;
