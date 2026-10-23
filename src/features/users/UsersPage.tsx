@@ -8,7 +8,7 @@ import { useToast } from '@/lib/toast';
 import { ROLE_LABELS } from '@/config/roles';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import { Pagination, usePagination } from '@/components/ui/pagination';
-import { Pencil } from 'lucide-react';
+import { Check, ChevronDown, KeyRound, MoreHorizontal, Pencil, UserCheck, UserX, X } from 'lucide-react';
 
 const ASSIGNABLE_ROLES: AssignableRole[] = ['ADMIN', 'CASHIER', 'SERVER', 'STOCK_KEEPER', 'COOK'];
 
@@ -22,6 +22,8 @@ export default function UsersPage() {
   const [newPassword, setNewPassword] = useState('');
   const [resetError, setResetError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AppUser | null>(null);
+  // Ligne dont les actions sont dépliées (une seule à la fois)
+  const [openActionsId, setOpenActionsId] = useState<string | null>(null);
 
   const load = () => {
     setIsLoading(true);
@@ -145,19 +147,18 @@ export default function UsersPage() {
                   </td>
                   <td data-label="" className="px-4 py-2 text-right">
                     {resettingId === u.id ? (
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         <input
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="Nouveau mot de passe"
+                          aria-label={`Nouveau mot de passe de ${u.name}`}
                           autoFocus
-                          className="input input-sm w-40 text-xs"
+                          className="input input-sm w-44 text-xs"
                         />
-                        <button
-                          onClick={() => handleResetPassword(u)}
-                          className="text-xs font-medium text-slate-900 hover:underline"
-                        >
+                        <button onClick={() => handleResetPassword(u)} className="btn btn-primary btn-sm">
+                          <Check size={14} />
                           Valider
                         </button>
                         <button
@@ -166,30 +167,60 @@ export default function UsersPage() {
                             setNewPassword('');
                             setResetError(null);
                           }}
-                          className="text-xs text-slate-500 hover:text-slate-600"
+                          className="btn btn-secondary btn-sm"
                         >
+                          <X size={14} />
                           Annuler
                         </button>
                       </div>
                     ) : (
                       u.role !== 'OWNER' &&
                       u.id !== currentUser?.id && (
-                        <div className="flex justify-end gap-3">
-                          <button onClick={() => setEditing(u)} className="btn btn-edit btn-sm">
-                            <Pencil size={14} />
-                            Modifier
-                          </button>
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          {/* Actions dépliées : bleu = modifier, orange = désactiver,
+                              vert = réactiver, violet = mot de passe */}
+                          {openActionsId === u.id && (
+                            <>
+                              <button onClick={() => setEditing(u)} className="btn btn-edit btn-sm">
+                                <Pencil size={14} />
+                                Modifier
+                              </button>
+                              {u.isActive ? (
+                                <button
+                                  onClick={() => handleToggleActive(u)}
+                                  className="btn btn-sm bg-amber-500 text-white hover:bg-amber-600"
+                                >
+                                  <UserX size={14} />
+                                  Désactiver
+                                </button>
+                              ) : (
+                                <button onClick={() => handleToggleActive(u)} className="btn btn-primary btn-sm">
+                                  <UserCheck size={14} />
+                                  Réactiver
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setResettingId(u.id);
+                                  setOpenActionsId(null);
+                                }}
+                                className="btn btn-sm bg-violet-600 text-white hover:bg-violet-700"
+                              >
+                                <KeyRound size={14} />
+                                Mot de passe
+                              </button>
+                            </>
+                          )}
                           <button
-                            onClick={() => handleToggleActive(u)}
-                            className="text-xs font-medium text-slate-500 hover:text-slate-900"
+                            onClick={() => setOpenActionsId((id) => (id === u.id ? null : u.id))}
+                            aria-expanded={openActionsId === u.id}
+                            aria-label={`${openActionsId === u.id ? 'Masquer' : 'Afficher'} les actions pour ${u.name}`}
+                            title={openActionsId === u.id ? 'Masquer les actions' : 'Afficher les actions'}
+                            className={`btn btn-sm ${openActionsId === u.id ? 'btn-secondary' : 'border border-slate-300 bg-surface text-slate-700 hover:bg-slate-50'}`}
                           >
-                            {u.isActive ? 'Désactiver' : 'Réactiver'}
-                          </button>
-                          <button
-                            onClick={() => setResettingId(u.id)}
-                            className="text-xs font-medium text-slate-500 hover:text-slate-900"
-                          >
-                            Réinitialiser le mot de passe
+                            <MoreHorizontal size={14} />
+                            Actions
+                            <ChevronDown size={14} className={`transition-transform ${openActionsId === u.id ? 'rotate-180' : ''}`} />
                           </button>
                         </div>
                       )
