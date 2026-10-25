@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Banknote, DoorClosed, DoorOpen, Pencil, Printer, X } from 'lucide-react';
+import { ArrowLeftRight, Banknote, DoorClosed, DoorOpen, Pencil, Printer, X } from 'lucide-react';
 import { api } from '@/lib/axios';
 import { useToast } from '@/lib/toast';
 import { useConfirm } from '@/lib/confirm';
@@ -15,6 +15,7 @@ import type { Customer } from '@/features/customers/types';
 import { addStayPayment, apiError, cancelStay, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
 import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import StayFormModal from './StayFormModal';
+import MoveRoomModal from './MoveRoomModal';
 import StayInvoiceTicket from './StayInvoiceTicket';
 import StayChargesCard from './StayChargesCard';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
@@ -277,6 +278,7 @@ export default function StayDetailPage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
   const [editing, setEditing] = useState(false);
+  const [moving, setMoving] = useState(false);
   const [paying, setPaying] = useState(false);
   const [cancellingWithAdvance, setCancellingWithAdvance] = useState(false);
   const [discounting, setDiscounting] = useState(false);
@@ -434,6 +436,12 @@ export default function StayDetailPage() {
             <Printer size={16} />
             Imprimer la facture
           </button>
+          {canEdit && (
+            <button onClick={() => setMoving(true)} className="btn bg-warning-soft text-warning-dark hover:brightness-95">
+              <ArrowLeftRight size={16} />
+              Changer de chambre
+            </button>
+          )}
           {canEdit && (
             <button onClick={() => setEditing(true)} className="btn btn-edit">
               <Pencil size={16} />
@@ -603,6 +611,18 @@ export default function StayDetailPage() {
         </div>
       </div>
 
+      {moving && (
+        <MoveRoomModal
+          stay={stay}
+          rooms={rooms}
+          onClose={() => setMoving(false)}
+          onMoved={(s) => {
+            setMoving(false);
+            setStay(s);
+            fetchRooms().then(setRooms).catch(() => {});
+          }}
+        />
+      )}
       {editing && (
         <StayFormModal
           rooms={rooms}

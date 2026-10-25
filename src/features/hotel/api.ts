@@ -50,6 +50,9 @@ export const setStayDiscount = async (
 
 export const fetchStay = async (id: string): Promise<StayDetail> => (await api.get(`/hotel/stays/${id}`)).data.stay;
 export const createStay = async (payload: StayPayload): Promise<StayDetail> => (await api.post('/hotel/stays', payload)).data.stay;
+// Changement de chambre (anomalie) : même facture et même tarif
+export const moveStay = async (id: string, payload: { roomId: string; reason: string; outOfService: boolean }): Promise<StayDetail> =>
+  (await api.post(`/hotel/stays/${id}/move`, payload)).data.stay;
 export const updateStay = async (id: string, payload: Partial<StayPayload>): Promise<StayDetail> =>
   (await api.patch(`/hotel/stays/${id}`, payload)).data.stay;
 export const checkInStay = async (id: string): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/check-in`)).data.stay;
