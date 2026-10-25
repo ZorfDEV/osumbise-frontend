@@ -17,14 +17,22 @@ export interface PrintSettings {
   autoPrintReceipt: boolean;
   // Bon de cuisine imprimé automatiquement par l'écran Cuisine de ce poste
   autoPrintKitchen: boolean;
+  // Réduction de la largeur imprimée (mm) : certaines imprimantes 80 mm
+  // n'impriment que 64 mm, la droite du ticket (montants) serait coupée
+  widthReductionMm: number;
 }
 
 const SETTINGS_KEY = 'osumbise:print';
 const CHANGE_EVENT = 'osumbise:print-change';
-const DEFAULTS: PrintSettings = { paperWidth: 80, autoPrintReceipt: false, autoPrintKitchen: false };
+const DEFAULTS: PrintSettings = { paperWidth: 80, autoPrintReceipt: false, autoPrintKitchen: false, widthReductionMm: 0 };
 
 // Zone imprimable réelle : environ 72 mm sur un rouleau de 80 mm, 48 mm sur 58 mm
 export const PRINTABLE_WIDTH_MM: Record<PaperWidth, number> = { 80: 72, 58: 48 };
+
+// Largeur réelle du ticket : zone imprimable du papier, moins la réduction
+// choisie sur ce poste (Paramètres > Impression des tickets)
+export const ticketWidthMm = (paperWidth: PaperWidth) =>
+  Math.max(36, PRINTABLE_WIDTH_MM[paperWidth] - (Number(readPrintSettings().widthReductionMm) || 0));
 
 export const readPrintSettings = (): PrintSettings => {
   try {

@@ -1,4 +1,4 @@
-import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
+import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
@@ -29,7 +29,7 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
   const closed = !!session.closedAt;
 
   return (
-    <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
+    <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
       <div className="ticket-center">
         {establishment?.logo && <img src={resolveUploadUrl(establishment.logo)} alt="" className="ticket-logo" />}
         <div className="ticket-title">{establishment?.name ?? 'Établissement'}</div>

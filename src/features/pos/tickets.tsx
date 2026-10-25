@@ -1,4 +1,4 @@
-import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
+import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -43,7 +43,7 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
   // Personne qui imprime : signataire de l'addition
   const { user } = useAuth();
   return (
-    <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
+    <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
       <div className="ticket-center">
         {order.establishment?.logo && (
           <img src={resolveUploadUrl(order.establishment.logo)} alt="" className="ticket-logo" />
@@ -118,7 +118,7 @@ export function KitchenTicket({
   paperWidth: PaperWidth;
 }) {
   return (
-    <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
+    <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
       <div className="ticket-center ticket-title">{isAddition ? '** AJOUT **' : 'BON CUISINE'}</div>
       <div className="ticket-center ticket-huge">{order.table ? `TABLE ${order.table.label}` : 'COMPTOIR'}</div>
       <Line left={time()} right={`N° ${invoiceNo(order)}`} />

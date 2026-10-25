@@ -1,4 +1,4 @@
-import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
+import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -40,7 +40,7 @@ export default function StayInvoiceTicket({
     .filter((o) => o.roomAmount > 0);
 
   return (
-    <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
+    <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
       <div className="ticket-center">
         {header.logo && <img src={resolveUploadUrl(header.logo)} alt="" className="ticket-logo" />}
         <div className="ticket-title">{header.name ?? 'Hôtel'}</div>

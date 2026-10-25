@@ -1,4 +1,4 @@
-import { PRINTABLE_WIDTH_MM, type PaperWidth } from '@/lib/print';
+import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -26,7 +26,7 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
   const payments = billed.flatMap((s) => s.payments).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   return (
-    <div className="ticket" style={{ width: `${PRINTABLE_WIDTH_MM[paperWidth]}mm` }}>
+    <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
       <div className="ticket-center">
         {group.establishment.logo && <img src={resolveUploadUrl(group.establishment.logo)} alt="" className="ticket-logo" />}
         <div className="ticket-title">{group.establishment.name}</div>

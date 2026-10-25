@@ -94,6 +94,27 @@ export default function PrintSettingsCard() {
           </select>
         </div>
 
+        <div>
+          <label htmlFor="width-reduction" className="mb-1 block text-sm font-medium text-slate-700">
+            Ajuster la largeur imprimée
+          </label>
+          <select
+            id="width-reduction"
+            value={settings.widthReductionMm ?? 0}
+            onChange={(e) => update({ widthReductionMm: Number(e.target.value) })}
+            className="input w-full sm:w-64"
+          >
+            <option value={0}>Normale</option>
+            <option value={4}>Réduite de 4 mm</option>
+            <option value={8}>Réduite de 8 mm (imprimantes 64 mm)</option>
+            <option value={12}>Réduite de 12 mm</option>
+            <option value={16}>Réduite de 16 mm</option>
+          </select>
+          <p className="mt-1 text-xs text-slate-500">
+            Si les montants à droite sont coupés à l’impression, réduisez la largeur puis imprimez un ticket de test.
+          </p>
+        </div>
+
         <label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
