@@ -59,7 +59,14 @@ export default function StayInvoiceTicket({
       {stay.guestPhone && <Line left="Téléphone" right={stay.guestPhone} />}
       <Line left="Chambre" right={`${roomName(stay.room)} (${CATEGORY_LABELS[stay.room.category]})`} />
       <Line left="Arrivée" right={formatDay(stay.checkInDate)} />
-      <Line left="Départ" right={formatDay(stay.checkOutDate)} />
+      {totals.extended && totals.billedCheckOutDate ? (
+        <>
+          <Line left="Départ prévu" right={formatDay(stay.checkOutDate)} />
+          <Line left="Prolongé au" right={formatDay(totals.billedCheckOutDate)} />
+        </>
+      ) : (
+        <Line left="Départ" right={formatDay(stay.checkOutDate)} />
+      )}
       <div className="ticket-rule" />
       <Line left={`Hébergement ${totals.nights} nuitée${totals.nights > 1 ? 's' : ''} x ${money(stay.nightlyRate)}`} right={money(totals.lodging)} />
       {totals.tax > 0 && <Line left={`Taxe de séjour ${totals.nights} x ${money(stay.taxPerNight)}`} right={money(totals.tax)} />}

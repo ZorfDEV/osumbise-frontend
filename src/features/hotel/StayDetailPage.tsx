@@ -463,6 +463,9 @@ export default function StayDetailPage() {
             <div>
               <p className="text-xs text-slate-500">Départ</p>
               <p className="font-medium text-heading">{formatDay(stay.checkOutDate)}</p>
+              {totals.extended && (
+                <p className="text-xs font-medium text-warning-dark">Prolongé : nuitées comptées jusqu’à aujourd’hui</p>
+              )}
               {stay.checkedOutAt && <p className="text-xs text-slate-500">à {new Date(stay.checkedOutAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>}
             </div>
             <div>

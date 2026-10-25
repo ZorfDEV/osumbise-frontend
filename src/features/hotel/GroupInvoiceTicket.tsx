@@ -51,7 +51,8 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
           </div>
           {s.guestName !== group.name && <div>{s.guestName}</div>}
           <div>
-            {formatDay(s.checkInDate, { day: '2-digit', month: '2-digit' })} → {formatDay(s.checkOutDate, { day: '2-digit', month: '2-digit' })}
+            {formatDay(s.checkInDate, { day: '2-digit', month: '2-digit' })} → {formatDay(s.totals.billedCheckOutDate ?? s.checkOutDate, { day: '2-digit', month: '2-digit' })}
+            {s.totals.extended ? ' (prolongé)' : ''}
           </div>
           <Line left={`${s.totals.nights} nuitée(s) x ${money(s.nightlyRate)}`} right={money(s.totals.lodging)} />
           {s.totals.tax > 0 && <Line left="Taxe de séjour" right={money(s.totals.tax)} />}

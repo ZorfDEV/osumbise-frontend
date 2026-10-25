@@ -60,6 +60,10 @@ export interface StayListItem {
 
 export interface StayTotals {
   nights: number;
+  // Nuits comptées jusqu'à cette date : aujourd'hui si le client est resté
+  // au-delà de son départ prévu
+  billedCheckOutDate?: string;
+  extended?: boolean;
   lodging: number;
   tax: number;
   charges: number;

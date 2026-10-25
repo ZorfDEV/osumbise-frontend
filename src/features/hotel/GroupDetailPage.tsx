@@ -299,7 +299,8 @@ export default function GroupDetailPage() {
                 </td>
                 <td data-label="Occupant" className="px-4 py-2 text-slate-700">{s.guestName}</td>
                 <td data-label="Dates" className="px-4 py-2 text-slate-600">
-                  {formatDay(s.checkInDate, { day: '2-digit', month: '2-digit' })} → {formatDay(s.checkOutDate, { day: '2-digit', month: '2-digit' })}
+                  {formatDay(s.checkInDate, { day: '2-digit', month: '2-digit' })} → {formatDay(s.totals.billedCheckOutDate ?? s.checkOutDate, { day: '2-digit', month: '2-digit' })}
+                  {s.totals.extended ? ' (prolongé)' : ''}
                   <span className="block text-xs text-slate-500">{s.totals.nights} nuitée{s.totals.nights > 1 ? 's' : ''}</span>
                 </td>
                 <td data-label="Statut" className="px-4 py-2">
