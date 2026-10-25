@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BedDouble, CalendarPlus, Crown, DoorOpen, Settings2, Sparkles, UserPlus, Users, Wrench, X } from 'lucide-react';
+import { BedDouble, CalendarPlus, Crown, DoorOpen, Settings2, Sparkles, UserPlus, Users, Wrench, X, ArrowLeftRight } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useToast } from '@/lib/toast';
 import { useConfirm } from '@/lib/confirm';
 import { getSocket } from '@/lib/socket';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
-import { apiError, checkInStay, fetchRooms, fetchTaxRates, setRoomStatus } from './api';
+import { apiError, checkInStay, fetchRooms, fetchTaxRates, setRoomStatus, fetchStay } from './api';
 import { CATEGORY_LABELS, dayOf, fcfa, formatDay, ROOM_DISPLAY, roomName, todayIso, type RoomDisplayStatus } from './labels';
 import StayFormModal from './StayFormModal';
 import GroupFormModal from './GroupFormModal';
 import RoomsSettings from './RoomsSettings';
-import type { Room, RoomStatus, TaxRate } from './types';
+import type { Room, RoomStatus, StayDetail, TaxRate } from './types';
+import MoveRoomModal from './MoveRoomModal';
 
 type FormState = { walkIn?: boolean; roomId?: string } | null;
 // Filtre du plan, choisi en cliquant sur un badge de la synthèse du jour
@@ -139,6 +140,16 @@ export default function RoomsPage() {
       socket.off('hotel:updated', load);
     };
   }, [load]);
+
+  // Changement de chambre depuis le plan (séjour chargé au clic)
+  const [moving, setMoving] = useState<StayDetail | null>(null);
+  const openMove = async (stayId: string) => {
+    try {
+      setMoving(await fetchStay(stayId));
+    } catch (err) {
+      toast.error(apiError(err, 'Séjour introuvable'));
+    }
+  };
 
   const today = todayIso();
   const current = (r: Room) => r.stays.find((s) => s.status === 'CHECKED_IN');
@@ -396,6 +407,15 @@ export default function RoomsPage() {
                         Séjour de {c.guestName} — note, encaissement, départ
                       </button>
                     )}
+                    {c && (
+                      <button
+                        onClick={() => openMove(c.id)}
+                        className="btn w-full justify-start bg-warning-soft text-warning-dark hover:brightness-95"
+                      >
+                        <ArrowLeftRight size={16} />
+                        Changer {c.guestName} de chambre
+                      </button>
+                    )}
                     {!c && arrival && (
                       <button
                         onClick={async () => {
@@ -417,7 +437,7 @@ export default function RoomsPage() {
                         Enregistrer l’arrivée de {arrival.guestName}
                       </button>
                     )}
-                    {!c && selected.status !== 'OUT_OF_SERVICE' && (
+                    {!c && selected.status !== 'OUT_OF_SERVICE' && selected.status !== 'OCCUPIED' && (
                       <button onClick={() => setForm({ walkIn: true, roomId: selected.id })} className="btn btn-secondary w-full justify-start">
                         <UserPlus size={16} />
                         Arrivée sans réservation
@@ -478,6 +498,19 @@ export default function RoomsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {moving && (
+        <MoveRoomModal
+          stay={moving}
+          rooms={rooms}
+          onClose={() => setMoving(null)}
+          onMoved={() => {
+            setMoving(null);
+            setSelected(null);
+            load();
+          }}
+        />
       )}
 
       {outOfService && (
