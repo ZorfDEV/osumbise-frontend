@@ -43,6 +43,7 @@ export interface ProductPayload {
   tva?: number;
   css?: number;
   priceIncludesTax?: boolean;
+  isSellable?: boolean;
   unit?: string;
   stockMin?: number;
   tag?: number | null;

@@ -19,6 +19,8 @@ const productFormSchema = z
     ),
     // Prix TTC fixe : le prix saisi est celui payé par le client, taxes incluses
     priceIncludesTax: z.boolean().optional(),
+    // Décoché : ingrédient (huile, spaghettis...), absent de la caisse
+    isSellable: z.boolean().optional(),
     tva: z.preprocess(
       (v) => (typeof v === 'number' && Number.isNaN(v) ? 0 : v),
       z.number().min(0, 'Entre 0 et 100').max(100, 'Entre 0 et 100').optional()
@@ -91,7 +93,7 @@ export default function ProductForm({
     formState: { errors, isSubmitting },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productFormSchema),
-    defaultValues: { unit: 'UNIT', preparationArea: 'KITCHEN', ...defaultValues },
+    defaultValues: { unit: 'UNIT', preparationArea: 'KITCHEN', isSellable: true, ...defaultValues },
   });
 
   const name = watch('name');
@@ -104,6 +106,7 @@ export default function ProductForm({
   }, [categoryId, categories, defaultValues?.preparationArea, setValue]);
   const price = Number(watch('sellingPrice')) || 0;
   const priceIncludesTax = !!watch('priceIncludesTax');
+  const isSellable = watch('isSellable') !== false;
   const taxRate = Number(watch('tva')) || 0;
   const cssRate = Number(watch('css')) || 0;
   const tagField = register('tag', { valueAsNumber: true });
@@ -196,6 +199,20 @@ export default function ProductForm({
           <option value="CL">Centilitre</option>
           <option value="L">Litre</option>
         </select>
+      </div>
+
+      <div>
+        <label className="flex items-start gap-2 text-sm text-slate-700">
+          <input type="checkbox" className="mt-0.5" {...register('isSellable')} />
+          <span>
+            Vendu en caisse
+            <span className="block text-xs text-slate-500">
+              {isSellable
+                ? 'Le produit apparaît à la caisse.'
+                : 'Ingrédient : absent de la caisse, consommé seulement via les recettes. Il garde son stock et son seuil d’alerte.'}
+            </span>
+          </span>
+        </label>
       </div>
 
       <div>

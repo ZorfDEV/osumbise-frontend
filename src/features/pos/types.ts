@@ -24,6 +24,8 @@ export interface Product {
   stockMin: string;
   // Plat composé (avec recette) : préparé à la commande, pas de stock propre
   isComposed?: boolean;
+  // false : ingrédient, jamais proposé à la vente
+  isSellable?: boolean;
   unit: string;
   tag: string | null;
   type: string;

@@ -47,6 +47,7 @@ export default function ProductsPage() {
   const [sort, setSort] = useState<ProductSort>('name');
   // Produits supprimés (désactivés) : masqués sauf demande
   const [showDeleted, setShowDeleted] = useState(false);
+  const [onlyIngredients, setOnlyIngredients] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -109,9 +110,11 @@ export default function ProductsPage() {
   };
 
   const deletedCount = products.filter((p) => !p.isActive).length;
+  const ingredientCount = products.filter((p) => p.isActive && p.isSellable === false).length;
   const q = normalizeText(query);
   const filtered = products
     .filter((p) => showDeleted || p.isActive)
+    .filter((p) => !onlyIngredients || p.isSellable === false)
     .filter((p) => !selectedCategoryId || p.categoryId === selectedCategoryId)
     .filter((p) => !q || normalizeText(p.name).includes(q) || (!!p.sku && normalizeText(p.sku).includes(q)))
     .sort((a, b) => {
@@ -126,9 +129,9 @@ export default function ProductsPage() {
           return a.name.localeCompare(b.name, 'fr');
       }
     });
-  const isFiltering = !!q || !!selectedCategoryId;
+  const isFiltering = !!q || !!selectedCategoryId || onlyIngredients;
 
-  const pager = usePagination(filtered, { resetKey: `${query}|${selectedCategoryId}|${sort}|${showDeleted}` });
+  const pager = usePagination(filtered, { resetKey: `${query}|${selectedCategoryId}|${sort}|${showDeleted}|${onlyIngredients}` });
 
   return (
     <div>
@@ -212,8 +215,14 @@ export default function ProductsPage() {
             {c.name}
           </button>
         ))}
-        {deletedCount > 0 && (
+        {ingredientCount > 0 && (
           <label className="ml-auto flex items-center gap-1 text-xs text-slate-500">
+            <input type="checkbox" checked={onlyIngredients} onChange={(e) => setOnlyIngredients(e.target.checked)} />
+            Ingrédients seulement ({ingredientCount})
+          </label>
+        )}
+        {deletedCount > 0 && (
+          <label className={`${ingredientCount > 0 ? '' : 'ml-auto '}flex items-center gap-1 text-xs text-slate-500`}>
             <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
             Afficher les produits supprimés ({deletedCount})
           </label>
@@ -290,6 +299,11 @@ export default function ProductsPage() {
                     >
                       {p.name}
                     </Link>
+                    {p.isSellable === false && (
+                      <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                        Ingrédient
+                      </span>
+                    )}
                     {p.type && (
                       <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500">
                         {PRODUCT_TYPE_LABELS[p.type]}

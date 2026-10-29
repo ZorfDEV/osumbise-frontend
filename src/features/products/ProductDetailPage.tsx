@@ -106,6 +106,7 @@ export default function ProductDetailPage() {
               tva: Number(product.tva ?? 0),
               css: Number(product.css ?? 0),
               priceIncludesTax: !!product.priceIncludesTax,
+              isSellable: product.isSellable !== false,
               unit: product.unit,
               stockMin: product.isComposed ? 0 : Number(product.stockMin),
               tag: product.tag !== null ? Number(product.tag) : undefined,
@@ -188,6 +189,12 @@ export default function ProductDetailPage() {
               <p className="text-xs text-slate-500">Seuil d’alerte</p>
               <p className="font-medium text-slate-900">
                 {product.isComposed ? 'Sur les ingrédients' : Number(product.stockMin)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Vendu en caisse</p>
+              <p className="font-medium text-slate-900">
+                {product.isSellable === false ? 'Non (ingrédient)' : 'Oui'}
               </p>
             </div>
             <div>

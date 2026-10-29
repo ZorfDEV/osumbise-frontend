@@ -260,7 +260,8 @@ export default function PosOrderPage() {
     fetchProducts()
       .then((fetchedProducts) => {
         setProducts(
-          fetchedProducts.map((product) => ({
+          // Les ingrédients (huile, spaghettis...) ne se vendent pas en caisse
+          fetchedProducts.filter((product) => product.isSellable !== false).map((product) => ({
             ...product,
             type: product.type ?? '',
           }))
@@ -269,7 +270,7 @@ export default function PosOrderPage() {
       .catch(() =>
         getCachedProducts().then((cachedProducts) => {
           setProducts(
-            cachedProducts.map((product) => ({
+            cachedProducts.filter((product) => product.isSellable !== false).map((product) => ({
               ...product,
               type: product.type ?? '',
             }))

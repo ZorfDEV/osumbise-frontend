@@ -31,6 +31,8 @@ export interface Product {
   // Plat composé (avec recette) : préparé à la commande, sans stock propre ni
   // seuil d'alerte — le seuil est porté par ses ingrédients
   isComposed?: boolean;
+  // false : ingrédient (huile, spaghettis...), absent de la caisse
+  isSellable?: boolean;
   isActive: boolean;
   categoryId: string;
   category?: { name: string };
