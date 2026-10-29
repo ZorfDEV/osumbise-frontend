@@ -67,6 +67,8 @@ interface Props {
   categories: Category[];
   defaultValues?: Partial<ProductFormValues>;
   currentImageUrl?: string;
+  // Plat composé : le seuil d'alerte est porté par ses ingrédients, pas par lui
+  isComposed?: boolean;
   submitLabel: string;
   onSubmit: (data: ProductFormValues, imageFile: File | null) => Promise<void>;
   onCancel?: () => void;
@@ -76,6 +78,7 @@ export default function ProductForm({
   categories,
   defaultValues,
   currentImageUrl,
+  isComposed,
   submitLabel,
   onSubmit,
   onCancel,
@@ -300,17 +303,26 @@ export default function ProductForm({
         />
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Seuil d’alerte stock
-        </label>
-        <input
-          type="number"
-          step="1"
-          {...register('stockMin', { valueAsNumber: true })}
-          className="input w-full"
-        />
-      </div>
+      {isComposed ? (
+        <div>
+          <p className="mb-1 block text-sm font-medium text-slate-700">Seuil d’alerte stock</p>
+          <p className="text-xs text-slate-500">
+            Plat préparé à la commande : le seuil se définit sur chacun de ses ingrédients.
+          </p>
+        </div>
+      ) : (
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Seuil d’alerte stock
+          </label>
+          <input
+            type="number"
+            step="1"
+            {...register('stockMin', { valueAsNumber: true })}
+            className="input w-full"
+          />
+        </div>
+      )}
 
       <div>
         <label className="mb-1 block text-sm font-medium text-slate-700">

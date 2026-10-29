@@ -28,6 +28,9 @@ export interface Product {
   // Réserve (magasin), déstockée vers la vente
   stockReserve?: string;
   stockMin: string;
+  // Plat composé (avec recette) : préparé à la commande, sans stock propre ni
+  // seuil d'alerte — le seuil est porté par ses ingrédients
+  isComposed?: boolean;
   isActive: boolean;
   categoryId: string;
   category?: { name: string };

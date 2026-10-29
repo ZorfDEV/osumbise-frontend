@@ -314,12 +314,18 @@ export default function ProductsPage() {
                     {p.priceIncludesTax && <span className="ml-1 text-xs text-slate-500">TTC</span>}
                   </td>
                   <td data-label="Stock" className="px-4 py-2 text-slate-600">
-                    {Number(p.stockCurrent)} {UNIT_LABELS[p.unit]}
-                    {Number(p.stockReserve ?? 0) > 0 && <span className="block text-xs text-slate-500">Réserve : {Number(p.stockReserve)}</span>}
-                    {Number(p.stockCurrent) <= Number(p.stockMin) && (
-                      <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning-dark">
-                        Stock bas
-                      </span>
+                    {p.isComposed ? (
+                      <span className="text-xs text-slate-500">Préparé à la commande</span>
+                    ) : (
+                      <>
+                        {Number(p.stockCurrent)} {UNIT_LABELS[p.unit]}
+                        {Number(p.stockReserve ?? 0) > 0 && <span className="block text-xs text-slate-500">Réserve : {Number(p.stockReserve)}</span>}
+                        {Number(p.stockCurrent) <= Number(p.stockMin) && (
+                          <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 text-xs text-warning-dark">
+                            Stock bas
+                          </span>
+                        )}
+                      </>
                     )}
                   </td>
                   <td data-label="Statut" className="px-4 py-2">

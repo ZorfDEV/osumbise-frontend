@@ -623,8 +623,9 @@ export default function PosOrderPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {filteredProducts.map((p) => {
                 const cartItem = order.items.find((i) => i.productId === p.id);
-                const outOfStock = Number(p.stockCurrent) <= 0;
-                const lowStock = Number(p.stockCurrent) <= Number(p.stockMin);
+                // Plat composé : préparé à la commande, son stock est celui de ses ingrédients
+                const outOfStock = !p.isComposed && Number(p.stockCurrent) <= 0;
+                const lowStock = !p.isComposed && Number(p.stockCurrent) <= Number(p.stockMin);
                 const canAdd = isEditable && !outOfStock;
                 return (
                   <div
@@ -660,7 +661,7 @@ export default function PosOrderPage() {
                         <span className="absolute right-2 top-2 flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-action px-2 text-sm font-bold text-white shadow">
                           {cartItem.quantity}
                         </span>
-                      ) : (
+                      ) : p.isComposed ? null : (
                         <span
                           className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-xs font-medium backdrop-blur ${
                             lowStock ? 'bg-danger-soft text-danger-dark' : 'bg-surface/90 text-slate-600'

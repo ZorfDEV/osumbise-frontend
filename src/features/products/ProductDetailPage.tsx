@@ -107,7 +107,7 @@ export default function ProductDetailPage() {
               css: Number(product.css ?? 0),
               priceIncludesTax: !!product.priceIncludesTax,
               unit: product.unit,
-              stockMin: Number(product.stockMin),
+              stockMin: product.isComposed ? 0 : Number(product.stockMin),
               tag: product.tag !== null ? Number(product.tag) : undefined,
               tagStartsAt: product.tagStartsAt ? product.tagStartsAt.slice(0, 10) : undefined,
               tagEndsAt: product.tagEndsAt ? product.tagEndsAt.slice(0, 10) : undefined,
@@ -115,6 +115,7 @@ export default function ProductDetailPage() {
               preparationArea: product.preparationArea ?? 'KITCHEN',
             }}
             currentImageUrl={resolveProductImageUrl(product.image)}
+            isComposed={product.isComposed}
             submitLabel="Enregistrer"
             onSubmit={async (data, imageFile) => {
               if (!id) return;
@@ -185,7 +186,9 @@ export default function ProductDetailPage() {
             </div>
             <div>
               <p className="text-xs text-slate-500">Seuil d’alerte</p>
-              <p className="font-medium text-slate-900">{Number(product.stockMin)}</p>
+              <p className="font-medium text-slate-900">
+                {product.isComposed ? 'Sur les ingrédients' : Number(product.stockMin)}
+              </p>
             </div>
             <div>
               <p className="text-xs text-slate-500">Statut</p>
