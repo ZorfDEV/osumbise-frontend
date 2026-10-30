@@ -42,7 +42,14 @@ export default function CategoriesPage() {
   const handleCreate = async () => {
     if (!newName.trim()) return;
     setError(null);
-    await createCategory(newName.trim(), establishmentId);
+    try {
+      await createCategory(newName.trim(), establishmentId);
+    } catch (err) {
+      const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Création de la catégorie impossible';
+      setError(message);
+      toast.error(message);
+      return;
+    }
     toast.success('Catégorie créée');
     setNewName('');
     load();

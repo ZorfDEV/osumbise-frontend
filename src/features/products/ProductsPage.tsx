@@ -78,11 +78,19 @@ export default function ProductsPage() {
     }
   }, [user]);
 
+  // Le formulaire ne se ferme qu'en cas de succès ; un refus du serveur
+  // (nom trop court, droits, établissement…) est affiché au lieu d'être ignoré
   const handleAddCategory = async () => {
     if (!newCategoryName.trim()) return;
-    await createCategory(newCategoryName.trim(), establishmentId);
+    try {
+      await createCategory(newCategoryName.trim(), establishmentId);
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Création de la catégorie impossible');
+      return;
+    }
     toast.success('Catégorie créée');
     setNewCategoryName('');
+    setShowCategoryForm(false);
     load();
   };
 
@@ -234,15 +242,13 @@ export default function ProductsPage() {
           <input
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
             placeholder="Nom de la catégorie"
             autoFocus
             className="input flex-1"
           />
           <button
-            onClick={async () => {
-              await handleAddCategory();
-              setShowCategoryForm(false);
-            }}
+            onClick={handleAddCategory}
             className="btn btn-primary px-3"
           >
             <Plus size={16} />
