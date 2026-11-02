@@ -10,7 +10,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { Printer, Plus } from 'lucide-react';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsTotal, productTotals, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
@@ -200,6 +200,18 @@ export default function CashSessionDetailPage() {
                 <span className="font-semibold text-heading">{formatFcfa(r.amount)}</span>
               </li>
             ))}
+            {hotelRoomsDiscount(session.hotel) > 0 && (
+              <li className="flex justify-between text-slate-600">
+                <span>Remises</span>
+                <span className="font-semibold text-heading">− {formatFcfa(hotelRoomsDiscount(session.hotel))}</span>
+              </li>
+            )}
+            {hotelRoomsTax(session.hotel) > 0 && (
+              <li className="flex justify-between text-slate-600">
+                <span>Taxe de séjour</span>
+                <span className="font-semibold text-heading">{formatFcfa(hotelRoomsTax(session.hotel))}</span>
+              </li>
+            )}
             <li className="flex justify-between border-t border-slate-100 pt-1.5 font-semibold text-heading">
               <span>Total</span>
               <span>{formatFcfa(hotelRoomsTotal(session.hotel))}</span>

@@ -68,5 +68,11 @@ export const HOTEL_METHOD_LABELS: Record<string, string> = {
   TRANSFER: 'Virement',
   CREDIT: 'Compte client',
 };
-export const hotelRoomsTotal = (hotel?: { rooms: { amount: number }[] }) =>
-  (hotel?.rooms ?? []).reduce((sum, r) => sum + r.amount, 0);
+// Taxe de séjour des nuitées vendues, ajoutée au total chambres comme sur la facture
+export const hotelRoomsTax = (hotel?: { rooms: { tax?: number }[] }) =>
+  (hotel?.rooms ?? []).reduce((sum, r) => sum + (r.tax ?? 0), 0);
+// Remises de séjour sur l'hébergement, déduites du total chambres
+export const hotelRoomsDiscount = (hotel?: { rooms: { discount?: number }[] }) =>
+  (hotel?.rooms ?? []).reduce((sum, r) => sum + (r.discount ?? 0), 0);
+export const hotelRoomsTotal = (hotel?: { rooms: { amount: number; tax?: number; discount?: number }[] }) =>
+  (hotel?.rooms ?? []).reduce((sum, r) => sum + r.amount, 0) - hotelRoomsDiscount(hotel) + hotelRoomsTax(hotel);

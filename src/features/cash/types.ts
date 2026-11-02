@@ -63,7 +63,9 @@ export interface CashSession {
 }
 
 export interface SessionHotel {
-  rooms: { category: 'STANDARD' | 'VIP' | 'SUITE'; nightlyRate: number; nights: number; amount: number }[];
+  // amount : nuitées × tarif ; tax : taxe de séjour de ces nuitées ;
+  // discount : part des remises de séjour portant sur l'hébergement
+  rooms: { category: 'STANDARD' | 'VIP' | 'SUITE'; nightlyRate: number; nights: number; amount: number; tax?: number; discount?: number }[];
   payments: { method: string; amount: number }[];
 }
 

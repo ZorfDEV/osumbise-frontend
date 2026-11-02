@@ -2,7 +2,7 @@ import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsTotal, otherMethodsTotal, productTotals, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, otherMethodsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { useAuth } from '@/features/auth/AuthContext';
 
@@ -61,6 +61,8 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
               right={money(r.amount)}
             />
           ))}
+          {hotelRoomsDiscount(session.hotel) > 0 && <Line left="- Remises" right={money(hotelRoomsDiscount(session.hotel))} />}
+          {hotelRoomsTax(session.hotel) > 0 && <Line left="Taxe de séjour" right={money(hotelRoomsTax(session.hotel))} />}
           <Line left="TOTAL CHAMBRES FCFA" right={money(hotelRoomsTotal(session.hotel))} bold />
           {session.hotel.payments.length > 0 && (
             <>
