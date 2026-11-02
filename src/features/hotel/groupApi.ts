@@ -50,6 +50,11 @@ export const fetchStayGroups = async (): Promise<StayGroupListItem[]> => (await 
 export const fetchStayGroup = async (id: string): Promise<StayGroupDetail> => (await api.get(`/hotel/groups/${id}`)).data.group;
 export const createStayGroup = async (payload: StayGroupPayload): Promise<StayGroupDetail> =>
   (await api.post('/hotel/groups', payload)).data.group;
+// Informations du groupe et dates de toutes ses chambres encore actives
+export const updateStayGroup = async (
+  id: string,
+  payload: { name?: string; contactPhone?: string; notes?: string; checkInDate?: string; checkOutDate?: string }
+): Promise<StayGroupDetail> => (await api.patch(`/hotel/groups/${id}`, payload)).data.group;
 export const checkInStayGroup = async (id: string): Promise<StayGroupDetail> =>
   (await api.post(`/hotel/groups/${id}/check-in`)).data.group;
 export const checkOutStayGroup = async (id: string, force = false): Promise<StayGroupDetail> =>

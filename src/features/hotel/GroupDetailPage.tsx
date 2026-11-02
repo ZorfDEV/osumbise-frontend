@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Banknote, DoorClosed, DoorOpen, Printer, Users, X } from 'lucide-react';
+import { Banknote, DoorClosed, DoorOpen, Pencil, Printer, Users, X } from 'lucide-react';
 import { useToast } from '@/lib/toast';
 import { useConfirm } from '@/lib/confirm';
 import { getSocket } from '@/lib/socket';
@@ -11,8 +11,8 @@ import { fetchCustomers } from '@/features/customers/api';
 import type { Customer } from '@/features/customers/types';
 import { fetchMyCashSession } from '@/features/cash/api';
 import { apiError } from './api';
-import { addStayGroupPayment, checkInStayGroup, checkOutStayGroup, fetchStayGroup, type StayGroupDetail } from './groupApi';
-import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
+import { addStayGroupPayment, checkInStayGroup, checkOutStayGroup, fetchStayGroup, updateStayGroup, type StayGroupDetail } from './groupApi';
+import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS, todayIso } from './labels';
 import GroupInvoiceTicket from './GroupInvoiceTicket';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import type { StayPaymentMethod } from './types';
@@ -140,6 +140,136 @@ function GroupPaymentDialog({ group, onClose, onPaid }: { group: StayGroupDetail
   );
 }
 
+// Modification du groupe : nom, contact, notes et dates de toutes les chambres
+// encore actives en une fois. Une chambre déjà arrivée garde sa date d'arrivée.
+function GroupEditDialog({ group, onClose, onSaved }: { group: StayGroupDetail; onClose: () => void; onSaved: (g: StayGroupDetail) => void }) {
+  const toast = useToast();
+  const active = group.stays.filter((s) => s.status === 'RESERVED' || s.status === 'CHECKED_IN');
+  const reserved = active.filter((s) => s.status === 'RESERVED');
+  // Dates proposées : celles de la première chambre active
+  const initialIn = active.length > 0 ? dayOf(active[0].checkInDate) : '';
+  const initialOut = active.length > 0 ? dayOf(active[0].checkOutDate) : '';
+  const datesDiffer = active.some((s) => dayOf(s.checkInDate) !== initialIn || dayOf(s.checkOutDate) !== initialOut);
+  const [name, setName] = useState(group.name);
+  const [contactPhone, setContactPhone] = useState(group.contactPhone ?? '');
+  const [notes, setNotes] = useState(group.notes ?? '');
+  const [checkInDate, setCheckInDate] = useState(initialIn);
+  const [checkOutDate, setCheckOutDate] = useState(initialOut);
+  const [saving, setSaving] = useState(false);
+  const minCheckOut = [addDaysIso(checkInDate, 1), todayIso()].sort().pop()!;
+
+  const submit = async () => {
+    if (name.trim().length < 2) return toast.error('Le nom du groupe est requis');
+    // Seules les dates modifiées sont envoyées : renommer le groupe ne touche
+    // pas aux chambres dont les dates ont été ajustées une par une
+    const inChanged = reserved.length > 0 && checkInDate !== initialIn;
+    const outChanged = active.length > 0 && checkOutDate !== initialOut;
+    if ((inChanged || outChanged) && checkOutDate <= checkInDate) {
+      return toast.error('La date de départ doit être après la date d’arrivée');
+    }
+    setSaving(true);
+    try {
+      const updated = await updateStayGroup(group.id, {
+        name: name.trim(),
+        contactPhone: contactPhone.trim(),
+        notes: notes.trim(),
+        checkInDate: inChanged ? checkInDate : undefined,
+        checkOutDate: outChanged ? checkOutDate : undefined,
+      });
+      toast.success(inChanged || outChanged ? `Dates modifiées pour ${active.length} chambre${active.length > 1 ? 's' : ''}` : 'Groupe modifié');
+      onSaved(updated);
+    } catch (err) {
+      toast.error(apiError(err, 'Modification impossible'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Modifier le groupe">
+      <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-heading">Modifier le groupe</h2>
+          <button onClick={onClose} aria-label="Fermer" className="rounded-md p-1 text-slate-500 hover:bg-slate-100">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label htmlFor="gedit-name" className="mb-1 block text-sm font-medium text-slate-700">
+              Nom du groupe
+            </label>
+            <input id="gedit-name" value={name} onChange={(e) => setName(e.target.value)} className="input w-full" />
+          </div>
+          <div>
+            <label htmlFor="gedit-phone" className="mb-1 block text-sm font-medium text-slate-700">
+              Téléphone du contact
+            </label>
+            <input id="gedit-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="input w-full" />
+          </div>
+          {active.length > 0 && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="gedit-in" className="mb-1 block text-sm font-medium text-slate-700">
+                    Arrivée
+                  </label>
+                  <input
+                    id="gedit-in"
+                    type="date"
+                    min={reserved.length > 0 ? todayIso() : undefined}
+                    value={checkInDate}
+                    disabled={reserved.length === 0}
+                    onChange={(e) => setCheckInDate(e.target.value)}
+                    className="input w-full"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="gedit-out" className="mb-1 block text-sm font-medium text-slate-700">
+                    Départ
+                  </label>
+                  <input
+                    id="gedit-out"
+                    type="date"
+                    min={minCheckOut}
+                    value={checkOutDate}
+                    onChange={(e) => setCheckOutDate(e.target.value)}
+                    className="input w-full"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-slate-500">
+                Les nouvelles dates s’appliquent aux {active.length} chambre{active.length > 1 ? 's' : ''} réservée{active.length > 1 ? 's' : ''} ou en cours
+                {reserved.length < active.length ? ' ; les chambres déjà arrivées gardent leur date d’arrivée' : ''}. Toutes doivent être
+                libres sur la nouvelle période, sinon rien n’est modifié.
+              </p>
+              {datesDiffer && (
+                <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
+                  Les chambres du groupe n’ont pas toutes les mêmes dates : une date modifiée sera appliquée à toutes.
+                </p>
+              )}
+            </>
+          )}
+          <div>
+            <label htmlFor="gedit-notes" className="mb-1 block text-sm font-medium text-slate-700">
+              Notes
+            </label>
+            <textarea id="gedit-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="input w-full" />
+          </div>
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button onClick={onClose} className="btn btn-secondary flex-1">
+            Annuler
+          </button>
+          <button onClick={submit} disabled={saving} aria-busy={saving} className="btn btn-primary flex-1">
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
   const toast = useToast();
@@ -147,6 +277,7 @@ export default function GroupDetailPage() {
   const { settings } = usePrintSettings();
   const [group, setGroup] = useState<StayGroupDetail | null>(null);
   const [paying, setPaying] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -239,6 +370,10 @@ export default function GroupDetailPage() {
           {group.notes && <p className="text-sm text-slate-500">{group.notes}</p>}
         </div>
         <div className="flex flex-wrap gap-2">
+          <button onClick={() => setEditing(true)} className="btn btn-secondary">
+            <Pencil size={16} />
+            Modifier le groupe
+          </button>
           {reserved > 0 && (
             <button onClick={checkIn} disabled={busy} className="btn btn-secondary">
               <DoorOpen size={16} />
@@ -321,6 +456,17 @@ export default function GroupDetailPage() {
       <PrintPortal>
         <GroupInvoiceTicket group={group} paperWidth={settings.paperWidth} />
       </PrintPortal>
+
+      {editing && (
+        <GroupEditDialog
+          group={group}
+          onClose={() => setEditing(false)}
+          onSaved={(g) => {
+            setGroup(g);
+            setEditing(false);
+          }}
+        />
+      )}
 
       {paying && (
         <GroupPaymentDialog
