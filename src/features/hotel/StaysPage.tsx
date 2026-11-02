@@ -76,6 +76,8 @@ export default function StaysPage() {
 
   // Liste : filtre "du jour" côté client (arrivées et départs prévus aujourd'hui)
   const q = normalizeText(query);
+  // « mars », « mars 2026 », « janv », « 03/2026 » : séjours ayant au moins une nuit dans ce mois
+  const month = parseMonthQuery(q);
   const listed = useMemo(
     () =>
       stays
@@ -85,6 +87,7 @@ export default function StaysPage() {
         .filter(
           (s) =>
             !q ||
+            (!!month && stayInMonth(s.checkInDate, s.checkOutDate, month)) ||
             normalizeText(s.guestName).includes(q) ||
             normalizeText(s.room.number).includes(q) ||
             (!!s.guestPhone && s.guestPhone.includes(q)) ||
@@ -99,7 +102,7 @@ export default function StaysPage() {
                 ? dayOf(b.checkInDate).localeCompare(dayOf(a.checkInDate))
                 : dayOf(a.checkInDate).localeCompare(dayOf(b.checkInDate))
         ),
-    [stays, filter, q, sort, today]
+    [stays, filter, q, month, sort, today]
   );
   const pager = usePagination(listed, { resetKey: `${filter}|${query}|${sort}` });
 
@@ -162,7 +165,7 @@ export default function StaysPage() {
             id="stays"
             query={query}
             onQueryChange={setQuery}
-            placeholder="Rechercher un client, une chambre, un téléphone, une facture (H0012)"
+            placeholder="Rechercher un client, une chambre, un téléphone, une facture (H0012), un mois (mars 2026)"
             sort={sort}
             onSortChange={setSort}
             sortOptions={[
@@ -376,6 +379,42 @@ export default function StaysPage() {
       )}
     </div>
   );
+}
+
+const MONTHS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+
+// Recherche d'un mois (texte déjà normalisé : minuscules, sans accents) :
+// nom complet ou abrégé sans ambiguïté (« janv », « sept » ; pas « ju »),
+// avec ou sans année, ou forme numérique « 03/2026 ». Sans année, le mois
+// est cherché quelle que soit l'année.
+function parseMonthQuery(q: string): { month: number; year: number | null } | null {
+  const numeric = q.match(/^(\d{1,2})[/-](\d{4})$/);
+  if (numeric) {
+    const month = Number(numeric[1]);
+    return month >= 1 && month <= 12 ? { month, year: Number(numeric[2]) } : null;
+  }
+  const named = q.match(/^([a-z]{3,})\.?(?:\s+(\d{4}))?$/);
+  if (!named) return null;
+  const word = named[1];
+  const exact = MONTHS.indexOf(word);
+  const candidates = MONTHS.filter((m) => m.startsWith(word));
+  const index = exact >= 0 ? exact : candidates.length === 1 ? MONTHS.indexOf(candidates[0]) : -1;
+  if (index < 0) return null;
+  return { month: index + 1, year: named[2] ? Number(named[2]) : null };
+}
+
+// Le séjour a-t-il au moins une nuit dans ce mois ? (nuit du départ exclue ;
+// un séjour sans nuit compte pour son jour d'arrivée)
+function stayInMonth(checkIn: string, checkOut: string, { month, year }: { month: number; year: number | null }) {
+  const first = dayOf(checkIn).slice(0, 7);
+  const lastDay = dayOf(checkOut) > dayOf(checkIn) ? addDaysIso(checkOut, -1) : dayOf(checkIn);
+  const last = lastDay.slice(0, 7);
+  const mm = String(month).padStart(2, '0');
+  const years = year !== null ? [year] : Array.from({ length: Number(last.slice(0, 4)) - Number(first.slice(0, 4)) + 1 }, (_, i) => Number(first.slice(0, 4)) + i);
+  return years.some((y) => {
+    const key = `${y}-${mm}`;
+    return key >= first && key <= last;
+  });
 }
 
 // Écart en jours (peut être négatif) entre deux dates AAAA-MM-JJ
