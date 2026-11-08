@@ -10,7 +10,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { Printer, Plus } from 'lucide-react';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, productTotals, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, itemTtcTotal, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { itemName } from '@/features/pos/itemName';
 
@@ -156,36 +156,33 @@ export default function CashSessionDetailPage() {
       )}
 
       {(session.orders ?? []).length > 0 && (
-        <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-lg border border-slate-200 bg-surface p-4 lg:col-span-2">
-            <h2 className="mb-3 text-sm font-semibold text-heading-muted">Factures de la session ({(session.orders ?? []).length})</h2>
-            <ul className="divide-y divide-slate-100 text-sm">
-              {(session.orders ?? []).map((o) => (
-                <li key={o.id} className={`py-2 ${o.status === 'ANNULEE' ? 'opacity-60' : ''}`}>
-                  <div className="flex justify-between gap-3 font-medium text-heading">
-                    <span>
-                      N° {invoiceNo(o)} · {o.table ? `Table ${o.table.label}` : 'Comptoir'}
-                      {o.customer ? ` · ${o.customer.name}` : ''}
-                      {o.status === 'ANNULEE' ? ' · annulée' : ''}
-                    </span>
-                    <span>{formatFcfa(Number(o.total))}</span>
-                  </div>
-                  <p className="text-xs text-slate-500">{o.items.map((i) => `${i.quantity} × ${itemName(i)}`).join(', ')}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-surface p-4">
-            <h2 className="mb-3 text-sm font-semibold text-heading-muted">Produits vendus</h2>
-            <ul className="space-y-1.5 text-sm">
-              {productTotals(session.orders).map((p) => (
-                <li key={p.name} className="flex justify-between text-slate-600">
-                  <span>{p.name}</span>
-                  <span className="font-semibold text-heading">{p.quantity}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <h2 className="mb-3 text-sm font-semibold text-heading-muted">Détail des factures ({(session.orders ?? []).length})</h2>
+          <ul className="divide-y divide-slate-100 text-sm">
+            {(session.orders ?? []).map((o) => (
+              <li key={o.id} className={`py-3 ${o.status === 'ANNULEE' ? 'opacity-60' : ''}`}>
+                <p className="font-semibold text-heading">
+                  {invoiceNo(o)} · {o.table ? `Table ${o.table.label}` : 'Comptoir'}
+                  {o.customer ? ` · ${o.customer.name}` : ''}
+                  {o.status === 'ANNULEE' ? ' · annulée' : ''}
+                </p>
+                <ul className="mt-1 space-y-0.5 text-slate-600">
+                  {o.items.map((i, idx) => (
+                    <li key={idx} className="flex justify-between gap-3">
+                      <span>
+                        {itemName(i)} × {i.quantity}
+                      </span>
+                      <span>{formatFcfa(itemTtcTotal(i))}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-1 flex justify-between gap-3 border-t border-dashed border-slate-200 pt-1 font-semibold text-heading">
+                  <span>Total TTC</span>
+                  <span>{formatFcfa(Number(o.total))}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

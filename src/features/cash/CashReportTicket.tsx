@@ -2,7 +2,7 @@ import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, otherMethodsTotal, productTotals, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, itemTtcTotal, otherMethodsTotal, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { useAuth } from '@/features/auth/AuthContext';
 import { itemName } from '@/features/pos/itemName';
@@ -95,23 +95,15 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
           <div className="ticket-bold">DÉTAIL DES FACTURES ({(session.orders ?? []).length})</div>
           {(session.orders ?? []).map((o) => (
             <div key={o.id} className="ticket-kitchen-item">
-              <Line
-                left={`N° ${invoiceNo(o)} ${o.table ? `T.${o.table.label}` : 'Comptoir'}${o.status === 'ANNULEE' ? ' (annulée)' : ''}`}
-                right={money(Number(o.total))}
-                bold
-              />
+              <div className="ticket-bold">
+                {invoiceNo(o)} {o.table ? `T.${o.table.label}` : 'Comptoir'}
+                {o.status === 'ANNULEE' ? ' (annulée)' : ''}
+              </div>
               {o.items.map((i, idx) => (
-                <div key={idx}>
-                  {'  '}
-                  {i.quantity} x {itemName(i)}
-                </div>
+                <Line key={idx} left={`${itemName(i)} x ${i.quantity}`} right={`= ${money(itemTtcTotal(i))}`} />
               ))}
+              <Line left="Total TTC" right={`${money(Number(o.total))} FCFA`} bold />
             </div>
-          ))}
-          <Rule />
-          <div className="ticket-bold">PRODUITS VENDUS (TOTAL)</div>
-          {productTotals(session.orders).map((p) => (
-            <Line key={p.name} left={p.name} right={String(p.quantity)} />
           ))}
         </>
       )}

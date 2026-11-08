@@ -76,6 +76,14 @@ export interface SessionOrder {
   total: string;
   table: { label: string } | null;
   customer: { name: string } | null;
-  items: { quantity: number; product: { id: string; name: string }; sideProduct?: { name: string } | null }[];
+  items: {
+    quantity: number;
+    unitPrice?: string;
+    taxRate?: string;
+    cssRate?: string;
+    priceIncludesTax?: boolean;
+    product: { id: string; name: string };
+    sideProduct?: { name: string } | null;
+  }[];
   payments: { method: string; amount: string }[];
 }

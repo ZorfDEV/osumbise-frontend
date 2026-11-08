@@ -1,18 +1,11 @@
 import type { CashSession, SessionOrder } from './types';
 
-// Quantités totales vendues par produit sur les factures de la session
-// (les ventes annulées ensuite sont exclues)
-export const productTotals = (orders: SessionOrder[] = []) => {
-  const map = new Map<string, { name: string; quantity: number }>();
-  for (const o of orders) {
-    if (o.status === 'ANNULEE') continue;
-    for (const i of o.items) {
-      const entry = map.get(i.product.id) ?? { name: i.product.name, quantity: 0 };
-      entry.quantity += i.quantity;
-      map.set(i.product.id, entry);
-    }
-  }
-  return [...map.values()].sort((a, b) => b.quantity - a.quantity || a.name.localeCompare(b.name));
+// Montant TTC d'une ligne de facture (quantité × prix de vente TTC) : prix
+// TTC fixe tel quel, prix HT + TVA + CSS sinon. Hors remise de la facture.
+export const itemTtcTotal = (i: SessionOrder['items'][number]) => {
+  const gross = i.quantity * Number(i.unitPrice ?? 0);
+  if (i.priceIncludesTax) return Math.round(gross);
+  return Math.round((gross * (100 + Number(i.taxRate ?? 0) + Number(i.cssRate ?? 0))) / 100);
 };
 
 // Ventes de la session hors tiroir et hors carte/Mobile Money
