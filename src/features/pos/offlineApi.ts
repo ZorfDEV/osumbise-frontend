@@ -106,11 +106,13 @@ export const addOrderItem = async (
     priceIncludesTax?: boolean;
     preparationArea?: 'KITCHEN' | 'BAR';
   },
-  quantity: number
+  quantity: number,
+  // Accompagnement choisi avec le plat (riz, banane…)
+  side: { id: string; name: string } | null = null
 ): Promise<void> => {
   if (navigator.onLine && !isLocalId(orderId)) {
     try {
-      await api.addOrderItem(orderId, { productId: product.id, quantity });
+      await api.addOrderItem(orderId, { productId: product.id, quantity, sideProductId: side?.id ?? null });
       return;
     } catch {
       // Bascule sur mise à jour locale + file d'attente juste en dessous
@@ -120,7 +122,8 @@ export const addOrderItem = async (
   const order = await getCachedOrder(orderId);
   if (!order) return;
 
-  const existing = order.items.find((i) => i.productId === product.id);
+  // Même plat ET même accompagnement : on augmente la quantité
+  const existing = order.items.find((i) => i.productId === product.id && (i.sideProductId ?? null) === (side?.id ?? null));
   if (existing) {
     existing.quantity += quantity;
   } else {
@@ -135,6 +138,8 @@ export const addOrderItem = async (
       taxRate: product.tva ?? '0',
       cssRate: product.css ?? '0',
       priceIncludesTax: !!product.priceIncludesTax,
+      sideProductId: side?.id ?? null,
+      sideProduct: side,
       note: null,
       product: { name: product.name, preparationArea: product.preparationArea },
     });
@@ -145,7 +150,7 @@ export const addOrderItem = async (
   await enqueueAction({
     type: 'addItem',
     localOrderId: orderId,
-    payload: { productId: product.id, quantity },
+    payload: { productId: product.id, quantity, sideProductId: side?.id ?? null },
   });
 };
 

@@ -12,6 +12,7 @@ import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
 import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
+import { itemName } from '@/features/pos/itemName';
 
 const MOVEMENT_LABELS: Record<CashMovementType, string> = {
   SALE_CASH: 'Vente espèces',
@@ -169,7 +170,7 @@ export default function CashSessionDetailPage() {
                     </span>
                     <span>{formatFcfa(Number(o.total))}</span>
                   </div>
-                  <p className="text-xs text-slate-500">{o.items.map((i) => `${i.quantity} × ${i.product.name}`).join(', ')}</p>
+                  <p className="text-xs text-slate-500">{o.items.map((i) => `${i.quantity} × ${itemName(i)}`).join(', ')}</p>
                 </li>
               ))}
             </ul>

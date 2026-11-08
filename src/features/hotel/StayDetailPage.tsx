@@ -23,6 +23,7 @@ import DiscountModal from '@/features/pos/DiscountModal';
 import { useAuth } from '@/features/auth/AuthContext';
 import { setStayDiscount } from './api';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
+import { itemName } from '@/features/pos/itemName';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
 
@@ -507,7 +508,7 @@ export default function StayDetailPage() {
                         </span>
                         <span>{fcfa(roomAmount)}</span>
                       </div>
-                      <p className="text-xs text-slate-500">{o.items.map((i) => `${i.quantity}× ${i.product.name}`).join(', ')}</p>
+                      <p className="text-xs text-slate-500">{o.items.map((i) => `${i.quantity}× ${itemName(i)}`).join(', ')}</p>
                     </li>
                   );
                 })}

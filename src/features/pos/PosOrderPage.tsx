@@ -56,6 +56,8 @@ import { ReceiptTicket } from './tickets';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import { setTableStatus } from './api';
 import { invoiceNo } from './invoiceNumber';
+import SidePickerModal from './SidePickerModal';
+import { itemName } from './itemName';
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   BROUILLON: 'Brouillon',
@@ -217,6 +219,8 @@ export default function PosOrderPage() {
   const isManager = user?.role === 'OWNER' || user?.role === 'ADMIN';
   // Annulation de facture et remise : propriétaire uniquement
   const isOwner = user?.role === 'OWNER';
+  // Plat avec accompagnements : on demande d'abord lequel
+  const [pickingSide, setPickingSide] = useState<Product | null>(null);
   const [discounting, setDiscounting] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ kind: 'item'; item: OrderItem } | { kind: 'order' } | null>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
@@ -349,7 +353,7 @@ export default function PosOrderPage() {
     });
   };
 
-  const addToOrder = (product: Product, quantity: number) =>
+  const addToOrder = (product: Product, quantity: number, side: { id: string; name: string } | null = null) =>
     addOrderItem(
       order.id,
       {
@@ -362,18 +366,23 @@ export default function PosOrderPage() {
         priceIncludesTax: product.priceIncludesTax,
         preparationArea: product.preparationArea,
       },
-      quantity
+      quantity,
+      side
     );
 
-  const handleAddProduct = async (product: Product) => {
+  const handleAddProduct = async (product: Product, side?: { id: string; name: string } | null) => {
     if (!isEditable || Number(product.stockCurrent) <= 0) return;
+    if (side === undefined && (product.sides?.length ?? 0) > 0) {
+      setPickingSide(product);
+      return;
+    }
     // Retour immédiat au toucher, sans attendre la réponse réseau
     navigator.vibrate?.(10);
     setBumpedId(product.id);
     window.clearTimeout(bumpTimerRef.current);
     bumpTimerRef.current = window.setTimeout(() => setBumpedId(null), 350);
     try {
-      await addToOrder(product, 1);
+      await addToOrder(product, 1, side ?? null);
       rememberFrequent(product.id);
       setError(null);
       reloadOrder();
@@ -389,11 +398,11 @@ export default function PosOrderPage() {
     // Retrait d'un article : pas de confirmation, mais 5 s pour se rattraper
     if (quantity <= 0) {
       const product = products.find((p) => p.id === item.productId);
-      toast.undoable(`${item.product.name} retiré de la commande`, {
+      toast.undoable(`${itemName(item)} retiré de la commande`, {
         onCommit: () => {},
         onUndo: product
           ? () => {
-              addToOrder(product, item.quantity).then(reloadOrder);
+              addToOrder(product, item.quantity, item.sideProduct ?? null).then(reloadOrder);
             }
           : undefined,
       });
@@ -414,7 +423,7 @@ export default function PosOrderPage() {
     try {
       if (voidTarget.kind === 'item') {
         await voidOrderItem(order.id, voidTarget.item.id, quantity, reason);
-        toast.success(`${quantity} × ${voidTarget.item.product.name} retiré de la commande`);
+        toast.success(`${quantity} × ${itemName(voidTarget.item)} retiré de la commande`);
         setVoidTarget(null);
         reloadOrder();
       } else {
@@ -772,7 +781,7 @@ export default function PosOrderPage() {
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900">{item.product.name}</p>
+                    <p className="truncate text-sm font-medium text-slate-900">{itemName(item)}</p>
                     <p className="text-xs text-slate-500">
                       {formatFcfa(Number(item.unitPrice))} × {item.quantity} ={' '}
                       <span className="font-medium text-slate-700">{formatFcfa(Number(item.unitPrice) * item.quantity)}</span>
@@ -801,7 +810,7 @@ export default function PosOrderPage() {
                   {canVoid && !isEditable && (
                     <button
                       onClick={() => setVoidTarget({ kind: 'item', item })}
-                      aria-label={`Retirer ${item.product.name}`}
+                      aria-label={`Retirer ${itemName(item)}`}
                       title="Retirer (motif obligatoire)"
                       className="shrink-0 rounded-md p-1.5 text-slate-400 transition hover:bg-danger-soft hover:text-danger"
                     >
@@ -984,9 +993,20 @@ export default function PosOrderPage() {
         />
       )}
 
+      {pickingSide && (
+        <SidePickerModal
+          product={pickingSide}
+          onClose={() => setPickingSide(null)}
+          onPick={(side) => {
+            const product = pickingSide;
+            setPickingSide(null);
+            handleAddProduct(product, side);
+          }}
+        />
+      )}
       {voidTarget && (
         <VoidReasonModal
-          title={voidTarget.kind === 'item' ? `Retirer « ${voidTarget.item.product.name} »` : 'Annuler la commande'}
+          title={voidTarget.kind === 'item' ? `Retirer « ${itemName(voidTarget.item)} »` : 'Annuler la commande'}
           description={
             voidTarget.kind === 'item'
               ? 'L’article ne sera pas facturé. S’il a déjà été préparé, ses ingrédients sortent du stock en perte.'

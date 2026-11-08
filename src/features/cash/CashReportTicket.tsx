@@ -5,6 +5,7 @@ import type { CashSession } from './types';
 import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, otherMethodsTotal, productTotals, summarizeSession } from './summary';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { useAuth } from '@/features/auth/AuthContext';
+import { itemName } from '@/features/pos/itemName';
 
 // Rapport de fin de service au format ticket thermique : rapport provisoire
 // (session ouverte) ou rapport de clôture (session fermée). Mêmes styles que
@@ -102,7 +103,7 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
               {o.items.map((i, idx) => (
                 <div key={idx}>
                   {'  '}
-                  {i.quantity} x {i.product.name}
+                  {i.quantity} x {itemName(i)}
                 </div>
               ))}
             </div>

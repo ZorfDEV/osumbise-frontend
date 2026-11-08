@@ -17,6 +17,7 @@ import { useToast } from '@/lib/toast';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { Pencil, Trash2, RotateCcw, Plus } from 'lucide-react';
+import ProductSidesCard from './ProductSidesCard';
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -306,6 +307,8 @@ export default function ProductDetailPage() {
             </div>
             {error && <p className="mt-2 text-sm text-danger">{error}</p>}
           </div>
+
+          <ProductSidesCard product={product} allProducts={allProducts} onChanged={reload} />
 
           <p className="mt-4 text-xs text-slate-500">
             {product.isActive

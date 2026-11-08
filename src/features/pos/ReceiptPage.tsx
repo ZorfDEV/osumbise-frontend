@@ -14,6 +14,7 @@ import Alert from '@/components/ui/alert';
 import CancelSaleModal from './CancelSaleModal';
 import { orderTotals, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
+import { itemName } from './itemName';
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CASH: 'Espèces',
@@ -203,7 +204,7 @@ export default function ReceiptPage() {
           {order.items.map((item) => (
             <div key={item.id} className="flex justify-between">
               <span>
-                {item.quantity}× {item.product.name}
+                {item.quantity}× {itemName(item)}
               </span>
               <span>{formatFcfa(Number(item.unitPrice) * item.quantity)}</span>
             </div>

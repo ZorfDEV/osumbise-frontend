@@ -17,6 +17,9 @@ export interface Product {
   css?: string;
   // Prix TTC fixe : sellingPrice est taxes incluses
   priceIncludesTax?: boolean;
+  // Accompagnements proposés avec ce plat (riz, banane…), inclus dans son prix
+  sides?: { id: string; name: string }[];
+  sideRequired?: boolean;
   // Cuisine (plats) ou bar (boissons servies par le serveur)
   preparationArea?: 'KITCHEN' | 'BAR';
   categoryId: string;
@@ -73,6 +76,9 @@ export interface OrderItem {
   cssRate?: string;
   // unitPrice est un prix TTC (taxes incluses), figé à l'ajout
   priceIncludesTax?: boolean;
+  // Accompagnement choisi avec le plat
+  sideProductId?: string | null;
+  sideProduct?: { id: string; name: string } | null;
   note: string | null;
   product: { name: string; preparationArea?: 'KITCHEN' | 'BAR' };
 }

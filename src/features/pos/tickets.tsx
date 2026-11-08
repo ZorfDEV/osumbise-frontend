@@ -5,6 +5,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { orderTotals, taxLabel } from './taxes';
 import { invoiceNo } from './invoiceNumber';
 import type { Order, OrderItem, PaymentMethod } from './types';
+import { itemName } from './itemName';
 
 // Tickets pour imprimante thermique : noir sur blanc, police à chasse fixe,
 // largeur de la zone imprimable du rouleau. Pas de gris (rendu tramé/pâle).
@@ -62,7 +63,7 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
       {order.followsOrder && <Line left="Suite de la facture" right={`N° ${invoiceNo(order.followsOrder)}`} />}
       <Rule />
       {order.items.map((item) => (
-        <Line key={item.id} left={`${item.quantity} x ${item.product.name}`} right={money(Number(item.unitPrice) * item.quantity)} />
+        <Line key={item.id} left={`${item.quantity} x ${itemName(item)}`} right={money(Number(item.unitPrice) * item.quantity)} />
       ))}
       <Rule />
       {Number(order.discount) > 0 && <Line left="Sous-total" right={money(Number(order.subtotal))} />}
@@ -127,7 +128,7 @@ export function KitchenTicket({
       {items.map(({ item, quantity }) => (
         <div key={item.id} className="ticket-kitchen-item">
           <div className="ticket-bold">
-            {quantity} x {item.product.name}
+            {quantity} x {itemName(item)}
           </div>
           {item.note && <div className="ticket-note">&gt; {item.note}</div>}
         </div>

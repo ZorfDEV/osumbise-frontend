@@ -87,7 +87,7 @@ export const setOrderCustomer = async (orderId: string, customerId: string | nul
 // après coup plutôt que de se fier à la réponse.
 export const addOrderItem = async (
   orderId: string,
-  payload: { productId: string; quantity: number }
+  payload: { productId: string; quantity: number; sideProductId?: string | null }
 ): Promise<void> => {
   await api.post(`/orders/${orderId}/items`, payload);
 };

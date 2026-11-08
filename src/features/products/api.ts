@@ -75,6 +75,14 @@ export const uploadProductImage = async (id: string, file: File): Promise<Produc
 // `image` est stocké côté backend comme un chemin relatif (ex. "/uploads/products/xxx.png")
 export const resolveProductImageUrl = resolveUploadUrl;
 
+// Accompagnements proposés avec un plat (remplace la liste)
+export const saveProductSides = async (
+  productId: string,
+  payload: { sideProductIds: string[]; sideRequired: boolean }
+): Promise<void> => {
+  await api.put(`/products/${productId}/sides`, payload);
+};
+
 export const addRecipeItem = async (
   productId: string,
   ingredientProductId: string,

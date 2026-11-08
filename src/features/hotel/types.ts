@@ -144,7 +144,7 @@ export interface StayDetail {
     total: string;
     table: { label: string } | null;
     establishment?: { name: string };
-    items: { id: string; quantity: number; unitPrice: string; product: { name: string } }[];
+    items: { id: string; quantity: number; unitPrice: string; product: { name: string }; sideProduct?: { name: string } | null }[];
     payments: { method: string; amount: string }[];
   }[];
   totals: StayTotals;

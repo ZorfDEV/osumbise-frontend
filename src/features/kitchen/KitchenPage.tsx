@@ -14,6 +14,7 @@ import {
   type PrintedSnapshot,
 } from '@/lib/print';
 import { KitchenTicket } from '@/features/pos/tickets';
+import { itemName } from '@/features/pos/itemName';
 
 const STATUS_ACTION: Partial<Record<OrderStatus, { label: string; next: OrderStatus }>> = {
   EN_ATTENTE: { label: 'Commencer la préparation', next: 'EN_PREPARATION' },
@@ -183,7 +184,7 @@ export default function KitchenPage() {
               <ul className="mb-3 space-y-1 text-sm text-slate-600">
                 {order.items.map((item) => (
                   <li key={item.id}>
-                    {item.quantity} × {item.product.name}
+                    {item.quantity} × {itemName(item)}
                     {item.note && <span className="block pl-4 text-xs italic text-slate-500">{item.note}</span>}
                   </li>
                 ))}

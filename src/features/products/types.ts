@@ -33,6 +33,9 @@ export interface Product {
   isComposed?: boolean;
   // false : ingrédient (huile, spaghettis...), absent de la caisse
   isSellable?: boolean;
+  // Accompagnements proposés avec ce plat, et choix obligatoire ou non
+  sides?: { id: string; name: string }[];
+  sideRequired?: boolean;
   isActive: boolean;
   categoryId: string;
   category?: { name: string };
