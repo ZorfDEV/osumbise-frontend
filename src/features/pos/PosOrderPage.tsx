@@ -371,7 +371,8 @@ export default function PosOrderPage() {
     );
 
   const handleAddProduct = async (product: Product, side?: { id: string; name: string } | null) => {
-    if (!isEditable || Number(product.stockCurrent) <= 0) return;
+    // Plat composé (recette) : son stock propre reste à 0, on ne le bloque pas
+    if (!isEditable || (!product.isComposed && Number(product.stockCurrent) <= 0)) return;
     if (side === undefined && (product.sides?.length ?? 0) > 0) {
       setPickingSide(product);
       return;
@@ -516,7 +517,7 @@ export default function PosOrderPage() {
 
   const handleSearchKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      const first = filteredProducts.find((p) => Number(p.stockCurrent) > 0);
+      const first = filteredProducts.find((p) => p.isComposed || Number(p.stockCurrent) > 0);
       if (first) {
         handleAddProduct(first);
         setSearchQuery('');
