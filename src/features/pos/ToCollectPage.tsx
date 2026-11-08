@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HandCoins } from 'lucide-react';
+import { BedDouble, HandCoins } from 'lucide-react';
 import { getSocket } from '@/lib/socket';
 import { ListSkeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/ui/empty-state';
@@ -10,6 +10,10 @@ import { fetchOrders } from './api';
 import type { Order, OrderStatus } from './types';
 import { invoiceNo } from './invoiceNumber';
 import InvoiceSearch from './InvoiceSearch';
+import { hotelInvoiceNo } from './invoiceNumber';
+import { fetchUnpaidStays, type UnpaidStay } from '@/features/hotel/api';
+import { roomName } from '@/features/hotel/labels';
+import { useActiveEstablishment } from '@/features/establishments/ActiveEstablishmentContext';
 
 // « À encaisser » : ce qui attend un paiement — les commandes servies ou en
 // cours pas encore réglées, et les comptes clients qui doivent de l'argent
@@ -33,7 +37,10 @@ const since = (iso?: string) => {
 };
 
 export default function ToCollectPage() {
-  const [tab, setTab] = useState<'orders' | 'accounts'>('orders');
+  const isHotel = useActiveEstablishment().current.type === 'HOTEL';
+  const [tab, setTab] = useState<'orders' | 'accounts' | 'stays'>('orders');
+  // Hôtel : séjours terminés (client parti) avec un solde impayé
+  const [stays, setStays] = useState<UnpaidStay[] | null>(null);
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [customers, setCustomers] = useState<Customer[] | null>(null);
 
@@ -44,7 +51,8 @@ export default function ToCollectPage() {
     fetchCustomers()
       .then((list) => setCustomers(list.filter((c) => Number(c.balance) > 0).sort((a, b) => Number(b.balance) - Number(a.balance))))
       .catch(() => setCustomers([]));
-  }, []);
+    if (isHotel) fetchUnpaidStays().then(setStays).catch(() => setStays([]));
+  }, [isHotel]);
 
   useEffect(() => {
     load();
@@ -53,7 +61,9 @@ export default function ToCollectPage() {
     socket.on('order:created', load);
     socket.on('order:status_changed', load);
     socket.on('order:paid', load);
+    socket.on('hotel:updated', load);
     return () => {
+      socket.off('hotel:updated', load);
       socket.off('order:created', load);
       socket.off('order:status_changed', load);
       socket.off('order:paid', load);
@@ -62,6 +72,7 @@ export default function ToCollectPage() {
 
   const ordersTotal = (orders ?? []).reduce((s, o) => s + Number(o.total), 0);
   const accountsTotal = (customers ?? []).reduce((s, c) => s + Number(c.balance), 0);
+  const staysTotal = (stays ?? []).reduce((s, st) => s + st.balance, 0);
 
   return (
     <div>
@@ -74,6 +85,9 @@ export default function ToCollectPage() {
         {[
           { v: 'orders' as const, label: `Commandes non payées${orders ? ` (${orders.length})` : ''}`, total: ordersTotal },
           { v: 'accounts' as const, label: `Comptes clients${customers ? ` (${customers.length})` : ''}`, total: accountsTotal },
+          ...(isHotel
+            ? [{ v: 'stays' as const, label: `Séjours impayés${stays ? ` (${stays.length})` : ''}`, total: staysTotal }]
+            : []),
         ].map((t) => (
           <button
             key={t.v}
@@ -89,7 +103,58 @@ export default function ToCollectPage() {
         ))}
       </div>
 
-      {tab === 'orders' ? (
+      {tab === 'stays' ? (
+        stays === null ? (
+          <ListSkeleton />
+        ) : stays.length === 0 ? (
+          <EmptyState icon={BedDouble} title="Aucun séjour impayé" description="Tous les clients partis ont réglé leur facture." />
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">
+            <table className="table-cards w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Séjour</th>
+                  <th className="px-4 py-2 font-medium">Départ</th>
+                  <th className="px-4 py-2 text-right font-medium">Facture</th>
+                  <th className="px-4 py-2 text-right font-medium">Reste dû</th>
+                  <th className="px-4 py-2" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {stays.map((s) => (
+                  <tr key={s.id}>
+                    <td data-label="Séjour" className="px-4 py-2">
+                      <span className="font-medium text-heading">
+                        N° {hotelInvoiceNo(s)} · {s.guestName}
+                      </span>
+                      <span className="block text-xs text-slate-500">
+                        Chambre {roomName(s.room)}
+                        {s.guestPhone ? ` · ${s.guestPhone}` : ''}
+                        {s.customer ? ` · Compte ${s.customer.name}` : ''}
+                        {s.group ? ` · Groupe ${s.group.name}` : ''}
+                      </span>
+                    </td>
+                    <td data-label="Départ" className="px-4 py-2 text-slate-600">
+                      {new Date(s.checkedOutAt ?? s.checkOutDate).toLocaleDateString('fr-FR')}
+                    </td>
+                    <td data-label="Facture" className="px-4 py-2 text-right text-slate-600">
+                      {fcfa(s.total)}
+                      {s.paid > 0 && <span className="block text-xs text-slate-500">payé {fcfa(s.paid)}</span>}
+                    </td>
+                    <td data-label="Reste dû" className="px-4 py-2 text-right font-semibold text-danger-dark">{fcfa(s.balance)}</td>
+                    <td data-label="" className="px-4 py-2 text-right">
+                      <Link to={`/hotel/stays/${s.id}`} className="btn btn-primary btn-sm">
+                        <HandCoins size={14} />
+                        Encaisser
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      ) : tab === 'orders' ? (
         orders === null ? (
           <ListSkeleton />
         ) : orders.length === 0 ? (

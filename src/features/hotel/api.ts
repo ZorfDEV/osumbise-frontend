@@ -10,6 +10,7 @@ import type {
   StayStatus,
   TaxRate,
 } from './types';
+import type { RoomCategory } from './types';
 
 // --- Chambres ---
 export const fetchRooms = async (): Promise<Room[]> => (await api.get('/hotel/rooms')).data.rooms;
@@ -53,6 +54,24 @@ export const createStay = async (payload: StayPayload): Promise<StayDetail> => (
 // Changement de chambre (anomalie) : même facture et même tarif
 export const moveStay = async (id: string, payload: { roomId: string; reason: string; outOfService: boolean }): Promise<StayDetail> =>
   (await api.post(`/hotel/stays/${id}/move`, payload)).data.stay;
+// Séjours terminés avec un solde impayé (« À encaisser »)
+export interface UnpaidStay {
+  id: string;
+  number?: number | null;
+  guestName: string;
+  guestPhone: string | null;
+  room: { number: string; building?: string; category: RoomCategory };
+  group: { id: string; name: string } | null;
+  customer: { id: string; name: string } | null;
+  checkInDate: string;
+  checkOutDate: string;
+  checkedOutAt: string | null;
+  total: number;
+  paid: number;
+  balance: number;
+}
+export const fetchUnpaidStays = async (): Promise<UnpaidStay[]> => (await api.get('/hotel/unpaid')).data.stays;
+
 export const updateStay = async (id: string, payload: Partial<StayPayload>): Promise<StayDetail> =>
   (await api.patch(`/hotel/stays/${id}`, payload)).data.stay;
 export const checkInStay = async (id: string): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/check-in`)).data.stay;
