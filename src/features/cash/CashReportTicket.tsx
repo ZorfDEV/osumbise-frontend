@@ -15,8 +15,8 @@ const money = (n: number) => Math.round(n).toLocaleString('fr-FR');
 const dateTime = (iso: string) =>
   new Date(iso).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-const Line = ({ left, right, bold }: { left: string; right?: string; bold?: boolean }) => (
-  <div className={`ticket-line ${bold ? 'ticket-bold' : ''}`}>
+const Line = ({ left, right, bold, wrap }: { left: string; right?: string; bold?: boolean; wrap?: boolean }) => (
+  <div className={`ticket-line ${bold ? 'ticket-bold' : ''} ${wrap ? 'ticket-line-wrap' : ''}`}>
     <span>{left}</span>
     {right !== undefined && <span>{right}</span>}
   </div>
@@ -100,7 +100,7 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
                 {o.status === 'ANNULEE' ? ' (annulée)' : ''}
               </div>
               {o.items.map((i, idx) => (
-                <Line key={idx} left={`${itemName(i)} x ${i.quantity}`} right={`= ${money(itemTtcTotal(i))}`} />
+                <Line key={idx} left={`${itemName(i)} x ${i.quantity}`} right={`= ${money(itemTtcTotal(i))}`} wrap />
               ))}
               <Line left="Total TTC" right={`${money(Number(o.total))} FCFA`} bold />
             </div>
