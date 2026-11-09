@@ -1,5 +1,23 @@
 import type { CashSession, SessionOrder } from './types';
 
+// Produits vendus dans la session : quantité totale et montant TTC par
+// produit (« Poisson braisé + Riz » compté à part de « + Banane »), ventes
+// annulées exclues, les plus vendus en premier
+export const productSales = (orders: SessionOrder[] = []) => {
+  const map = new Map<string, { name: string; quantity: number; amount: number }>();
+  for (const o of orders) {
+    if (o.status === 'ANNULEE') continue;
+    for (const i of o.items) {
+      const name = i.sideProduct ? `${i.product.name} + ${i.sideProduct.name}` : i.product.name;
+      const entry = map.get(name) ?? { name, quantity: 0, amount: 0 };
+      entry.quantity += i.quantity;
+      entry.amount += itemTtcTotal(i);
+      map.set(name, entry);
+    }
+  }
+  return [...map.values()].sort((a, b) => b.quantity - a.quantity || a.name.localeCompare(b.name));
+};
+
 // Montant TTC d'une ligne de facture (quantité × prix de vente TTC) : prix
 // TTC fixe tel quel, prix HT + TVA + CSS sinon. Hors remise de la facture.
 export const itemTtcTotal = (i: SessionOrder['items'][number]) => {

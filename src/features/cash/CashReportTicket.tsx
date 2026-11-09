@@ -2,10 +2,8 @@ import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, itemTtcTotal, otherMethodsTotal, summarizeSession } from './summary';
-import { invoiceNo } from '@/features/pos/invoiceNumber';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, otherMethodsTotal, productSales, summarizeSession } from './summary';
 import { useAuth } from '@/features/auth/AuthContext';
-import { itemName } from '@/features/pos/itemName';
 
 // Rapport de fin de service au format ticket thermique : rapport provisoire
 // (session ouverte) ou rapport de clôture (session fermée). Mêmes styles que
@@ -89,21 +87,12 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
           <Line left="ÉCART" right={money(Number(session.discrepancy))} bold />
         </>
       )}
-      {(session.orders ?? []).length > 0 && (
+      {productSales(session.orders).length > 0 && (
         <>
           <Rule />
-          <div className="ticket-bold">DÉTAIL DES FACTURES ({(session.orders ?? []).length})</div>
-          {(session.orders ?? []).map((o) => (
-            <div key={o.id} className="ticket-kitchen-item">
-              <div className="ticket-bold">
-                {invoiceNo(o)} {o.table ? `T.${o.table.label}` : 'Comptoir'}
-                {o.status === 'ANNULEE' ? ' (annulée)' : ''}
-              </div>
-              {o.items.map((i, idx) => (
-                <Line key={idx} left={`${itemName(i)} x ${i.quantity}`} right={`= ${money(itemTtcTotal(i))}`} wrap />
-              ))}
-              <Line left="Total TTC" right={`${money(Number(o.total))} FCFA`} bold />
-            </div>
+          <div className="ticket-bold">PRODUITS VENDUS</div>
+          {productSales(session.orders).map((p) => (
+            <Line key={p.name} left={`${p.name} x ${p.quantity}`} right={money(p.amount)} wrap />
           ))}
         </>
       )}
