@@ -38,7 +38,10 @@ const isoDay = (d: Date) => d.toLocaleDateString('en-CA');
 // réclamation) et l'annuler. Propriétaire et administrateur.
 export default function SalesPage() {
   // Annuler une vente encaissée : propriétaire uniquement
-  const isOwner = useAuth().user?.role === 'OWNER';
+  const role = useAuth().user?.role;
+  const isOwner = role === 'OWNER';
+  // Caissier : le serveur ne renvoie que ses propres ventes
+  const isCashier = role === 'CASHIER';
   const [from, setFrom] = useState(() => isoDay(new Date()));
   const [to, setTo] = useState(() => isoDay(new Date()));
   const [sales, setSales] = useState<Sale[] | null>(null);
@@ -61,7 +64,7 @@ export default function SalesPage() {
     <div>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-heading">Ventes</h1>
+          <h1 className="text-2xl font-semibold text-heading">{isCashier ? 'Mes ventes' : 'Ventes'}</h1>
           <p className="text-sm text-slate-500">
             {sales ? `${paid.length} vente${paid.length > 1 ? 's' : ''} encaissée${paid.length > 1 ? 's' : ''} · ${fcfa(total)}` : ' '}
           </p>

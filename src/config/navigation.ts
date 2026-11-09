@@ -48,8 +48,16 @@ export const NAV_ITEMS: NavItem[] = [
   // Pilotage
   { to: '/dashboard', label: 'Tableau de bord', section: 'Pilotage', roles: ['OWNER', 'ADMIN'], icon: LayoutDashboard },
   { to: '/reports', label: 'Rapports', section: 'Pilotage', roles: ['OWNER', 'ADMIN'], icon: BarChart3 },
-  // Ventes encaissées : retrouver et annuler une vente (test, remboursement)
-  { to: '/sales', label: 'Ventes', section: 'Pilotage', roles: ['OWNER', 'ADMIN'], icon: ReceiptText },
+  // Ventes encaissées : retrouver et annuler une vente (test, remboursement).
+  // Caissier : ses propres ventes, jours passés compris (pas en hôtel, sans POS)
+  {
+    to: '/sales',
+    label: 'Ventes',
+    section: 'Pilotage',
+    roles: ['OWNER', 'ADMIN', 'CASHIER'],
+    icon: ReceiptText,
+    hiddenFor: { roles: ['CASHIER'], types: ['HOTEL'] },
+  },
 
   // Vente
   {
