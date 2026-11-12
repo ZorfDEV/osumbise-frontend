@@ -10,7 +10,8 @@ import Breadcrumbs from '@/components/ui/breadcrumbs';
 import { Printer, Plus } from 'lucide-react';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
 import CashReportTicket from './CashReportTicket';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, itemTtcTotal, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, itemTtcTotal, salesTaxSummary, summarizeSession } from './summary';
+import { taxLabel } from '@/features/pos/taxes';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { itemName } from '@/features/pos/itemName';
 
@@ -180,6 +181,28 @@ export default function CashSessionDetailPage() {
                   <span>Total TTC</span>
                   <span>{formatFcfa(Number(o.total))}</span>
                 </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {(session.orders ?? []).some((o) => o.status !== 'ANNULEE') && (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-surface p-4">
+          <h2 className="mb-3 text-sm font-semibold text-heading-muted">Produits vendus : récapitulatif des taxes</h2>
+          <ul className="space-y-1.5 text-sm">
+            <li className="flex justify-between font-semibold text-heading">
+              <span>Total TTC</span>
+              <span>{formatFcfa(salesTaxSummary(session.orders).ttc)}</span>
+            </li>
+            <li className="flex justify-between text-slate-600">
+              <span>Total HT</span>
+              <span className="font-semibold text-heading">{formatFcfa(salesTaxSummary(session.orders).ht)}</span>
+            </li>
+            {salesTaxSummary(session.orders).taxLines.map((t) => (
+              <li key={`${t.label}-${t.rate}`} className="flex justify-between text-slate-600">
+                <span>{taxLabel(t)}</span>
+                <span className="font-semibold text-heading">{formatFcfa(t.amount)}</span>
               </li>
             ))}
           </ul>

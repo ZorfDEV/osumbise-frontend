@@ -1,4 +1,5 @@
 import type { CashSession, SessionOrder } from './types';
+import { orderTotals, type TaxLine } from '@/features/pos/taxes';
 
 // Produits vendus dans la session : quantité totale et montant TTC par
 // produit (« Poisson braisé + Riz » compté à part de « + Banane »), ventes
@@ -24,6 +25,26 @@ export const itemTtcTotal = (i: SessionOrder['items'][number]) => {
   const gross = i.quantity * Number(i.unitPrice ?? 0);
   if (i.priceIncludesTax) return Math.round(gross);
   return Math.round((gross * (100 + Number(i.taxRate ?? 0) + Number(i.cssRate ?? 0))) / 100);
+};
+
+// Récapitulatif fiscal des produits vendus : somme des factures non annulées,
+// calculées comme sur chaque facture (remises déduites, taxes par taux)
+export const salesTaxSummary = (orders: SessionOrder[] = []) => {
+  let ht = 0;
+  const lines = new Map<string, TaxLine>();
+  for (const o of orders) {
+    if (o.status === 'ANNULEE') continue;
+    const t = orderTotals({ discount: o.discount ?? '0', discountRate: o.discountRate, items: o.items.map((i) => ({ ...i, unitPrice: i.unitPrice ?? '0' })) });
+    ht += t.subtotal - t.discount;
+    for (const l of t.lines) {
+      const key = `${l.label}-${l.rate}`;
+      const m = lines.get(key) ?? { ...l, amount: 0 };
+      m.amount += l.amount;
+      lines.set(key, m);
+    }
+  }
+  const taxLines = [...lines.values()].sort((a, b) => (a.label === b.label ? b.rate - a.rate : a.label === 'TVA' ? -1 : 1));
+  return { ht, taxLines, ttc: ht + taxLines.reduce((s, l) => s + l.amount, 0) };
 };
 
 // Ventes de la session hors tiroir et hors carte/Mobile Money

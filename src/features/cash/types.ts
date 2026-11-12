@@ -74,6 +74,8 @@ export interface SessionOrder {
   number: number | null;
   status: string;
   total: string;
+  discount?: string;
+  discountRate?: string | null;
   table: { label: string } | null;
   customer: { name: string } | null;
   items: {

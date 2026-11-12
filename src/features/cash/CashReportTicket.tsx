@@ -2,7 +2,8 @@ import { ticketWidthMm, type PaperWidth } from '@/lib/print';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import type { CashSession } from './types';
-import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, otherMethodsTotal, productSales, summarizeSession } from './summary';
+import { HOTEL_METHOD_LABELS, ROOM_CATEGORY_SHORT, hotelRoomsDiscount, hotelRoomsTax, hotelRoomsTotal, otherMethodsTotal, productSales, salesTaxSummary, summarizeSession } from './summary';
+import { taxLabel } from '@/features/pos/taxes';
 import { useAuth } from '@/features/auth/AuthContext';
 
 // Rapport de fin de service au format ticket thermique : rapport provisoire
@@ -26,6 +27,7 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
   const { user } = useAuth();
   const establishment = session.cashRegister?.establishment;
   const closed = !!session.closedAt;
+  const taxes = salesTaxSummary(session.orders);
 
   return (
     <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
@@ -93,6 +95,12 @@ export default function CashReportTicket({ session, paperWidth }: { session: Cas
           <div className="ticket-bold">PRODUITS VENDUS</div>
           {productSales(session.orders).map((p) => (
             <Line key={p.name} left={`${p.name} x ${p.quantity}`} right={money(p.amount)} wrap />
+          ))}
+          <Rule />
+          <Line left="TOTAL TTC" right={money(taxes.ttc)} bold />
+          <Line left="TOTAL HT" right={money(taxes.ht)} />
+          {taxes.taxLines.map((t) => (
+            <Line key={`${t.label}-${t.rate}`} left={taxLabel(t).toUpperCase()} right={money(t.amount)} />
           ))}
         </>
       )}
