@@ -6,7 +6,7 @@ export interface StockMovement {
   id: string;
   type: MovementType;
   location?: StockLocation;
-  // Entrée déjà corrigée (une seule correction possible)
+  // Mouvement déjà corrigé (une seule correction possible)
   corrected?: boolean;
   quantity: string;
   stockBefore: string;
@@ -15,6 +15,8 @@ export interface StockMovement {
   createdAt: string;
   product: { name: string; unit: string };
   user: { name: string } | null;
+  // Sortie de vente : facture qui l'a déclenchée
+  order?: { id: string; number: number | null; createdAt: string } | null;
 }
 
 export interface StockAlert {

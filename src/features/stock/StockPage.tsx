@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { fetchMovements, fetchAlerts } from './api';
 import { fetchProducts } from '@/features/products/api';
 import { StockMovement, StockAlert, MovementType } from './types';
@@ -38,6 +40,18 @@ const MOVEMENT_STYLES: Record<MovementType, string> = {
   CORRECTION: 'text-warning-dark bg-warning-soft',
 };
 
+// Mouvements saisis à la main qui peuvent être corrigés (une seule fois),
+// comme côté serveur (CORRECTABLE_TYPES dans stock.service.ts)
+const CORRECTABLE: MovementType[] = ['ENTREE', 'PERTE', 'CASSE', 'AJUSTEMENT'];
+const CORRECTION_TITLES: Partial<Record<MovementType, string>> = {
+  ENTREE: 'Corriger l’entrée',
+  PERTE: 'Corriger la perte',
+  CASSE: 'Corriger la casse',
+  AJUSTEMENT: 'Corriger l’ajustement',
+};
+// Valeur saisie à l'origine : quantité, ou stock compté pour un ajustement
+const enteredValue = (m: StockMovement) => Number(m.type === 'AJUSTEMENT' ? m.stockAfter : m.quantity);
+
 type FormMode = 'ENTREE' | 'DESTOCKAGE' | 'PERTE' | 'CASSE' | 'AJUSTEMENT';
 
 export default function StockPage() {
@@ -60,7 +74,7 @@ export default function StockPage() {
     if (correctReason.trim().length < 3) return toast.error('La justification est obligatoire');
     try {
       await correctMovement(correcting.id, { quantity: Number(correctQty), reason: correctReason.trim() });
-      toast.success('Entrée modifiée');
+      toast.success('Mouvement corrigé');
       setCorrecting(null);
       load();
     } catch (err) {
@@ -71,7 +85,7 @@ export default function StockPage() {
   const q = normalizeText(query);
   const visibleMovements = movements
     .filter((m) => typeFilter === 'ALL' || m.type === typeFilter)
-    .filter((m) => !q || normalizeText(m.product.name).includes(q) || (!!m.reason && normalizeText(m.reason).includes(q)))
+    .filter((m) => !q || normalizeText(m.product.name).includes(q) || (!!m.reason && normalizeText(m.reason).includes(q)) || (!!m.order && normalizeText(invoiceNo(m.order)).includes(q)))
     .sort((a, b) => {
       const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       return sort === 'oldest' ? diff : -diff;
@@ -143,17 +157,18 @@ export default function StockPage() {
       )}
 
       {correcting && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Modifier une entrée">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label={CORRECTION_TITLES[correcting.type]}>
           <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
-            <h2 className="mb-1 text-lg font-semibold text-heading">Modifier l’entrée</h2>
+            <h2 className="mb-1 text-lg font-semibold text-heading">{CORRECTION_TITLES[correcting.type]}</h2>
             <p className="mb-4 text-sm text-slate-600">
-              {correcting.product.name} · {Number(correcting.quantity)} {correcting.product.unit} saisis le{' '}
-              {new Date(correcting.createdAt).toLocaleDateString('fr-FR')}. Le stock est rectifié de l’écart ; l’entrée d’origine reste dans l’historique.
+              {correcting.product.name} · {correcting.type === 'AJUSTEMENT' ? 'stock compté : ' : ''}
+              {enteredValue(correcting)} {correcting.product.unit} saisis le{' '}
+              {new Date(correcting.createdAt).toLocaleDateString('fr-FR')}. Le stock est rectifié de l’écart ; le mouvement d’origine reste dans l’historique.
             </p>
             <div className="space-y-3">
               <div>
                 <label htmlFor="correct-qty" className="mb-1 block text-sm font-medium text-slate-700">
-                  Bonne quantité
+                  {correcting.type === 'AJUSTEMENT' ? 'Bon stock compté' : 'Bonne quantité'}
                 </label>
                 <input id="correct-qty" type="number" min={0} value={correctQty} onChange={(e) => setCorrectQty(e.target.value)} className="input w-full" />
               </div>
@@ -169,7 +184,7 @@ export default function StockPage() {
                 Annuler
               </button>
               <button onClick={submitCorrection} disabled={correctReason.trim().length < 3} className="btn btn-primary flex-1">
-                Modifier
+                Corriger
               </button>
             </div>
           </div>
@@ -272,23 +287,31 @@ export default function StockPage() {
                     {Number(m.quantity)} {m.product.unit}
                   </td>
                   <td data-label="Stock après" className="px-4 py-2 text-slate-600">{Number(m.stockAfter)}</td>
-                  <td data-label="Motif" className="px-4 py-2 text-slate-500">{m.reason ?? '—'}</td>
+                  <td data-label="Motif" className="px-4 py-2 text-slate-500">
+                    {m.order ? (
+                      <Link to={`/pos/${m.order.id}/receipt`} className="text-action hover:underline">
+                        Facture {invoiceNo(m.order)}
+                      </Link>
+                    ) : (
+                      m.reason ?? '—'
+                    )}
+                  </td>
                   <td data-label="Par" className="px-4 py-2 text-slate-500">{m.user?.name ?? '—'}</td>
                   <td data-label="" className="px-4 py-2 text-right">
-                    {m.type === 'ENTREE' && !m.corrected && (
+                    {CORRECTABLE.includes(m.type) && !m.corrected && (
                       <button
                         onClick={() => {
                           setCorrecting(m);
-                          setCorrectQty(String(Number(m.quantity)));
+                          setCorrectQty(String(enteredValue(m)));
                           setCorrectReason('');
                         }}
                         className="btn btn-edit btn-sm"
                       >
                         <Pencil size={14} />
-                        Modifier
+                        Corriger
                       </button>
                     )}
-                    {m.type === 'ENTREE' && m.corrected && <span className="text-xs text-slate-400">Modifiée</span>}
+                    {CORRECTABLE.includes(m.type) && m.corrected && <span className="text-xs text-slate-400">Corrigé</span>}
                   </td>
                 </tr>
               ))}
