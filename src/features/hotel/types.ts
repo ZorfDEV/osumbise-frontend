@@ -137,6 +137,9 @@ export interface StayDetail {
     // Espèces remises et monnaie rendue
     cashReceived?: string | null;
     changeGiven?: string;
+    // Session de caisse du versement : clôturée, le mode n'est plus modifiable
+    cashSessionId?: string | null;
+    cashSession?: { closedAt: string | null } | null;
   }[];
   orders: {
     id: string;

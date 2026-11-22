@@ -12,7 +12,7 @@ import { useActiveEstablishment } from '@/features/establishments/ActiveEstablis
 import { fetchCustomers } from '@/features/customers/api';
 import { fetchMyCashSession } from '@/features/cash/api';
 import type { Customer } from '@/features/customers/types';
-import { addStayPayment, apiError, cancelStay, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
+import { addStayPayment, apiError, cancelStay, changeStayPaymentMethod, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
 import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import StayFormModal from './StayFormModal';
 import MoveRoomModal from './MoveRoomModal';
@@ -26,6 +26,103 @@ import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
 import { itemName } from '@/features/pos/itemName';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
+
+type StayPayment = StayDetail['payments'][number];
+
+// Mauvais mode choisi à l'encaissement : le versement garde son montant, la
+// caisse et le compte client suivent le nouveau mode. Un versement de groupe
+// change de mode sur toutes ses chambres.
+function ChangeMethodDialog({
+  stay,
+  payment,
+  onClose,
+  onChanged,
+}: {
+  stay: StayDetail;
+  payment: StayPayment;
+  onClose: () => void;
+  onChanged: (s: StayDetail) => void;
+}) {
+  const toast = useToast();
+  const [method, setMethod] = useState<StayPaymentMethod>(payment.method === 'CASH' ? 'MOBILE_MONEY' : 'CASH');
+  const [customers, setCustomers] = useState<Customer[] | null>(null);
+  const [customerId, setCustomerId] = useState(stay.customer?.id ?? '');
+  const [saving, setSaving] = useState(false);
+  const isCredit = method === 'CREDIT';
+
+  useEffect(() => {
+    if (isCredit && customers === null) {
+      fetchCustomers()
+        .then((list) => setCustomers(list.filter((c) => c.isActive)))
+        .catch(() => setCustomers([]));
+    }
+  }, [isCredit, customers]);
+
+  const submit = async () => {
+    if (isCredit && !customerId) return toast.error('Choisissez le compte client à débiter');
+    setSaving(true);
+    try {
+      const updated = await changeStayPaymentMethod(stay.id, payment.id, { method, customerId: isCredit ? customerId : undefined });
+      toast.success(`Versement passé en ${STAY_PAYMENT_LABELS[method]}`);
+      onChanged(updated);
+    } catch (err) {
+      toast.error(apiError(err, 'Changement de mode impossible'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Changer le mode de paiement">
+      <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
+        <h2 className="mb-1 text-lg font-semibold text-heading">Changer le mode de paiement</h2>
+        <p className="mb-4 text-sm text-slate-600">
+          Versement de {fcfa(payment.amount)} encaissé en {STAY_PAYMENT_LABELS[payment.method]}. Le montant ne change pas ; la caisse et le
+          compte client sont mis à jour.
+        </p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {METHODS.filter((m) => m !== payment.method || m === 'CREDIT').map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMethod(m)}
+                className={`rounded-full border px-3 py-1 text-sm font-medium ${
+                  method === m ? 'border-action bg-action text-white' : 'border-slate-300 text-slate-600'
+                }`}
+              >
+                {STAY_PAYMENT_LABELS[m]}
+              </button>
+            ))}
+          </div>
+          {isCredit && (
+            <div>
+              <label htmlFor="change-customer" className="mb-1 block text-sm font-medium text-slate-700">
+                Compte client à débiter
+              </label>
+              <select id="change-customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input w-full">
+                <option value="">{customers === null ? 'Chargement…' : 'Choisir un client…'}</option>
+                {customers?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button onClick={onClose} className="btn btn-secondary flex-1">
+            Annuler
+          </button>
+          <button onClick={submit} disabled={saving || (isCredit && !customerId)} aria-busy={saving} className="btn btn-primary flex-1">
+            Changer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Versement (acompte ou solde) — entre dans la caisse ouverte s'il y en a une.
 // « Compte client » : le montant est mis sur le compte d'un client (entreprise,
@@ -281,6 +378,7 @@ export default function StayDetailPage() {
   const [editing, setEditing] = useState(false);
   const [moving, setMoving] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [changingPayment, setChangingPayment] = useState<StayPayment | null>(null);
   const [cancellingWithAdvance, setCancellingWithAdvance] = useState(false);
   const [discounting, setDiscounting] = useState(false);
   const { user } = useAuth();
@@ -537,7 +635,14 @@ export default function StayDetailPage() {
                         {Number(p.changeGiven ?? 0) > 0 ? ` · reçu ${fcfa(p.cashReceived ?? 0)}, rendu ${fcfa(p.changeGiven ?? 0)}` : ''}
                       </span>
                     </span>
-                    <span className="font-medium text-heading">{fcfa(p.amount)}</span>
+                    <span className="flex flex-col items-end gap-1">
+                      <span className="font-medium text-heading">{fcfa(p.amount)}</span>
+                      {stay.status !== 'CANCELLED' && Number(p.amount) > 0 && !p.cashSession?.closedAt && (
+                        <button onClick={() => setChangingPayment(p)} className="text-xs font-medium text-action hover:underline">
+                          Changer le mode
+                        </button>
+                      )}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -645,6 +750,17 @@ export default function StayDetailPage() {
           onClose={() => setPaying(false)}
           onPaid={(s) => {
             setPaying(false);
+            setStay(s);
+          }}
+        />
+      )}
+      {changingPayment && (
+        <ChangeMethodDialog
+          stay={stay}
+          payment={changingPayment}
+          onClose={() => setChangingPayment(null)}
+          onChanged={(s) => {
+            setChangingPayment(null);
             setStay(s);
           }}
         />

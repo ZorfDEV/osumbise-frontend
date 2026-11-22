@@ -88,6 +88,13 @@ export const addStayPayment = async (
   payload: { method: StayPaymentMethod; amount: number; note?: string; cashSessionId?: string; customerId?: string }
 ): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/payments`, payload)).data.stay;
 
+// Mauvais mode choisi à l'encaissement : même montant, autre mode
+export const changeStayPaymentMethod = async (
+  id: string,
+  paymentId: string,
+  payload: { method: StayPaymentMethod; customerId?: string }
+): Promise<StayDetail> => (await api.patch(`/hotel/stays/${id}/payments/${paymentId}`, payload)).data.stay;
+
 // Message d'erreur renvoyé par l'API (ou message par défaut)
 export const apiError = (err: unknown, fallback: string) =>
   (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? fallback;
