@@ -41,8 +41,12 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
       navigate('/dashboard');
-    } catch {
-      setServerError('Identifiants incorrects');
+    } catch (err) {
+      const response = (err as { response?: { status: number; data?: { message?: string } } }).response;
+      if (!response) setServerError('Connexion au serveur impossible. Vérifiez votre connexion internet.');
+      else if (response.status === 429) setServerError(response.data?.message ?? 'Trop de tentatives. Réessayez plus tard.');
+      else if (response.status >= 500) setServerError('Erreur du serveur. Réessayez dans un instant.');
+      else setServerError('Identifiants incorrects');
     }
   };
 
