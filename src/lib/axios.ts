@@ -5,6 +5,11 @@ export const api = axios.create({
   withCredentials: true, // indispensable : envoie/reçoit le cookie JWT HttpOnly
 });
 
+// Appels de la caisse qui ont un secours local : sans réponse dans ce délai (wifi
+// sans internet), ils basculent hors connexion. Seulement des lectures, ou des
+// envois que le serveur reconnaît s'ils arrivent deux fois — jamais l'encaissement.
+export const OFFLINE_CAPABLE = { timeout: 8000 };
+
 // --- Établissement actif (propriétaire multi-établissements) -------------
 // Défini par ActiveEstablishmentProvider. Envoyé dans l'en-tête
 // X-Establishment-Id : le backend limite alors toutes les données à cet

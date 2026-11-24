@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from '@/features/auth/AuthContext';
-import { ALL_ESTABLISHMENTS, api, setActiveEstablishmentId } from '@/lib/axios';
+import { ALL_ESTABLISHMENTS, api, OFFLINE_CAPABLE, setActiveEstablishmentId } from '@/lib/axios';
 import { AppLoader } from '@/components/ui/skeleton';
 import { refreshOfflineCache } from '@/lib/offlineCache';
 import type { Establishment, EstablishmentType } from './types';
@@ -77,7 +77,7 @@ export function ActiveEstablishmentProvider({ children }: { children: ReactNode 
     };
     let list: Establishment[];
     try {
-      const res = await api.get('/establishments', ALL_ESTABLISHMENTS);
+      const res = await api.get('/establishments', { ...ALL_ESTABLISHMENTS, ...OFFLINE_CAPABLE });
       list = res.data.establishments;
       try {
         localStorage.setItem(listKey(user.id), JSON.stringify(list));

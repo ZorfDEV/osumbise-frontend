@@ -1,18 +1,18 @@
-import { api } from '@/lib/axios';
+import { api, OFFLINE_CAPABLE } from '@/lib/axios';
 import { Category, Product, DiningTable, Order } from './types';
 
 export const fetchCategories = async (): Promise<Category[]> => {
-  const res = await api.get('/categories');
+  const res = await api.get('/categories', OFFLINE_CAPABLE);
   return res.data.categories;
 };
 
 export const fetchProducts = async (): Promise<Product[]> => {
-  const res = await api.get('/products', { params: { isActive: true } });
+  const res = await api.get('/products', { params: { isActive: true }, ...OFFLINE_CAPABLE });
   return res.data.products;
 };
 
 export const fetchTables = async (): Promise<DiningTable[]> => {
-  const res = await api.get('/tables');
+  const res = await api.get('/tables', OFFLINE_CAPABLE);
   return res.data.tables;
 };
 
@@ -41,7 +41,7 @@ export const fetchOrders = async (params: {
   tableId?: string;
   status?: string;
 }): Promise<Order[]> => {
-  const res = await api.get('/orders', { params });
+  const res = await api.get('/orders', { params, ...OFFLINE_CAPABLE });
   return res.data.orders;
 };
 
@@ -59,7 +59,7 @@ export const setOrderDiscount = async (
 };
 
 export const fetchOrder = async (id: string): Promise<Order> => {
-  const res = await api.get(`/orders/${id}`);
+  const res = await api.get(`/orders/${id}`, OFFLINE_CAPABLE);
   return res.data.order;
 };
 
@@ -72,7 +72,7 @@ export const createOrder = async (payload: {
   // Identifiant de l'envoi : un renvoi ne crée pas de seconde commande
   clientRef?: string;
 }): Promise<Order> => {
-  const res = await api.post('/orders', payload);
+  const res = await api.post('/orders', payload, OFFLINE_CAPABLE);
   return res.data.order;
 };
 
@@ -91,7 +91,7 @@ export const addOrderItem = async (
   orderId: string,
   payload: { productId: string; quantity: number; sideProductId?: string | null; clientRef?: string }
 ): Promise<void> => {
-  await api.post(`/orders/${orderId}/items`, payload);
+  await api.post(`/orders/${orderId}/items`, payload, OFFLINE_CAPABLE);
 };
 
 export const updateOrderItem = async (
@@ -99,11 +99,11 @@ export const updateOrderItem = async (
   itemId: string,
   quantity: number
 ): Promise<void> => {
-  await api.patch(`/orders/${orderId}/items/${itemId}`, { quantity });
+  await api.patch(`/orders/${orderId}/items/${itemId}`, { quantity }, OFFLINE_CAPABLE);
 };
 
 export const removeOrderItem = async (orderId: string, itemId: string): Promise<void> => {
-  await api.delete(`/orders/${orderId}/items/${itemId}`);
+  await api.delete(`/orders/${orderId}/items/${itemId}`, OFFLINE_CAPABLE);
 };
 
 // Propriétaire / administrateur uniquement, motif obligatoire
@@ -123,7 +123,7 @@ export const cancelOrder = async (
 };
 
 export const updateOrderStatus = async (orderId: string, status: string): Promise<void> => {
-  await api.patch(`/orders/${orderId}/status`, { status });
+  await api.patch(`/orders/${orderId}/status`, { status }, OFFLINE_CAPABLE);
 };
 
 export interface PaymentLine {

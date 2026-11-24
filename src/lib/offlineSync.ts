@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios';
 import { FailedAction, getDb, getOfflineUserId, OfflineDb, OutboxAction } from './db';
-import { api, getActiveEstablishmentId } from './axios';
+import { api, getActiveEstablishmentId, OFFLINE_CAPABLE } from './axios';
 
 export const ACTION_FAILED_EVENT = 'offline-action-failed';
 export const SYNCED_EVENT = 'offline-synced';
@@ -121,14 +121,17 @@ const isAlreadyDone = async (action: OutboxAction, orderId: string, status: numb
   if (action.type === 'removeItem') return status === 404;
   if (action.type !== 'updateStatus' || status !== 409) return false;
   const target = String(action.payload.status);
-  const current = (await api.get(`/orders/${orderId}`)).data.order.status as string;
+  const current = (await api.get(`/orders/${orderId}`, OFFLINE_CAPABLE)).data.order.status as string;
   if (current === target) return true;
   return STATUS_FLOW.includes(target) && STATUS_FLOW.indexOf(current) > STATUS_FLOW.indexOf(target);
 };
 
 const send = async (action: OutboxAction, orderId: string): Promise<string | undefined> => {
   // Établissement d'origine de l'action (prioritaire sur l'établissement actif)
-  const scoped = action.establishmentId ? { headers: { 'X-Establishment-Id': action.establishmentId } } : {};
+  const scoped = {
+    ...OFFLINE_CAPABLE,
+    ...(action.establishmentId ? { headers: { 'X-Establishment-Id': action.establishmentId } } : {}),
+  };
 
   switch (action.type) {
     case 'createOrder':
@@ -169,7 +172,7 @@ const complete = async (db: OfflineDb, action: OutboxAction, realId?: string) =>
 const refreshOrders = async (db: OfflineDb, orderIds: Set<string>) => {
   for (const id of orderIds) {
     if ((await getPendingActions(id)).length > 0) continue;
-    const order = (await api.get(`/orders/${id}`)).data.order;
+    const order = (await api.get(`/orders/${id}`, OFFLINE_CAPABLE)).data.order;
     await db.put('orders', order);
   }
 };
@@ -183,7 +186,7 @@ const runSync = async (userId: string) => {
 
   // Session du navigateur passée à un autre compte (autre onglet) : surtout ne
   // pas envoyer ces actions en son nom
-  const me = await api.get('/auth/me');
+  const me = await api.get('/auth/me', OFFLINE_CAPABLE);
   if (me.data.user.id !== userId) return;
 
   const touched = new Set<string>();

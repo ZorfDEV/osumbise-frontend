@@ -2,6 +2,7 @@ import { LogOut, Maximize, Menu, Minimize, Search, ShieldCheck } from 'lucide-re
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import { useConfirm } from '@/lib/confirm';
+import { useToast } from '@/lib/toast';
 import { getFailedActions, getOutboxCount, syncOutbox } from '@/lib/offlineSync';
 import { useFullscreen } from '@/lib/useFullscreen';
 import { ROLE_LABELS } from '@/config/roles';
@@ -26,6 +27,7 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 
   const confirm = useConfirm();
+  const toast = useToast();
 
   // Dernier envoi avant de partir ; ce qui reste attend cet utilisateur sur
   // cet appareil (jamais envoyé au nom d'un autre)
@@ -44,7 +46,12 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
       });
       if (!ok) return;
     }
-    await logout();
+    try {
+      await logout();
+    } catch {
+      // Le cookie de session ne peut être retiré que par le serveur
+      toast.error('Déconnexion impossible sans connexion au serveur. Réessayez au retour d’internet.');
+    }
   };
 
   const fullscreenLabel = isFullscreen ? 'Quitter le plein écran' : 'Passer en plein écran';
