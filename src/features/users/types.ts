@@ -8,6 +8,8 @@ export interface AppUser {
   establishmentId: string | null;
   isActive: boolean;
   multiEstablishment?: boolean;
+  // Compte administrateur de la plateforme : non modifiable ici
+  isPlatformAdmin?: boolean;
   establishment?: { name: string } | null;
 }
 

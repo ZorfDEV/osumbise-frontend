@@ -19,6 +19,13 @@ export const getSocket = (): Socket => {
     // comme pour les appels API (le backend l'exige pour authentifier)
     const origin = socketOrigin();
     socket = origin ? io(origin, { withCredentials: true }) : io({ withCredentials: true });
+    // Fermée par le serveur (mot de passe changé, compte désactivé) : pas de
+    // reconnexion automatique dans ce cas. On réessaie une fois avec la session
+    // actuelle ; le serveur la refuse si elle n'est plus valable.
+    const current = socket;
+    current.on('disconnect', (reason) => {
+      if (reason === 'io server disconnect') setTimeout(() => socket === current && current.connect(), 1000);
+    });
   }
   return socket;
 };

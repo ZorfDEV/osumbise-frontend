@@ -13,6 +13,8 @@ import { playReadySound, useReadySoundSetting } from '@/lib/readySound';
 const profileSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide'),
+  // Demandé seulement si l'e-mail change
+  currentPassword: z.string().optional(),
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
@@ -41,8 +43,9 @@ export default function SettingsPage() {
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: user?.name ?? '', email: user?.email ?? '' },
+    defaultValues: { name: user?.name ?? '', email: user?.email ?? '', currentPassword: '' },
   });
+  const emailChanged = profileForm.watch('email') !== (user?.email ?? '');
 
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -52,8 +55,9 @@ export default function SettingsPage() {
     setProfileError(null);
     setProfileSuccess(false);
     try {
-      await updateProfile(data);
+      await updateProfile({ name: data.name, email: data.email, currentPassword: emailChanged ? data.currentPassword : undefined });
       await refreshProfile();
+      profileForm.setValue('currentPassword', '');
       setProfileSuccess(true);
       toast.success('Profil mis à jour');
     } catch (err) {
@@ -121,6 +125,20 @@ export default function SettingsPage() {
               </p>
             )}
           </div>
+          {emailChanged && (
+            <div>
+              <label htmlFor="profile-password" className="mb-1 block text-sm font-medium text-slate-700">
+                Mot de passe actuel <span className="font-normal text-slate-500">(pour changer l’e-mail)</span>
+              </label>
+              <input
+                id="profile-password"
+                type="password"
+                autoComplete="current-password"
+                {...profileForm.register('currentPassword')}
+                className="input w-full"
+              />
+            </div>
+          )}
           {profileError && <p className="text-sm text-danger">{profileError}</p>}
           {profileSuccess && <p className="text-sm text-success">Profil mis à jour.</p>}
           <button

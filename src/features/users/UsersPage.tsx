@@ -39,7 +39,7 @@ export default function UsersPage() {
   // Même règle que le serveur : le compte propriétaire et son propre compte ne
   // se modifient pas ici ; un administrateur est géré par le propriétaire
   const canManage = (u: AppUser) =>
-    u.role !== 'OWNER' && u.id !== currentUser?.id && (u.role !== 'ADMIN' || currentUser?.role === 'OWNER');
+    u.role !== 'OWNER' && !u.isPlatformAdmin && u.id !== currentUser?.id && (u.role !== 'ADMIN' || currentUser?.role === 'OWNER');
 
   const showError = (err: unknown) =>
     toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Modification impossible');

@@ -4,6 +4,8 @@ import { AuthUser } from './types';
 export const updateProfile = async (payload: {
   name?: string;
   email?: string;
+  // Exigé si l'e-mail change
+  currentPassword?: string;
 }): Promise<AuthUser> => {
   const res = await api.patch('/auth/me', payload);
   return res.data.user;
