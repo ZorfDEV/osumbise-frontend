@@ -22,7 +22,7 @@ const MODE_LABELS: Record<Mode, string> = {
   AJUSTEMENT: 'Ajustement (inventaire)',
 };
 
-const LOCATION_LABELS: Record<StockLocation, string> = {
+export const LOCATION_LABELS: Record<StockLocation, string> = {
   RESERVE: 'Réserve (magasin)',
   SALES: 'Stock de vente (bar, rayon)',
 };

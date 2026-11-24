@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { invoiceNo } from '@/features/pos/invoiceNumber';
 import { fetchMovements, fetchAlerts } from './api';
 import { fetchProducts } from '@/features/products/api';
-import { StockMovement, StockAlert, MovementType } from './types';
+import { StockMovement, StockAlert, MovementType, StockLocation } from './types';
 import { Product } from '@/features/products/types';
-import StockMovementForm from './StockMovementForm';
+import StockMovementForm, { LOCATION_LABELS } from './StockMovementForm';
 import { correctMovement } from './api';
 import { useToast } from '@/lib/toast';
 import { ListSkeleton } from '@/components/ui/skeleton';
@@ -66,6 +66,7 @@ export default function StockPage() {
   const toast = useToast();
   const [correcting, setCorrecting] = useState<StockMovement | null>(null);
   const [correctQty, setCorrectQty] = useState('');
+  const [correctLocation, setCorrectLocation] = useState<StockLocation>('SALES');
   const [correctReason, setCorrectReason] = useState('');
 
   const submitCorrection = async () => {
@@ -73,7 +74,11 @@ export default function StockPage() {
     if (correctQty === '' || Number(correctQty) < 0) return toast.error('Indiquez la bonne quantité');
     if (correctReason.trim().length < 3) return toast.error('La justification est obligatoire');
     try {
-      await correctMovement(correcting.id, { quantity: Number(correctQty), reason: correctReason.trim() });
+      await correctMovement(correcting.id, {
+        quantity: Number(correctQty),
+        location: correcting.type === 'ENTREE' ? correctLocation : undefined,
+        reason: correctReason.trim(),
+      });
       toast.success('Mouvement corrigé');
       setCorrecting(null);
       load();
@@ -172,6 +177,20 @@ export default function StockPage() {
                 </label>
                 <input id="correct-qty" type="number" min={0} value={correctQty} onChange={(e) => setCorrectQty(e.target.value)} className="input w-full" />
               </div>
+              {correcting.type === 'ENTREE' && (
+                <div>
+                  <label htmlFor="correct-location" className="mb-1 block text-sm font-medium text-slate-700">
+                    Stock concerné
+                  </label>
+                  <select id="correct-location" value={correctLocation} onChange={(e) => setCorrectLocation(e.target.value as StockLocation)} className="input w-full">
+                    {(Object.keys(LOCATION_LABELS) as StockLocation[]).map((l) => (
+                      <option key={l} value={l}>
+                        {LOCATION_LABELS[l]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label htmlFor="correct-reason" className="mb-1 block text-sm font-medium text-slate-700">
                   Justification (obligatoire)
@@ -303,6 +322,7 @@ export default function StockPage() {
                         onClick={() => {
                           setCorrecting(m);
                           setCorrectQty(String(enteredValue(m)));
+                          setCorrectLocation(m.location ?? 'SALES');
                           setCorrectReason('');
                         }}
                         className="btn btn-edit btn-sm"

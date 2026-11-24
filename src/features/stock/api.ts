@@ -51,7 +51,11 @@ export const createTransfer = async (payload: {
   await api.post('/stock/transfer', payload);
 };
 
-// Corriger une entrée erronée : nouvelle quantité + justification obligatoire
-export const correctMovement = async (movementId: string, payload: { quantity: number; reason: string }): Promise<void> => {
+// Corriger un mouvement erroné : bonne valeur + justification obligatoire ;
+// location : bon stock d'une entrée rangée au mauvais endroit
+export const correctMovement = async (
+  movementId: string,
+  payload: { quantity: number; location?: 'SALES' | 'RESERVE'; reason: string }
+): Promise<void> => {
   await api.post(`/stock/movements/${movementId}/correct`, payload);
 };
