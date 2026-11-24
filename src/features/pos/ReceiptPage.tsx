@@ -6,7 +6,7 @@ import { useToast } from '@/lib/toast';
 import { Order, PaymentMethod } from './types';
 import { PageSkeleton } from '@/components/ui/skeleton';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
-import { ReceiptTicket } from './tickets';
+import { partialPayment, ReceiptTicket } from './tickets';
 import { resolveUploadUrl } from '@/lib/uploads';
 import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
@@ -92,6 +92,8 @@ export default function ReceiptPage() {
       </div>
     );
   }
+
+  const partial = partialPayment(order);
 
   return (
     <div>
@@ -256,6 +258,25 @@ export default function ReceiptPage() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {partial && (
+          <div className="space-y-1 border-t border-dashed border-slate-300 py-3 font-semibold text-slate-900">
+            <div className="flex justify-between">
+              <span>Montant total</span>
+              <span>{formatFcfa(Number(order.total))}</span>
+            </div>
+            {partial.advance > 0 && (
+              <div className="flex justify-between">
+                <span>Avance versée</span>
+                <span>{formatFcfa(partial.advance)}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span>Reste sur compte client</span>
+              <span>{formatFcfa(partial.onAccount)}</span>
+            </div>
           </div>
         )}
 

@@ -4,6 +4,7 @@ import { legalLines } from '@/features/establishments/legalInfo';
 import { useAuth } from '@/features/auth/AuthContext';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import { CATEGORY_LABELS, formatDay, roomName, STAY_PAYMENT_LABELS } from './labels';
+import { invoiceSummary } from './invoiceSummary';
 import type { StayGroupDetail } from './groupApi';
 
 // Facture unique d'un groupe : chaque chambre détaillée (nuits, taxe de
@@ -68,15 +69,19 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
       {totals.charges > 0 && <Line left="Consommations" right={money(totals.charges)} />}
       {totals.services > 0 && <Line left="Prestations" right={money(totals.services)} />}
       {totals.discount > 0 && <Line left="Remises" right={`-${money(totals.discount)}`} />}
-      <Line left="TOTAL FCFA" right={money(totals.total)} bold />
+      <Line left="MONTANT TOTAL FCFA" right={money(totals.total)} bold />
+      {invoiceSummary(payments, totals.balance).map((l) => (
+        <Line key={l.label} left={l.label} right={money(l.amount)} bold />
+      ))}
       {payments.length > 0 && (
         <>
           <Rule />
+          <div>Détail des versements</div>
           {payments.map((p) => (
             <Line
               key={p.id}
               left={`${formatDay(p.createdAt, { day: '2-digit', month: '2-digit' })} ${Number(p.amount) < 0 ? 'Remboursement' : p.customer ? `Compte ${p.customer.name}` : STAY_PAYMENT_LABELS[p.method]}`}
-              right={Number(p.amount) < 0 ? `+${money(-Number(p.amount))}` : `-${money(p.amount)}`}
+              right={Number(p.amount) < 0 ? `-${money(-Number(p.amount))}` : money(p.amount)}
             />
           ))}
           {payments.filter((p) => Number(p.changeGiven ?? 0) > 0).map((p) => (
@@ -87,8 +92,6 @@ export default function GroupInvoiceTicket({ group, paperWidth }: { group: StayG
           ))}
         </>
       )}
-      <Rule />
-      <Line left={totals.balance > 0 ? 'RESTE À PAYER' : 'SOLDÉ'} right={money(Math.max(0, totals.balance))} bold />
       <Rule />
       <div className="ticket-center">Merci de votre confiance !</div>
       <div className="ticket-feed" />

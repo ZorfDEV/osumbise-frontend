@@ -39,10 +39,20 @@ const Rule = () => <div className="ticket-rule" />;
 
 // --- Ticket client -------------------------------------------------------
 
+// Vente réglée en partie : avance versée à la caisse et reste porté au compte
+// du client (la part « sur la chambre » a sa propre ligne). null si tout est payé.
+export const partialPayment = (order: Order) => {
+  const sum = (methods: PaymentMethod[]) =>
+    (order.payments ?? []).filter((p) => methods.includes(p.method)).reduce((total, p) => total + Number(p.amount), 0);
+  const onAccount = sum(['CREDIT']);
+  return onAccount > 0 ? { advance: sum(['CASH', 'CARD', 'MOBILE_MONEY', 'TRANSFER']), onAccount } : null;
+};
+
 // bill = addition imprimée avant l'encaissement (facture non payée)
 export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Order; paperWidth: PaperWidth; bill?: boolean }) {
   // Personne qui imprime : signataire de l'addition
   const { user } = useAuth();
+  const partial = bill ? null : partialPayment(order);
   return (
     <div className="ticket" style={{ width: `${ticketWidthMm(paperWidth)}mm` }}>
       <div className="ticket-center">
@@ -92,6 +102,14 @@ export function ReceiptTicket({ order, paperWidth, bill = false }: { order: Orde
             <>
               <Line left="Espèces reçues" right={money(Number(order.cashReceived))} />
               <Line left="Monnaie rendue" right={money(Number(order.changeGiven))} bold />
+            </>
+          )}
+          {partial && (
+            <>
+              <Rule />
+              <Line left="MONTANT TOTAL" right={money(Number(order.total))} bold />
+              {partial.advance > 0 && <Line left="AVANCE VERSÉE" right={money(partial.advance)} bold />}
+              <Line left="RESTE SUR COMPTE CLIENT" right={money(partial.onAccount)} bold />
             </>
           )}
         </>
