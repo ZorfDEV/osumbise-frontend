@@ -4,7 +4,8 @@ import { api } from '@/lib/axios';
 import { getSocket } from '@/lib/socket';
 import { useAuth } from '@/features/auth/AuthContext';
 import { fetchTables, fetchOrders } from './api';
-import { createOrder, findLocalActiveOrderForTable } from './offlineApi';
+import { createOrder, findLocalActiveOrderForTable, findUnsentOrderForTable } from './offlineApi';
+import { useToast } from '@/lib/toast';
 import { getCachedTables } from '@/lib/offlineCache';
 import { DiningTable, TABLE_STATUS_LABELS } from './types';
 import { CardGridSkeleton } from '@/components/ui/skeleton';
@@ -34,6 +35,7 @@ const ACTIVE_STATUSES = ['BROUILLON', 'EN_ATTENTE', 'EN_PREPARATION', 'PRETE', '
 export default function TablesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [tables, setTables] = useState<DiningTable[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [establishmentId, setEstablishmentId] = useState<string | undefined>(
@@ -76,10 +78,24 @@ export default function TablesPage() {
     };
   }, [user]);
 
-  const handleTableClick = async (table: DiningTable) => {
-    if (table.status === 'FREE') {
-      const order = await createOrder({ tableId: table.id, establishmentId });
+  const startOrder = async (tableId?: string) => {
+    try {
+      const order = await createOrder({ tableId, establishmentId });
       navigate(`/pos/${order.id}`);
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Impossible de créer la commande');
+    }
+  };
+
+  const handleTableClick = async (table: DiningTable) => {
+    // Commande prise hors ligne : on la reprend au lieu d'en ouvrir une autre
+    const unsent = await findUnsentOrderForTable(table.id).catch(() => null);
+    if (unsent) {
+      navigate(`/pos/${unsent.id}`);
+      return;
+    }
+    if (table.status === 'FREE') {
+      await startOrder(table.id);
       return;
     }
 
@@ -102,10 +118,7 @@ export default function TablesPage() {
     }
   };
 
-  const handleCounterSale = async () => {
-    const order = await createOrder({ establishmentId });
-    navigate(`/pos/${order.id}`);
-  };
+  const handleCounterSale = () => startOrder();
 
   return (
     <div>

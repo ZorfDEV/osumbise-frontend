@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { api } from '@/lib/axios';
 import { getSocket, disconnectSocket } from '@/lib/socket';
+import { leaveOfflineDb, setOfflineUser } from '@/lib/db';
 import { AuthUser } from './types';
 
 interface AuthContextValue {
@@ -22,7 +23,13 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUserState] = useState<AuthUser | null>(null);
+
+  // Données hors ligne de l'utilisateur, ouvertes avant le rendu des pages
+  const setUser = (next: AuthUser | null) => {
+    setOfflineUser(next?.id ?? null);
+    setUserState(next);
+  };
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -59,6 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await api.post('/auth/logout');
+    await leaveOfflineDb();
     setUser(null);
     disconnectSocket();
   };

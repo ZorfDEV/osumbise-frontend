@@ -32,7 +32,9 @@ import {
   addOrderItem,
   updateOrderItemQuantity,
   advanceOrderStatus,
+  hasUnsentActions,
 } from './offlineApi';
+import { ORDER_REMAPPED_EVENT, SYNCED_EVENT } from '@/lib/offlineSync';
 import { getCachedCategories, getCachedProducts } from '@/lib/offlineCache';
 import { fetchCustomers } from '@/features/customers/api';
 import { Customer } from '@/features/customers/types';
@@ -241,9 +243,15 @@ export default function PosOrderPage() {
   const [frequent, setFrequent] = useState<Record<string, number>>(readFrequent);
   const [bumpedId, setBumpedId] = useState<string | null>(null);
 
+  // Lu par référence : `toast` change à chaque notification affichée, il ne doit
+  // pas relancer le chargement de la commande
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
   const reloadOrder = useCallback(() => {
     if (!orderId) return;
-    loadOrder(orderId).then(setOrder);
+    loadOrder(orderId)
+      .then(setOrder)
+      .catch(() => toastRef.current.error('Commande introuvable'));
   }, [orderId]);
 
   useEffect(() => {
@@ -296,9 +304,16 @@ export default function PosOrderPage() {
         navigate(`/pos/${realId}`, { replace: true });
       }
     };
-    window.addEventListener('offline-order-remapped', handler);
-    return () => window.removeEventListener('offline-order-remapped', handler);
+    window.addEventListener(ORDER_REMAPPED_EVENT, handler);
+    return () => window.removeEventListener(ORDER_REMAPPED_EVENT, handler);
   }, [orderId, navigate]);
+
+  // Des actions en attente viennent d'être envoyées (ou refusées) : l'écran
+  // reprend la version du serveur
+  useEffect(() => {
+    window.addEventListener(SYNCED_EVENT, reloadOrder);
+    return () => window.removeEventListener(SYNCED_EVENT, reloadOrder);
+  }, [reloadOrder]);
 
   // Raccourcis clavier (poste fixe) : un seul écouteur, la logique à jour est
   // lue via keyHandlerRef à chaque rendu pour éviter les closures périmées.
@@ -335,6 +350,9 @@ export default function PosOrderPage() {
         : NEXT_ACTION[order.status];
   const canPay = order.status === 'SERVIE' && isOnline;
   const canAdvance = !!nextAction && order.items.length > 0;
+
+  const apiMessage = (err: unknown, fallback: string) =>
+    (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? fallback;
 
   const handleSelectCustomer = async (customerId: string) => {
     await attachOrderCustomer(order.id, customerId || null);
@@ -387,14 +405,21 @@ export default function PosOrderPage() {
       rememberFrequent(product.id);
       setError(null);
       reloadOrder();
-    } catch {
-      setError('Impossible d’ajouter ce produit');
-      toast.error('Impossible d’ajouter ce produit');
+    } catch (err) {
+      const message = apiMessage(err, 'Impossible d’ajouter ce produit');
+      setError(message);
+      toast.error(message);
     }
   };
 
   const handleQuantityChange = async (item: OrderItem, quantity: number) => {
-    await updateOrderItemQuantity(order.id, item.id, quantity);
+    try {
+      await updateOrderItemQuantity(order.id, item.id, quantity);
+    } catch (err) {
+      toast.error(apiMessage(err, 'Modification impossible'));
+      reloadOrder();
+      return;
+    }
     reloadOrder();
     // Retrait d'un article : pas de confirmation, mais 5 s pour se rattraper
     if (quantity <= 0) {
@@ -403,7 +428,9 @@ export default function PosOrderPage() {
         onCommit: () => {},
         onUndo: product
           ? () => {
-              addToOrder(product, item.quantity, item.sideProduct ?? null).then(reloadOrder);
+              addToOrder(product, item.quantity, item.sideProduct ?? null)
+                .catch((err) => toast.error(apiMessage(err, 'Impossible d’ajouter ce produit')))
+                .finally(reloadOrder);
             }
           : undefined,
       });
@@ -412,12 +439,13 @@ export default function PosOrderPage() {
 
   const handleNextStatus = async () => {
     if (!nextAction) return;
-    await advanceOrderStatus(order.id, nextAction.next);
+    try {
+      await advanceOrderStatus(order.id, nextAction.next);
+    } catch (err) {
+      toast.error(apiMessage(err, 'Action impossible'));
+    }
     reloadOrder();
   };
-
-  const apiMessage = (err: unknown, fallback: string) =>
-    (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? fallback;
 
   const handleVoidConfirm = async (reason: string, quantity: number) => {
     if (!voidTarget) return;
@@ -460,12 +488,23 @@ export default function PosOrderPage() {
       danger: true,
     });
     if (!ok) return;
-    await advanceOrderStatus(order.id, 'ANNULEE');
+    try {
+      await advanceOrderStatus(order.id, 'ANNULEE');
+    } catch (err) {
+      toast.error(apiMessage(err, 'Action impossible'));
+      reloadOrder();
+      return;
+    }
     toast.info('Commande annulée');
     navigate('/tables');
   };
 
-  const openPayment = (method: 'CASH' | 'MOBILE_MONEY' | 'CARD' = 'CASH') => {
+  const openPayment = async (method: 'CASH' | 'MOBILE_MONEY' | 'CARD' = 'CASH') => {
+    // Le total doit être complet sur le serveur avant d'encaisser
+    if (await hasUnsentActions(order.id)) {
+      toast.error('Des articles de cette commande ne sont pas encore envoyés : réessayez dans un instant');
+      return;
+    }
     setDefaultPaymentMethod(method);
     setIsPaying(true);
   };

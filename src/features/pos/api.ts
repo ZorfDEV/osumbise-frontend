@@ -69,6 +69,8 @@ export const createOrder = async (payload: {
   establishmentId?: string;
   // Suite d'une facture déjà payée (même table, même client)
   followsOrderId?: string;
+  // Identifiant de l'envoi : un renvoi ne crée pas de seconde commande
+  clientRef?: string;
 }): Promise<Order> => {
   const res = await api.post('/orders', payload);
   return res.data.order;
@@ -87,7 +89,7 @@ export const setOrderCustomer = async (orderId: string, customerId: string | nul
 // après coup plutôt que de se fier à la réponse.
 export const addOrderItem = async (
   orderId: string,
-  payload: { productId: string; quantity: number; sideProductId?: string | null }
+  payload: { productId: string; quantity: number; sideProductId?: string | null; clientRef?: string }
 ): Promise<void> => {
   await api.post(`/orders/${orderId}/items`, payload);
 };

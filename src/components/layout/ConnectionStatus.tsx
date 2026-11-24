@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CloudOff, RefreshCw, Wifi } from 'lucide-react';
 import { useOnlineStatus } from '@/lib/useOnlineStatus';
-import { getOutboxActions, isSyncInProgress, syncOutbox } from '@/lib/offlineSync';
+import {
+  getFailedActions,
+  getOutboxActions,
+  ignoreFailedAction,
+  isSyncInProgress,
+  retryFailedActions,
+  syncOutbox,
+} from '@/lib/offlineSync';
 import { refreshOfflineCache, getCachedProducts } from '@/lib/offlineCache';
-import type { OutboxAction } from '@/lib/db';
+import type { FailedAction, OutboxAction } from '@/lib/db';
 
 const POLL_MS = 3000;
 
@@ -35,6 +42,7 @@ const STYLES: Record<State, { dot: string; pill: string; label: string }> = {
 export default function ConnectionStatus() {
   const isOnline = useOnlineStatus();
   const [actions, setActions] = useState<OutboxAction[]>([]);
+  const [failed, setFailed] = useState<FailedAction[]>([]);
   const [productNames, setProductNames] = useState<Record<string, string>>({});
   const [isOpen, setIsOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -44,6 +52,9 @@ export default function ConnectionStatus() {
     getOutboxActions()
       .then(setActions)
       .catch(() => setActions([]));
+    getFailedActions()
+      .then(setFailed)
+      .catch(() => setFailed([]));
     setIsSyncing(isSyncInProgress());
   }, []);
 
@@ -87,6 +98,17 @@ export default function ConnectionStatus() {
     refresh();
   };
 
+  const retryFailed = async () => {
+    setIsSyncing(true);
+    await retryFailedActions().catch(() => undefined);
+    refresh();
+  };
+
+  const ignore = async (a: FailedAction) => {
+    await ignoreFailedAction(a.id).catch(() => undefined);
+    refresh();
+  };
+
   const describe = (a: OutboxAction) => {
     const name = typeof a.payload.productId === 'string' ? productNames[a.payload.productId] : undefined;
     const qty = typeof a.payload.quantity === 'number' ? ` × ${a.payload.quantity}` : '';
@@ -99,12 +121,13 @@ export default function ConnectionStatus() {
         type="button"
         onClick={() => setIsOpen((o) => !o)}
         aria-expanded={isOpen}
-        aria-label={`${style.label}${pending ? `, ${pending} action${pending > 1 ? 's' : ''} en attente` : ''}`}
+        aria-label={`${style.label}${pending ? `, ${pending} action${pending > 1 ? 's' : ''} en attente` : ''}${failed.length ? `, ${failed.length} refusée${failed.length > 1 ? 's' : ''}` : ''}`}
         className={`flex h-9 items-center gap-2 rounded-full border border-slate-200 px-2.5 text-xs font-semibold transition-colors hover:bg-slate-50 sm:px-3 ${style.pill}`}
       >
         <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.dot}`} />
         <span className="hidden sm:inline">{style.label}</span>
         {pending > 0 && <span className="rounded-full bg-slate-100 px-1.5 text-[0.7rem] text-slate-700">{pending}</span>}
+        {failed.length > 0 && <span className="rounded-full bg-danger-soft px-1.5 text-[0.7rem] text-danger-dark">{failed.length}</span>}
       </button>
 
       {isOpen && (
@@ -128,7 +151,9 @@ export default function ConnectionStatus() {
                   ? 'Les commandes continuent de fonctionner. Elles seront envoyées au retour de la connexion. L’encaissement reste indisponible.'
                   : pending > 0
                     ? 'Des actions faites hors ligne sont en cours d’envoi.'
-                    : 'Toutes les actions sont enregistrées sur le serveur.'}
+                    : failed.length > 0
+                      ? 'Des actions faites hors ligne ont été refusées par le serveur.'
+                      : 'Toutes les actions sont enregistrées sur le serveur.'}
               </p>
             </div>
           </div>
@@ -150,6 +175,33 @@ export default function ConnectionStatus() {
                 <button onClick={syncNow} aria-busy={isSyncing} className="btn btn-secondary btn-sm mt-3 w-full">
                   {!isSyncing && <RefreshCw size={14} />}
                   {isSyncing ? 'Synchronisation…' : 'Synchroniser maintenant'}
+                </button>
+              )}
+            </>
+          )}
+
+          {failed.length > 0 && (
+            <>
+              <p className="mb-1 mt-4 text-[0.7rem] font-semibold uppercase tracking-wider text-danger-dark">
+                Refusées ({failed.length})
+              </p>
+              <ul className="max-h-52 divide-y divide-slate-100 overflow-y-auto text-sm">
+                {failed.map((a) => (
+                  <li key={a.id} className="flex items-start justify-between gap-3 py-1.5">
+                    <span className="min-w-0">
+                      <span className="block truncate text-slate-700">{describe(a)}</span>
+                      <span className="block text-xs text-danger-dark">{a.message}</span>
+                    </span>
+                    <button onClick={() => ignore(a)} className="shrink-0 text-xs font-medium text-slate-500 hover:underline">
+                      Abandonner
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {isOnline && (
+                <button onClick={retryFailed} aria-busy={isSyncing} className="btn btn-secondary btn-sm mt-3 w-full">
+                  {!isSyncing && <RefreshCw size={14} />}
+                  Réessayer
                 </button>
               )}
             </>

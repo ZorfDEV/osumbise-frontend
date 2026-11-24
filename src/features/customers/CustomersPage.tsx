@@ -84,8 +84,12 @@ export default function CustomersPage() {
   };
 
   const handleNewSale = async (customerId?: string) => {
-    const order = await createOrder({ establishmentId, customerId });
-    navigate(`/pos/${order.id}`);
+    try {
+      const order = await createOrder({ establishmentId, customerId });
+      navigate(`/pos/${order.id}`);
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Impossible de créer la commande');
+    }
   };
 
   const pager = usePagination(customers);

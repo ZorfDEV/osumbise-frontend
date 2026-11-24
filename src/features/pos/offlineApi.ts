@@ -1,21 +1,42 @@
-import { getDb } from '@/lib/db';
-import { enqueueAction } from '@/lib/offlineSync';
-import { isReadOnlyRefusal } from '@/lib/axios';
+import { getDb, OutboxAction } from '@/lib/db';
+import { enqueueAction, getPendingActions, isLocalId, isOutage, resolveOrderId, syncOutbox, waitForSync } from '@/lib/offlineSync';
 import * as api from './api';
 import { Order } from './types';
 import { computeOrderTotals } from './taxes';
 
-const isLocalId = (id: string) => id.startsWith('local-');
-
-const getCachedOrder = async (orderId: string): Promise<Order | null> => {
+const getCachedOrder = async (orderId: string): Promise<Order> => {
   const db = await getDb();
-  return (await db.get('orders', orderId)) ?? null;
+  const order = (await db.get('orders', orderId)) ?? (await db.get('orders', await resolveOrderId(orderId)));
+  if (!order) throw new Error('Commande indisponible hors connexion');
+  return order;
 };
 
 const saveOrderLocally = async (order: Order) => {
   const db = await getDb();
   await db.put('orders', order);
 };
+
+// Commande reçue du serveur, gardée pour le hors ligne : un stockage plein ou
+// bloqué ne doit pas faire échouer une opération réussie
+const cacheOrder = (order: Order) => saveOrderLocally(order).catch(() => undefined);
+
+// La commande peut-elle être modifiée directement sur le serveur ? Seulement si
+// rien n'attend pour elle dans la file : l'ordre des actions doit être respecté.
+const onlineOrderId = async (orderId: string): Promise<string | null> => {
+  if (!navigator.onLine) return null;
+  try {
+    if ((await getPendingActions(orderId)).length > 0) await syncOutbox();
+    const id = await resolveOrderId(orderId);
+    return isLocalId(id) || (await getPendingActions(orderId)).length > 0 ? null : id;
+  } catch {
+    // Stockage local indisponible : rien ne peut attendre, on travaille en ligne
+    return isLocalId(orderId) ? null : orderId;
+  }
+};
+
+// Des actions de cette commande ne sont pas encore sur le serveur (encaissement
+// impossible tant que le total n'est pas complet)
+export const hasUnsentActions = async (orderId: string): Promise<boolean> => (await onlineOrderId(orderId)) === null;
 
 const recalculateLocalTotals = (order: Order) => {
   // Même calcul que le serveur (orderTotals.ts) : prix HT ou prix TTC fixe,
@@ -39,21 +60,24 @@ const recalculateLocalTotals = (order: Order) => {
 // --- Lecture ---------------------------------------------------------------
 
 export const loadOrder = async (orderId: string): Promise<Order> => {
-  if (navigator.onLine && !isLocalId(orderId)) {
+  // Stockage local indisponible : on lit simplement le serveur
+  const id = await resolveOrderId(orderId).catch(() => orderId);
+  // Des actions en attente : la version locale les contient, pas le serveur
+  const pending = await getPendingActions(orderId).then((list) => list.length > 0, () => false);
+  if (navigator.onLine && !isLocalId(id) && !pending) {
     try {
-      const order = await api.fetchOrder(orderId);
-      await saveOrderLocally(order);
+      const order = await api.fetchOrder(id);
+      await cacheOrder(order);
       return order;
     } catch {
       // Bascule sur secours hors ligne juste en dessous
     }
   }
-
-  const cached = await getCachedOrder(orderId);
-  if (!cached) {
-    throw new Error('Commande introuvable, y compris dans le cache local');
-  }
-  return cached;
+  return getCachedOrder(orderId).catch((err) => {
+    // Modifiée en ligne depuis un autre écran : rien en cache, on lit le serveur
+    if (navigator.onLine && !isLocalId(id)) return api.fetchOrder(id);
+    throw err;
+  });
 };
 
 // --- Création ----------------------------------------------------------
@@ -65,19 +89,20 @@ export const createOrder = async (payload: {
   // Suite d'une facture déjà payée (même table, même client)
   followsOrderId?: string;
 }): Promise<Order> => {
+  const ref = crypto.randomUUID();
   if (navigator.onLine) {
     try {
-      const order = await api.createOrder(payload);
-      await saveOrderLocally(order);
+      const order = await api.createOrder({ ...payload, clientRef: ref });
+      await cacheOrder(order);
       return order;
     } catch (err) {
-      // Lecture seule (abonnement expiré) : un vrai refus, pas une coupure
-      if (isReadOnlyRefusal(err)) throw err;
+      // Un refus du serveur n'est pas une coupure
+      if (!isOutage(err)) throw err;
       // Bascule sur secours hors ligne juste en dessous
     }
   }
 
-  const localId = `local-${crypto.randomUUID()}`;
+  const localId = `local-${ref}`;
   const localOrder: Order = {
     id: localId,
     status: 'BROUILLON',
@@ -91,7 +116,7 @@ export const createOrder = async (payload: {
     items: [],
   };
   await saveOrderLocally(localOrder);
-  await enqueueAction({ type: 'createOrder', localOrderId: localId, payload });
+  await enqueueAction({ id: ref, type: 'createOrder', localOrderId: localId, payload });
   return localOrder;
 };
 
@@ -113,26 +138,30 @@ export const addOrderItem = async (
   // Accompagnement choisi avec le plat (riz, banane…)
   side: { id: string; name: string } | null = null
 ): Promise<void> => {
-  if (navigator.onLine && !isLocalId(orderId)) {
+  const ref = crypto.randomUUID();
+  const onlineId = await onlineOrderId(orderId);
+  if (onlineId) {
     try {
-      await api.addOrderItem(orderId, { productId: product.id, quantity, sideProductId: side?.id ?? null });
+      await api.addOrderItem(onlineId, { productId: product.id, quantity, sideProductId: side?.id ?? null, clientRef: ref });
       return;
     } catch (err) {
-      if (isReadOnlyRefusal(err)) throw err;
+      if (!isOutage(err)) throw err;
       // Bascule sur mise à jour locale + file d'attente juste en dessous
     }
   }
 
   const order = await getCachedOrder(orderId);
-  if (!order) return;
 
-  // Même plat ET même accompagnement : on augmente la quantité
-  const existing = order.items.find((i) => i.productId === product.id && (i.sideProductId ?? null) === (side?.id ?? null));
+  // Même plat ET même accompagnement : on augmente la quantité, mais seulement
+  // d'une ligne pas encore envoyée (le serveur, lui, créera une ligne à part)
+  const existing = order.items.find(
+    (i) => i.id.startsWith('local-item-') && i.productId === product.id && (i.sideProductId ?? null) === (side?.id ?? null)
+  );
   if (existing) {
     existing.quantity += quantity;
   } else {
     order.items.push({
-      id: `local-item-${crypto.randomUUID()}`,
+      id: `local-item-${ref}`,
       productId: product.id,
       quantity,
       // Approximation hors ligne : reprend la remise vue au dernier chargement
@@ -152,10 +181,37 @@ export const addOrderItem = async (
   await saveOrderLocally(order);
 
   await enqueueAction({
+    id: ref,
     type: 'addItem',
-    localOrderId: orderId,
+    localOrderId: order.id,
     payload: { productId: product.id, quantity, sideProductId: side?.id ?? null },
   });
+};
+
+// Ligne ajoutée hors ligne et pas encore envoyée : on corrige ses ajouts dans
+// la file, sinon la quantité d'origine (ou l'article retiré) partirait quand même
+const rewritePendingAdds = async (
+  orderId: string,
+  item: { productId: string; sideProductId?: string | null },
+  quantity: number
+) => {
+  // Un envoi en cours pourrait être en train d'expédier cet ajout
+  await waitForSync();
+  const adds = (await getPendingActions(orderId)).filter(
+    (a: OutboxAction) =>
+      a.type === 'addItem' &&
+      a.payload.productId === item.productId &&
+      (a.payload.sideProductId ?? null) === (item.sideProductId ?? null)
+  );
+  if (adds.length === 0) throw new Error('Cet article vient d’être envoyé : réessayez');
+
+  const db = await getDb();
+  const tx = db.transaction('outbox', 'readwrite');
+  const [first, ...others] = adds;
+  for (const a of others) tx.store.delete(a.id);
+  if (quantity <= 0) tx.store.delete(first.id);
+  else tx.store.put({ ...first, payload: { ...first.payload, quantity } });
+  await tx.done;
 };
 
 export const updateOrderItemQuantity = async (
@@ -163,39 +219,37 @@ export const updateOrderItemQuantity = async (
   itemId: string,
   quantity: number
 ): Promise<void> => {
-  if (navigator.onLine && !isLocalId(orderId) && !itemId.startsWith('local-item-')) {
+  const isLocalItem = itemId.startsWith('local-item-');
+  const onlineId = isLocalItem ? null : await onlineOrderId(orderId);
+  if (onlineId) {
     try {
       if (quantity <= 0) {
-        await api.removeOrderItem(orderId, itemId);
+        await api.removeOrderItem(onlineId, itemId);
       } else {
-        await api.updateOrderItem(orderId, itemId, quantity);
+        await api.updateOrderItem(onlineId, itemId, quantity);
       }
       return;
     } catch (err) {
-      if (isReadOnlyRefusal(err)) throw err;
+      if (!isOutage(err)) throw err;
       // Bascule sur mise à jour locale + file d'attente juste en dessous
     }
   }
 
+  if (isLocalItem) await waitForSync();
   const order = await getCachedOrder(orderId);
-  if (!order) return;
+  const item = order.items.find((i) => i.id === itemId);
+  if (!item) throw new Error('Cet article vient d’être envoyé : réessayez');
 
-  if (quantity <= 0) {
-    order.items = order.items.filter((i) => i.id !== itemId);
-    if (!itemId.startsWith('local-item-')) {
-      await enqueueAction({ type: 'removeItem', localOrderId: orderId, payload: { itemId } });
-    }
+  if (isLocalItem) {
+    await rewritePendingAdds(orderId, item, quantity);
+  } else if (quantity <= 0) {
+    await enqueueAction({ type: 'removeItem', localOrderId: order.id, payload: { itemId } });
   } else {
-    const item = order.items.find((i) => i.id === itemId);
-    if (item) item.quantity = quantity;
-    if (!itemId.startsWith('local-item-')) {
-      await enqueueAction({
-        type: 'updateItemQuantity',
-        localOrderId: orderId,
-        payload: { itemId, quantity },
-      });
-    }
+    await enqueueAction({ type: 'updateItemQuantity', localOrderId: order.id, payload: { itemId, quantity } });
   }
+
+  if (quantity <= 0) order.items = order.items.filter((i) => i.id !== itemId);
+  else item.quantity = quantity;
   recalculateLocalTotals(order);
   await saveOrderLocally(order);
 };
@@ -203,22 +257,22 @@ export const updateOrderItemQuantity = async (
 // --- Statut --------------------------------------------------------------
 
 export const advanceOrderStatus = async (orderId: string, status: string): Promise<void> => {
-  if (navigator.onLine && !isLocalId(orderId)) {
+  const onlineId = await onlineOrderId(orderId);
+  if (onlineId) {
     try {
-      await api.updateOrderStatus(orderId, status);
+      await api.updateOrderStatus(onlineId, status);
       return;
     } catch (err) {
-      if (isReadOnlyRefusal(err)) throw err;
+      if (!isOutage(err)) throw err;
       // Bascule sur mise à jour locale + file d'attente juste en dessous
     }
   }
 
   const order = await getCachedOrder(orderId);
-  if (!order) return;
   order.status = status as Order['status'];
   await saveOrderLocally(order);
 
-  await enqueueAction({ type: 'updateStatus', localOrderId: orderId, payload: { status } });
+  await enqueueAction({ type: 'updateStatus', localOrderId: order.id, payload: { status } });
 };
 
 // Utilisé par TablesPage pour retrouver la commande d'une table occupée
@@ -230,5 +284,15 @@ export const findLocalActiveOrderForTable = async (tableId: string): Promise<Ord
   const all = await db.getAll('orders');
   return (
     all.find((o) => o.tableId === tableId && ACTIVE_ORDER_STATUSES.includes(o.status)) ?? null
+  );
+};
+
+// Commande prise hors ligne pour cette table et pas encore envoyée : le plan de
+// salle, lui, affiche toujours la table libre
+export const findUnsentOrderForTable = async (tableId: string): Promise<Order | null> => {
+  const db = await getDb();
+  const all = await db.getAll('orders');
+  return (
+    all.find((o) => isLocalId(o.id) && o.tableId === tableId && ACTIVE_ORDER_STATUSES.includes(o.status)) ?? null
   );
 };

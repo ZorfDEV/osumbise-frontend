@@ -1,6 +1,8 @@
 import { LogOut, Maximize, Menu, Minimize, Search, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
+import { useConfirm } from '@/lib/confirm';
+import { getFailedActions, getOutboxCount, syncOutbox } from '@/lib/offlineSync';
 import { useFullscreen } from '@/lib/useFullscreen';
 import { ROLE_LABELS } from '@/config/roles';
 import ConnectionStatus from './ConnectionStatus';
@@ -22,6 +24,28 @@ const ICON_BUTTON =
 export default function Topbar({ onMenuClick, onSearchClick }: Props) {
   const { user, logout } = useAuth();
   const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
+
+  const confirm = useConfirm();
+
+  // Dernier envoi avant de partir ; ce qui reste attend cet utilisateur sur
+  // cet appareil (jamais envoyé au nom d'un autre)
+  const handleLogout = async () => {
+    await syncOutbox();
+    const [pending, failed] = await Promise.all([
+      getOutboxCount().catch(() => 0),
+      getFailedActions().then((list) => list.length).catch(() => 0),
+    ]);
+    if (pending + failed > 0) {
+      const ok = await confirm({
+        title: 'Actions non envoyées',
+        message: `${pending + failed} action(s) faite(s) hors ligne ne sont pas sur le serveur. Elles resteront sur cet appareil jusqu’à votre prochaine connexion ici. Se déconnecter quand même ?`,
+        confirmLabel: 'Se déconnecter',
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    await logout();
+  };
 
   const fullscreenLabel = isFullscreen ? 'Quitter le plein écran' : 'Passer en plein écran';
 
@@ -88,7 +112,7 @@ export default function Topbar({ onMenuClick, onSearchClick }: Props) {
         )}
 
         <button
-          onClick={() => logout()}
+          onClick={handleLogout}
           aria-label="Déconnexion"
           title="Déconnexion"
           className="btn btn-danger btn-sm h-9 shrink-0 px-2 sm:px-3"
