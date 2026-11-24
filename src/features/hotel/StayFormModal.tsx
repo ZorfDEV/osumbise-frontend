@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from '@/lib/toast';
+import { useAuth } from '@/features/auth/AuthContext';
 import { apiError, createStay, updateStay } from './api';
 import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, nightsBetween, roomName, todayIso } from './labels';
 import type { Room, StayDetail, TaxRate } from './types';
@@ -25,6 +26,9 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
   const toast = useToast();
   const isEdit = !!stay;
   const isCheckedIn = stay?.status === 'CHECKED_IN';
+  // Date d'arrivée d'un séjour existant : propriétaire et administrateur de la plateforme
+  const { user } = useAuth();
+  const arrivalLocked = isEdit && user?.role !== 'OWNER' && !user?.isPlatformAdmin;
   const start = stay ? dayOf(stay.checkInDate) : walkIn ? todayIso() : initialCheckIn ?? todayIso();
 
   const [roomId, setRoomId] = useState(stay?.roomId ?? initialRoomId ?? '');
@@ -84,6 +88,9 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
     const checkInChanged = !isEdit || checkInDate !== dayOf(stay.checkInDate);
     if (!isCheckedIn && checkInChanged && checkInDate < todayIso()) {
       return setError('Impossible de réserver à une date passée : choisissez aujourd’hui ou une date à venir.');
+    }
+    if (isCheckedIn && checkInChanged && checkInDate > todayIso()) {
+      return setError('Le client est déjà arrivé : la date d’arrivée ne peut pas être à venir.');
     }
     if (checkOutDate <= checkInDate) return setError('La date de départ doit être après la date d’arrivée.');
     if (room && adults + children > room.capacity) {
@@ -205,11 +212,16 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               id="stay-in"
               type="date"
               value={checkInDate}
-              min={isEdit && dayOf(stay.checkInDate) < todayIso() ? dayOf(stay.checkInDate) : todayIso()}
+              min={isCheckedIn ? undefined : isEdit && dayOf(stay.checkInDate) < todayIso() ? dayOf(stay.checkInDate) : todayIso()}
+              max={isCheckedIn ? todayIso() : undefined}
               onChange={(e) => setCheckInDate(e.target.value)}
-              disabled={walkIn || isCheckedIn}
+              disabled={walkIn || arrivalLocked}
               className="input w-full"
             />
+            {arrivalLocked && <p className="mt-1 text-xs text-slate-500">Seul le propriétaire peut modifier la date d’arrivée.</p>}
+            {isCheckedIn && !arrivalLocked && (
+              <p className="mt-1 text-xs text-slate-500">Client déjà arrivé : les nuitées et la facture seront recalculées.</p>
+            )}
           </div>
           <div>
             <label htmlFor="stay-out" className="mb-1 block text-sm font-medium text-slate-700">

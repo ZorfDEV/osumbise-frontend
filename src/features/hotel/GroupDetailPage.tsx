@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Banknote, DoorClosed, DoorOpen, Pencil, Printer, Users, X } from 'lucide-react';
 import { useToast } from '@/lib/toast';
+import { useAuth } from '@/features/auth/AuthContext';
 import { useConfirm } from '@/lib/confirm';
 import { getSocket } from '@/lib/socket';
 import { PrintPortal, printTicket, usePrintSettings } from '@/lib/print';
@@ -156,6 +157,9 @@ function GroupEditDialog({ group, onClose, onSaved }: { group: StayGroupDetail; 
   const [checkInDate, setCheckInDate] = useState(initialIn);
   const [checkOutDate, setCheckOutDate] = useState(initialOut);
   const [saving, setSaving] = useState(false);
+  // Date d'arrivée : propriétaire et administrateur de la plateforme
+  const { user } = useAuth();
+  const arrivalLocked = reserved.length > 0 && user?.role !== 'OWNER' && !user?.isPlatformAdmin;
   const minCheckOut = [addDaysIso(checkInDate, 1), todayIso()].sort().pop()!;
 
   const submit = async () => {
@@ -219,7 +223,7 @@ function GroupEditDialog({ group, onClose, onSaved }: { group: StayGroupDetail; 
                     type="date"
                     min={reserved.length > 0 ? todayIso() : undefined}
                     value={checkInDate}
-                    disabled={reserved.length === 0}
+                    disabled={reserved.length === 0 || arrivalLocked}
                     onChange={(e) => setCheckInDate(e.target.value)}
                     className="input w-full"
                   />
@@ -238,6 +242,7 @@ function GroupEditDialog({ group, onClose, onSaved }: { group: StayGroupDetail; 
                   />
                 </div>
               </div>
+              {arrivalLocked && <p className="text-xs text-slate-500">Seul le propriétaire peut modifier la date d’arrivée.</p>}
               <p className="text-xs text-slate-500">
                 Les nouvelles dates s’appliquent aux {active.length} chambre{active.length > 1 ? 's' : ''} réservée{active.length > 1 ? 's' : ''} ou en cours
                 {reserved.length < active.length ? ' ; les chambres déjà arrivées gardent leur date d’arrivée' : ''}. Toutes doivent être
