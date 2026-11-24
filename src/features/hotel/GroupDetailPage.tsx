@@ -17,6 +17,7 @@ import { addDaysIso, CATEGORY_LABELS, dayOf, fcfa, formatDay, roomName, STAY_PAY
 import GroupInvoiceTicket from './GroupInvoiceTicket';
 import { hotelInvoiceNo } from '@/features/pos/invoiceNumber';
 import type { StayPaymentMethod } from './types';
+import { splitPayments } from './invoiceSummary';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
 
@@ -302,6 +303,7 @@ export default function GroupDetailPage() {
   if (!group) return <PageSkeleton />;
 
   const { totals } = group;
+  const { advance, onAccount } = splitPayments(group.stays.filter((st) => st.status !== 'CANCELLED').flatMap((st) => st.payments));
   const reserved = group.stays.filter((s) => s.status === 'RESERVED').length;
   const inHouse = group.stays.filter((s) => s.status === 'CHECKED_IN').length;
 
@@ -405,8 +407,16 @@ export default function GroupDetailPage() {
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { label: 'Total', value: fcfa(totals.total) },
-          { label: 'Avance', value: fcfa(totals.paid) },
-          { label: totals.balance > 0 ? 'Reste à payer' : 'Soldé', value: fcfa(Math.max(0, totals.balance)) },
+          { label: 'Avance', value: fcfa(advance) },
+          ...(onAccount > 0 ? [{ label: 'Reste sur compte client', value: fcfa(onAccount) }] : []),
+          ...(totals.balance !== 0 || onAccount <= 0
+            ? [
+                {
+                  label: totals.balance > 0 ? 'Reste à payer' : totals.balance < 0 ? 'Trop-perçu' : 'Soldé',
+                  value: fcfa(Math.abs(totals.balance)),
+                },
+              ]
+            : []),
           { label: 'Consommations et prestations', value: fcfa(totals.charges + (totals.services ?? 0)) },
         ].map((k) => (
           <div key={k.label} className="rounded-lg border border-slate-200 bg-surface p-3">

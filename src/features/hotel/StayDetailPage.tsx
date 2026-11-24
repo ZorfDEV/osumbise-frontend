@@ -24,6 +24,7 @@ import { useAuth } from '@/features/auth/AuthContext';
 import { setStayDiscount } from './api';
 import type { Room, StayDetail, StayPaymentMethod, TaxRate } from './types';
 import { itemName } from '@/features/pos/itemName';
+import { splitPayments } from './invoiceSummary';
 
 const METHODS: StayPaymentMethod[] = ['CASH', 'MOBILE_MONEY', 'CARD', 'TRANSFER', 'CREDIT'];
 
@@ -485,6 +486,7 @@ export default function StayDetailPage() {
     if (ok) act(() => cancelStay(stay.id), 'Réservation annulée');
   };
 
+  const { advance, onAccount } = splitPayments(stay.payments);
   const canEdit = stay.status === 'RESERVED' || stay.status === 'CHECKED_IN';
 
   return (
@@ -700,16 +702,25 @@ export default function StayDetailPage() {
             )}
             <div className="flex justify-between text-slate-600">
               <span>Avance</span>
-              <span>− {fcfa(totals.paid)}</span>
+              <span>− {fcfa(advance)}</span>
             </div>
-            <div
-              className={`mt-2 flex justify-between rounded-lg px-3 py-2 text-base font-bold ${
-                totals.balance > 0 ? 'bg-warning-soft text-warning-dark' : 'bg-success-soft text-success-dark'
-              }`}
-            >
-              <span>{totals.balance > 0 ? 'Reste à payer' : totals.balance < 0 ? 'Trop-perçu' : 'Soldé'}</span>
-              <span>{fcfa(Math.abs(totals.balance))}</span>
-            </div>
+            {onAccount > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>Reste sur compte client</span>
+                <span>− {fcfa(onAccount)}</span>
+              </div>
+            )}
+            {/* Tout le reste est sur compte client : rien à encaisser ici, mais pas « soldé » */}
+            {(totals.balance !== 0 || onAccount <= 0) && (
+              <div
+                className={`mt-2 flex justify-between rounded-lg px-3 py-2 text-base font-bold ${
+                  totals.balance > 0 ? 'bg-warning-soft text-warning-dark' : 'bg-success-soft text-success-dark'
+                }`}
+              >
+                <span>{totals.balance > 0 ? 'Reste à payer' : totals.balance < 0 ? 'Trop-perçu' : 'Soldé'}</span>
+                <span>{fcfa(Math.abs(totals.balance))}</span>
+              </div>
+            )}
           </div>
           {stay.status === 'CHECKED_IN' && (
             <p className="mt-3 text-xs text-slate-500">

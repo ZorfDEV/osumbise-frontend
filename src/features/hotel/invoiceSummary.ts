@@ -5,15 +5,23 @@ export interface SummaryLine {
   amount: number;
 }
 
+// Argent réellement versé (remboursements déduits) et part mise sur un compte
+// client, pas encore payée
+export const splitPayments = (payments: { method: StayPaymentMethod; amount: string }[]) => {
+  const sum = (list: { amount: string }[]) => list.reduce((total, p) => total + Number(p.amount), 0);
+  return {
+    advance: sum(payments.filter((p) => p.method !== 'CREDIT')),
+    onAccount: sum(payments.filter((p) => p.method === 'CREDIT')),
+  };
+};
+
 // Bas de facture : avance versée, part mise sur un compte client (pas encore
 // payée) et reste à payer. Remboursements déduits de l'avance.
 export const invoiceSummary = (
   payments: { method: StayPaymentMethod; amount: string }[],
   balance: number
 ): SummaryLine[] => {
-  const sum = (list: { amount: string }[]) => list.reduce((total, p) => total + Number(p.amount), 0);
-  const advance = sum(payments.filter((p) => p.method !== 'CREDIT'));
-  const onAccount = sum(payments.filter((p) => p.method === 'CREDIT'));
+  const { advance, onAccount } = splitPayments(payments);
   const due = Math.round(balance);
   const lines: SummaryLine[] = [];
   const settled = due <= 0 && onAccount <= 0;
