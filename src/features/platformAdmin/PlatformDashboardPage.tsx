@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchRevenueSummary } from './api';
 import { RevenueSummary } from './types';
+import PendingPaymentsCard from './PendingPaymentsCard';
 import { PageSkeleton } from '@/components/ui/skeleton';
 
 const formatFcfa = (v: number) => `${v.toLocaleString('fr-FR')} FCFA`;
@@ -15,8 +16,12 @@ const STATUS_LABELS: Record<string, string> = {
 export default function PlatformDashboardPage() {
   const [summary, setSummary] = useState<RevenueSummary | null>(null);
 
-  useEffect(() => {
+  const load = () => {
     fetchRevenueSummary().then(setSummary);
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   if (!summary) return <PageSkeleton />;
@@ -49,6 +54,8 @@ export default function PlatformDashboardPage() {
           </div>
         ))}
       </div>
+
+      <PendingPaymentsCard onReviewed={load} />
 
       <h2 className="mb-3 text-sm font-semibold text-heading-muted">Répartition par formule</h2>
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">

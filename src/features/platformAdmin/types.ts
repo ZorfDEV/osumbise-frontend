@@ -47,6 +47,13 @@ export interface OrganizationDetail {
     | null;
 }
 
+// Paiement Mobile Money à vérifier sur le compte marchand avant validation
+export interface PendingPayment extends SubscriptionPayment {
+  externalRef: string | null;
+  createdAt: string;
+  subscription: { plan: { name: string; price: string }; organization: { id: string; name: string } };
+}
+
 export interface RevenueSummary {
   mrr: number;
   totalCollected: number;

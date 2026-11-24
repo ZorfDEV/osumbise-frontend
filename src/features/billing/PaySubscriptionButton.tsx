@@ -53,7 +53,7 @@ export default function PaySubscriptionButton({ amountLabel, onSuccess }: Props)
     timeoutRef.current = setTimeout(() => {
       stopPolling();
       setIsSubmitting(false);
-      setError('Toujours en attente après 2 minutes. Vérifie sur ton téléphone, ou réessaie.');
+      setError('Paiement en attente de vérification. Si ton compte a été débité, ne paie pas une seconde fois : ton abonnement sera activé après vérification.');
     }, POLL_TIMEOUT_MS);
   };
 
@@ -130,8 +130,8 @@ export default function PaySubscriptionButton({ amountLabel, onSuccess }: Props)
           <div>
             <p className="text-sm font-medium text-slate-900">Vérifie ton téléphone</p>
             <p className="text-xs text-slate-500">
-              Valide le paiement avec ton code PIN Airtel Money — confirmation automatique dès
-              validation.
+              Valide le paiement avec ton code PIN Airtel Money. L’abonnement est activé dès que le
+              paiement est confirmé.
             </p>
           </div>
           <button

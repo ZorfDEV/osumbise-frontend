@@ -1,10 +1,19 @@
 import { api } from '@/lib/axios';
-import { OrganizationSummary, OrganizationDetail, RevenueSummary } from './types';
+import { OrganizationSummary, OrganizationDetail, PendingPayment, RevenueSummary } from './types';
 import { SubscriptionStatus } from '@/features/billing/types';
 
 export const fetchRevenueSummary = async (): Promise<RevenueSummary> => {
   const res = await api.get('/platform-admin/revenue');
   return res.data;
+};
+
+export const fetchPendingPayments = async (): Promise<PendingPayment[]> => {
+  const res = await api.get('/platform-admin/payments/pending');
+  return res.data.payments;
+};
+
+export const reviewPayment = async (id: string, approve: boolean): Promise<void> => {
+  await api.post(`/platform-admin/payments/${id}/review`, { approve });
 };
 
 export const fetchOrganizations = async (search?: string): Promise<OrganizationSummary[]> => {
