@@ -5,6 +5,7 @@ import Topbar from './Topbar';
 import CommandPalette from './CommandPalette';
 import OrderReadyNotifier from './OrderReadyNotifier';
 import UpdatePrompt from './UpdatePrompt';
+import SubscriptionBanner from './SubscriptionBanner';
 import {
   ActiveEstablishmentProvider,
   useActiveEstablishment,
@@ -86,6 +87,9 @@ function AppShell() {
             avoir à compenser sa hauteur dans le contenu. */}
         <div className="sticky top-0 z-30 print:hidden">
           <Topbar onMenuClick={() => setIsSidebarOpen(true)} onSearchClick={() => setIsSearchOpen(true)} />
+        </div>
+        <div className="print:hidden">
+          <SubscriptionBanner />
         </div>
         <main className="min-w-0 flex-1 p-4 sm:p-6 print:p-0">
           <Outlet key={scopeKey} />

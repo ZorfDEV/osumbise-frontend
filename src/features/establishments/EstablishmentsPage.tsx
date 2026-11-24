@@ -310,10 +310,13 @@ export default function EstablishmentsPage() {
                 {establishments.length > 1 ? 's' : ''}
               </p>
             </div>
-            {subscription.status !== 'ACTIVE' && (
+            {(subscription.status !== 'ACTIVE' || new Date(subscription.currentPeriodEnd) < new Date()) && (
               <PaySubscriptionButton
                 amountLabel={`${Number(subscription.plan.price).toLocaleString('fr-FR')} FCFA`}
-                onSuccess={loadSubscription}
+                onSuccess={() => {
+                  loadSubscription();
+                  refreshProfile().catch(() => undefined);
+                }}
               />
             )}
           </div>

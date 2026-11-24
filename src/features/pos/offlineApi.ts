@@ -1,5 +1,6 @@
 import { getDb } from '@/lib/db';
 import { enqueueAction } from '@/lib/offlineSync';
+import { isReadOnlyRefusal } from '@/lib/axios';
 import * as api from './api';
 import { Order } from './types';
 import { computeOrderTotals } from './taxes';
@@ -69,7 +70,9 @@ export const createOrder = async (payload: {
       const order = await api.createOrder(payload);
       await saveOrderLocally(order);
       return order;
-    } catch {
+    } catch (err) {
+      // Lecture seule (abonnement expiré) : un vrai refus, pas une coupure
+      if (isReadOnlyRefusal(err)) throw err;
       // Bascule sur secours hors ligne juste en dessous
     }
   }
@@ -114,7 +117,8 @@ export const addOrderItem = async (
     try {
       await api.addOrderItem(orderId, { productId: product.id, quantity, sideProductId: side?.id ?? null });
       return;
-    } catch {
+    } catch (err) {
+      if (isReadOnlyRefusal(err)) throw err;
       // Bascule sur mise à jour locale + file d'attente juste en dessous
     }
   }
@@ -167,7 +171,8 @@ export const updateOrderItemQuantity = async (
         await api.updateOrderItem(orderId, itemId, quantity);
       }
       return;
-    } catch {
+    } catch (err) {
+      if (isReadOnlyRefusal(err)) throw err;
       // Bascule sur mise à jour locale + file d'attente juste en dessous
     }
   }
@@ -202,7 +207,8 @@ export const advanceOrderStatus = async (orderId: string, status: string): Promi
     try {
       await api.updateOrderStatus(orderId, status);
       return;
-    } catch {
+    } catch (err) {
+      if (isReadOnlyRefusal(err)) throw err;
       // Bascule sur mise à jour locale + file d'attente juste en dessous
     }
   }

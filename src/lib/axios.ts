@@ -39,6 +39,12 @@ api.interceptors.request.use((config) => {
 //   authentifiée pour s'afficher
 const PUBLIC_PATHS = ['/', '/login', '/register'];
 
+// Refus du serveur : abonnement expiré, application en lecture seule. Signalé
+// au bandeau de la mise en page (SubscriptionBanner), quelle que soit la page.
+export const READ_ONLY_EVENT = 'subscription-read-only';
+export const isReadOnlyRefusal = (error: unknown) =>
+  (error as { response?: { status?: number } }).response?.status === 402;
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -47,6 +53,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !isAuthCheck && !isPublicPage) {
       window.location.href = '/login';
     }
+    if (isReadOnlyRefusal(error)) window.dispatchEvent(new CustomEvent(READ_ONLY_EVENT));
     return Promise.reject(error);
   }
 );
