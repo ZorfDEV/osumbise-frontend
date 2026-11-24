@@ -1,5 +1,5 @@
 import { api } from '@/lib/axios';
-import { OrganizationSummary, OrganizationDetail, PendingPayment, RevenueSummary } from './types';
+import { OrganizationSummary, OrganizationDetail, PendingPayment, PlanRequest, RevenueSummary } from './types';
 import { SubscriptionStatus } from '@/features/billing/types';
 
 export const fetchRevenueSummary = async (): Promise<RevenueSummary> => {
@@ -14,6 +14,15 @@ export const fetchPendingPayments = async (): Promise<PendingPayment[]> => {
 
 export const reviewPayment = async (id: string, approve: boolean): Promise<void> => {
   await api.post(`/platform-admin/payments/${id}/review`, { approve });
+};
+
+export const fetchPlanRequests = async (): Promise<PlanRequest[]> => {
+  const res = await api.get('/platform-admin/plan-requests');
+  return res.data.requests;
+};
+
+export const reviewPlanRequest = async (id: string, approve: boolean, planId: string): Promise<void> => {
+  await api.post(`/platform-admin/plan-requests/${id}/review`, { approve, planId });
 };
 
 export const fetchOrganizations = async (search?: string): Promise<OrganizationSummary[]> => {

@@ -14,6 +14,8 @@ export interface Subscription {
   status: SubscriptionStatus;
   currentPeriodEnd: string;
   plan: Plan;
+  // Formule plus chère demandée, en attente de validation
+  requestedPlan?: Plan | null;
 }
 
 export type SubscriptionPaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED';

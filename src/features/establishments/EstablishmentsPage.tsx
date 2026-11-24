@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/AuthContext';
 import {
   fetchEstablishments,
@@ -308,6 +309,14 @@ export default function EstablishmentsPage() {
                 {subscription.plan.maxEstablishments >= 999 ? '∞' : subscription.plan.maxEstablishments}{' '}
                 établissement{establishments.length > 1 ? 's' : ''} utilisé
                 {establishments.length > 1 ? 's' : ''}
+              </p>
+              <p className="mt-1 text-xs">
+                <Link to="/subscribe" className="font-medium text-action hover:underline">
+                  Changer de formule
+                </Link>
+                {subscription.requestedPlan && (
+                  <span className="ml-2 text-slate-500">Demande en attente : {subscription.requestedPlan.name}</span>
+                )}
               </p>
             </div>
             {(subscription.status !== 'ACTIVE' || new Date(subscription.currentPeriodEnd) < new Date()) && (

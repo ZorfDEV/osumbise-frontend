@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchRevenueSummary } from './api';
 import { RevenueSummary } from './types';
 import PendingPaymentsCard from './PendingPaymentsCard';
+import PlanRequestsCard from './PlanRequestsCard';
 import { PageSkeleton } from '@/components/ui/skeleton';
 
 const formatFcfa = (v: number) => `${v.toLocaleString('fr-FR')} FCFA`;
@@ -56,6 +57,7 @@ export default function PlatformDashboardPage() {
       </div>
 
       <PendingPaymentsCard onReviewed={load} />
+      <PlanRequestsCard onReviewed={load} />
 
       <h2 className="mb-3 text-sm font-semibold text-heading-muted">Répartition par formule</h2>
       <div className="overflow-x-auto rounded-lg border border-slate-200 bg-surface">

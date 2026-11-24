@@ -54,6 +54,16 @@ export interface PendingPayment extends SubscriptionPayment {
   subscription: { plan: { name: string; price: string }; organization: { id: string; name: string } };
 }
 
+// Formule plus chère demandée en cours de période payée
+export interface PlanRequest {
+  id: string; // abonnement
+  currentPeriodEnd: string;
+  requestedPlanAt: string | null;
+  plan: { name: string; price: string };
+  requestedPlan: { id: string; name: string; price: string };
+  organization: { id: string; name: string };
+}
+
 export interface RevenueSummary {
   mrr: number;
   totalCollected: number;

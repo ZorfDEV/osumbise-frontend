@@ -2,25 +2,55 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { fetchPlans, selectPlan } from '@/features/billing/api';
-import { Plan } from '@/features/billing/types';
+import { fetchPlans, fetchSubscription, selectPlan } from '@/features/billing/api';
+import { Plan, Subscription } from '@/features/billing/types';
+import { useToast } from '@/lib/toast';
 
 const formatFcfa = (value: number) => `${value.toLocaleString('fr-FR')} FCFA`;
 
 export default function SubscribePage() {
   const { user, refreshProfile, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+  // Abonnement existant : la page sert alors à changer de formule
+  const [current, setCurrent] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchPlans().then((list) => {
+    Promise.all([fetchPlans(), fetchSubscription().catch(() => null)]).then(([list, subscription]) => {
       setPlans(list);
-      if (list.length > 0) setSelectedPlanId(list[0].id);
+      setCurrent(subscription);
+      setSelectedPlanId(subscription?.requestedPlan?.id ?? subscription?.plan.id ?? list[0]?.id ?? null);
     });
   }, []);
+
+  // Même règle que le serveur : en période payée, une formule plus chère est
+  // une demande à faire valider
+  const selected = plans.find((p) => p.id === selectedPlanId);
+  const needsApproval =
+    !!current &&
+    !!selected &&
+    current.status !== 'TRIAL' &&
+    new Date(current.currentPeriodEnd) > new Date() &&
+    Number(selected.price) > Number(current.plan.price);
+  const isCurrent = !!current && selectedPlanId === current.plan.id;
+  // Rien à envoyer : formule actuelle sans demande à annuler, ou déjà demandée
+  const nothingToDo =
+    (isCurrent && !current.requestedPlan) || (!!current?.requestedPlan && selectedPlanId === current.requestedPlan.id);
+  const confirmLabel = !current
+    ? 'Démarrer mon essai gratuit'
+    : isCurrent
+      ? current.requestedPlan
+        ? 'Annuler ma demande'
+        : 'Formule actuelle'
+      : needsApproval
+        ? nothingToDo
+          ? 'Demande en attente'
+          : 'Demander cette formule'
+        : 'Passer à cette formule';
 
   const handleConfirm = async () => {
     if (!selectedPlanId) return;
@@ -29,7 +59,12 @@ export default function SubscribePage() {
     try {
       await selectPlan(selectedPlanId);
       await refreshProfile(); // pour que hasSubscription passe à true côté app
-      navigate('/dashboard');
+      if (current) {
+        toast.success(
+          needsApproval ? 'Demande envoyée : la formule changera après validation' : isCurrent ? 'Demande annulée' : 'Formule changée'
+        );
+      }
+      navigate(current ? '/establishments' : '/dashboard');
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
@@ -45,10 +80,12 @@ export default function SubscribePage() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 text-center">
           <h1 className="mb-1 text-2xl font-semibold text-heading">
-            Bienvenue{user ? `, ${user.name}` : ''} 👋
+            {current ? 'Changer de formule' : `Bienvenue${user ? `, ${user.name}` : ''} 👋`}
           </h1>
           <p className="text-sm text-slate-500">
-            Choisis ta formule pour commencer — 14 jours d’essai gratuit, sans carte bancaire.
+            {current
+              ? `Formule actuelle : ${current.plan.name}.${current.requestedPlan ? ` Demande en attente : ${current.requestedPlan.name}.` : ''}`
+              : 'Choisis ta formule pour commencer — 14 jours d’essai gratuit, sans carte bancaire.'}
           </p>
         </div>
 
@@ -93,21 +130,26 @@ export default function SubscribePage() {
           ))}
         </div>
 
+        {needsApproval && !nothingToDo && (
+          <p className="mb-4 text-center text-sm text-slate-600">
+            Ta période en cours est déjà payée : cette formule plus complète sera activée après validation par Osumbice.
+          </p>
+        )}
         {error && <p className="mb-4 text-center text-sm text-danger">{error}</p>}
 
         <div className="mx-auto max-w-xs">
           <button
             onClick={handleConfirm}
-            disabled={isSubmitting || !selectedPlanId} aria-busy={isSubmitting}
+            disabled={isSubmitting || !selectedPlanId || nothingToDo} aria-busy={isSubmitting}
             className="btn btn-primary w-full py-2.5"
           >
-            {isSubmitting ? 'Activation...' : 'Démarrer mon essai gratuit'}
+            {isSubmitting ? 'Enregistrement...' : confirmLabel}
           </button>
           <button
-            onClick={() => logout()}
+            onClick={() => (current ? navigate('/establishments') : logout())}
             className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-600"
           >
-            Annuler et se déconnecter
+            {current ? 'Retour' : 'Annuler et se déconnecter'}
           </button>
         </div>
       </div>
