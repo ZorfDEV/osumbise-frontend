@@ -36,14 +36,30 @@ export default function UsersPage() {
     load();
   }, []);
 
+  // Même règle que le serveur : le compte propriétaire et son propre compte ne
+  // se modifient pas ici ; un administrateur est géré par le propriétaire
+  const canManage = (u: AppUser) =>
+    u.role !== 'OWNER' && u.id !== currentUser?.id && (u.role !== 'ADMIN' || currentUser?.role === 'OWNER');
+
+  const showError = (err: unknown) =>
+    toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Modification impossible');
+
   const handleToggleActive = async (u: AppUser) => {
-    await updateUser(u.id, { isActive: !u.isActive });
+    try {
+      await updateUser(u.id, { isActive: !u.isActive });
+    } catch (err) {
+      return showError(err);
+    }
     toast.success(u.isActive ? 'Utilisateur désactivé' : 'Utilisateur réactivé');
     load();
   };
 
   const handleRoleChange = async (u: AppUser, role: string) => {
-    await updateUser(u.id, { role: role as AssignableRole });
+    try {
+      await updateUser(u.id, { role: role as AssignableRole });
+    } catch (err) {
+      return showError(err);
+    }
     toast.success('Rôle mis à jour');
     load();
   };
@@ -117,7 +133,7 @@ export default function UsersPage() {
                   <td data-label="Nom" className="px-4 py-2 text-slate-900">{u.name}</td>
                   <td data-label="Email" className="px-4 py-2 text-slate-600">{u.email}</td>
                   <td data-label="Rôle" className="px-4 py-2">
-                    {u.role === 'OWNER' || u.id === currentUser?.id ? (
+                    {!canManage(u) ? (
                       <span className="text-slate-600">{ROLE_LABELS[u.role]}</span>
                     ) : (
                       <select
@@ -174,8 +190,7 @@ export default function UsersPage() {
                         </button>
                       </div>
                     ) : (
-                      u.role !== 'OWNER' &&
-                      u.id !== currentUser?.id && (
+                      canManage(u) && (
                         <div className="flex flex-wrap items-center justify-end gap-2">
                           {/* Actions dépliées : bleu = modifier, orange = désactiver,
                               vert = réactiver, violet = mot de passe */}
