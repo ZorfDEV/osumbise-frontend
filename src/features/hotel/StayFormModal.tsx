@@ -76,6 +76,10 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
     if (checkOutDate <= checkInDate) setCheckOutDate(addDaysIso(checkInDate, 1));
   }, [checkInDate, checkOutDate]);
 
+  // Au moins une nuit ; client déjà arrivé : départ possible dès aujourd'hui
+  const firstCheckOut = addDaysIso(checkInDate, 1);
+  const minCheckOut = isCheckedIn && firstCheckOut < todayIso() ? todayIso() : firstCheckOut;
+
   const nights = nightsBetween(checkInDate, checkOutDate);
   const taxPerNight = room ? taxRates.find((t) => t.category === room.category)?.taxPerNight ?? 0 : 0;
   const estimate = useMemo(() => nights * (Number(rate) || 0) + nights * taxPerNight, [nights, rate, taxPerNight]);
@@ -231,7 +235,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               id="stay-out"
               type="date"
               value={checkOutDate}
-              min={addDaysIso(checkInDate < todayIso() && isCheckedIn ? todayIso() : checkInDate, 1)}
+              min={minCheckOut}
               onChange={(e) => setCheckOutDate(e.target.value)}
               className="input w-full"
             />
