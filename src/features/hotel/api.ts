@@ -88,6 +88,12 @@ export const addStayPayment = async (
   payload: { method: StayPaymentMethod; amount: number; note?: string; cashSessionId?: string; customerId?: string }
 ): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/payments`, payload)).data.stay;
 
+// Trop-perçu rendu au client (propriétaire et administrateur)
+export const refundStay = async (
+  id: string,
+  payload: { method: StayPaymentMethod; amount: number; reason: string; cashSessionId?: string }
+): Promise<StayDetail> => (await api.post(`/hotel/stays/${id}/refund`, payload)).data.stay;
+
 // Mauvais mode choisi à l'encaissement : même montant, autre mode
 export const changeStayPaymentMethod = async (
   id: string,

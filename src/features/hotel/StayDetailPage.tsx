@@ -12,7 +12,7 @@ import { useActiveEstablishment } from '@/features/establishments/ActiveEstablis
 import { fetchCustomers } from '@/features/customers/api';
 import { fetchMyCashSession } from '@/features/cash/api';
 import type { Customer } from '@/features/customers/types';
-import { addStayPayment, apiError, cancelStay, changeStayPaymentMethod, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
+import { addStayPayment, apiError, cancelStay, changeStayPaymentMethod, refundStay, checkInStay, checkOutStay, fetchRooms, fetchStay, fetchTaxRates } from './api';
 import { CATEGORY_LABELS, fcfa, formatDay, roomName, STAY_PAYMENT_LABELS, STAY_STATUS } from './labels';
 import StayFormModal from './StayFormModal';
 import MoveRoomModal from './MoveRoomModal';
@@ -118,6 +118,119 @@ function ChangeMethodDialog({
           </button>
           <button onClick={submit} disabled={saving || (isCredit && !customerId)} aria-busy={saving} className="btn btn-primary flex-1">
             Changer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Trop-perçu (départ anticipé d'un client qui a payé d'avance) rendu au client.
+// En espèces, l'argent sort de la caisse ouverte ; sur compte client, sa dette baisse.
+function RefundDialog({ stay, onClose, onRefunded }: { stay: StayDetail; onClose: () => void; onRefunded: (s: StayDetail) => void }) {
+  const toast = useToast();
+  const overpaid = Math.max(0, -stay.totals.balance);
+  const { advance, onAccount } = splitPayments(stay.payments);
+  // Un compte client ne se rembourse que sur ce compte, l'argent versé en argent
+  const methods = METHODS.filter((m) => (m === 'CREDIT' ? onAccount > 0 : advance > 0));
+  const limit = (m: StayPaymentMethod) => Math.min(overpaid, m === 'CREDIT' ? onAccount : advance);
+  const [method, setMethod] = useState<StayPaymentMethod>(methods.includes('CASH') ? 'CASH' : methods[0] ?? 'CASH');
+  const [amount, setAmount] = useState(String(limit(method)));
+  const [reason, setReason] = useState('');
+  const [session, setSession] = useState<{ id: string; cashRegister: { name: string } } | null>(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const value = Number(amount);
+  const missingSession = method === 'CASH' && sessionLoaded && !session;
+
+  useEffect(() => {
+    fetchMyCashSession()
+      .then(setSession)
+      .catch(() => setSession(null))
+      .finally(() => setSessionLoaded(true));
+  }, []);
+
+  const pickMethod = (m: StayPaymentMethod) => {
+    setMethod(m);
+    setAmount(String(limit(m)));
+  };
+
+  const submit = async () => {
+    if (!(value > 0) || value > limit(method)) return toast.error(`Montant entre 1 et ${fcfa(limit(method))}`);
+    if (reason.trim().length < 3) return toast.error('Indiquez le motif du remboursement');
+    setSaving(true);
+    try {
+      // Hors espèces, rien ne sort du tiroir : le remboursement n'est pas rattaché à une caisse
+      const updated = await refundStay(stay.id, {
+        method,
+        amount: value,
+        reason: reason.trim(),
+        cashSessionId: method === 'CASH' ? session?.id : undefined,
+      });
+      toast.success(`${fcfa(value)} remboursés`);
+      onRefunded(updated);
+    } catch (err) {
+      toast.error(apiError(err, 'Remboursement impossible'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Rembourser le trop-perçu">
+      <div className="w-full max-w-md rounded-t-xl bg-surface p-6 sm:rounded-xl">
+        <h2 className="mb-1 text-lg font-semibold text-heading">Rembourser le trop-perçu</h2>
+        <p className="mb-4 text-sm text-slate-600">
+          {stay.guestName} a versé <span className="font-semibold text-heading">{fcfa(overpaid)}</span> de trop.
+        </p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {methods.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => pickMethod(m)}
+                className={`rounded-full border px-3 py-1 text-sm font-medium ${
+                  method === m ? 'border-action bg-action text-white' : 'border-slate-300 text-slate-600'
+                }`}
+              >
+                {STAY_PAYMENT_LABELS[m]}
+              </button>
+            ))}
+          </div>
+          {method === 'CASH' && session && (
+            <p className="text-xs text-slate-500">Les espèces sortent de la caisse « {session.cashRegister.name} ».</p>
+          )}
+          {missingSession && (
+            <p className="rounded-md bg-warning-soft px-3 py-2 text-xs text-warning-dark">
+              Aucune caisse ouverte : ouvrez une session de caisse pour rembourser en espèces.
+            </p>
+          )}
+          {method === 'CREDIT' && <p className="text-xs text-slate-500">La dette du compte client baisse de ce montant ; aucun argent ne sort.</p>}
+          <div>
+            <label htmlFor="refund-amount" className="mb-1 block text-sm font-medium text-slate-700">
+              Montant (FCFA)
+            </label>
+            <input id="refund-amount" type="number" min={1} max={limit(method)} value={amount} onChange={(e) => setAmount(e.target.value)} className="input w-full" />
+          </div>
+          <div>
+            <label htmlFor="refund-reason" className="mb-1 block text-sm font-medium text-slate-700">
+              Motif (obligatoire)
+            </label>
+            <input id="refund-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} className="input w-full" placeholder="Ex. départ anticipé" />
+          </div>
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button onClick={onClose} className="btn btn-secondary flex-1">
+            Annuler
+          </button>
+          <button
+            onClick={submit}
+            disabled={saving || missingSession || (method === 'CASH' && !sessionLoaded) || reason.trim().length < 3}
+            aria-busy={saving}
+            className="btn btn-danger flex-1"
+          >
+            Rembourser
           </button>
         </div>
       </div>
@@ -380,6 +493,7 @@ export default function StayDetailPage() {
   const [moving, setMoving] = useState(false);
   const [paying, setPaying] = useState(false);
   const [changingPayment, setChangingPayment] = useState<StayPayment | null>(null);
+  const [refunding, setRefunding] = useState(false);
   const [cancellingWithAdvance, setCancellingWithAdvance] = useState(false);
   const [discounting, setDiscounting] = useState(false);
   const { user } = useAuth();
@@ -721,6 +835,11 @@ export default function StayDetailPage() {
                 <span>{fcfa(Math.abs(totals.balance))}</span>
               </div>
             )}
+            {isManager && totals.balance < 0 && stay.status !== 'CANCELLED' && (
+              <button onClick={() => setRefunding(true)} className="btn btn-danger btn-sm mt-2 w-full">
+                Rembourser le trop-perçu
+              </button>
+            )}
           </div>
           {stay.status === 'CHECKED_IN' && (
             <p className="mt-3 text-xs text-slate-500">
@@ -761,6 +880,16 @@ export default function StayDetailPage() {
           onClose={() => setPaying(false)}
           onPaid={(s) => {
             setPaying(false);
+            setStay(s);
+          }}
+        />
+      )}
+      {refunding && (
+        <RefundDialog
+          stay={stay}
+          onClose={() => setRefunding(false)}
+          onRefunded={(s) => {
+            setRefunding(false);
             setStay(s);
           }}
         />
