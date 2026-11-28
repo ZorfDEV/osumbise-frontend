@@ -158,9 +158,9 @@ function GroupEditDialog({ group, onClose, onSaved }: { group: StayGroupDetail; 
   const [checkInDate, setCheckInDate] = useState(initialIn);
   const [checkOutDate, setCheckOutDate] = useState(initialOut);
   const [saving, setSaving] = useState(false);
-  // Date d'arrivée : propriétaire et administrateur de la plateforme
+  // Date d'arrivée : propriétaire, administrateur et administrateur de la plateforme
   const { user } = useAuth();
-  const arrivalLocked = reserved.length > 0 && user?.role !== 'OWNER' && !user?.isPlatformAdmin;
+  const arrivalLocked = reserved.length > 0 && user?.role !== 'OWNER' && user?.role !== 'ADMIN' && !user?.isPlatformAdmin;
   const minCheckOut = [addDaysIso(checkInDate, 1), todayIso()].sort().pop()!;
 
   const submit = async () => {
@@ -243,7 +243,7 @@ function GroupEditDialog({ group, onClose, onSaved }: { group: StayGroupDetail; 
                   />
                 </div>
               </div>
-              {arrivalLocked && <p className="text-xs text-slate-500">Seul le propriétaire peut modifier la date d’arrivée.</p>}
+              {arrivalLocked && <p className="text-xs text-slate-500">Seuls le propriétaire et l’administrateur peuvent modifier la date d’arrivée.</p>}
               <p className="text-xs text-slate-500">
                 Les nouvelles dates s’appliquent aux {active.length} chambre{active.length > 1 ? 's' : ''} réservée{active.length > 1 ? 's' : ''} ou en cours
                 {reserved.length < active.length ? ' ; les chambres déjà arrivées gardent leur date d’arrivée' : ''}. Toutes doivent être

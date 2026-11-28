@@ -26,9 +26,9 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
   const toast = useToast();
   const isEdit = !!stay;
   const isCheckedIn = stay?.status === 'CHECKED_IN';
-  // Date d'arrivée d'un séjour existant : propriétaire et administrateur de la plateforme
+  // Date d'arrivée d'un séjour existant : propriétaire, administrateur et administrateur de la plateforme
   const { user } = useAuth();
-  const arrivalLocked = isEdit && user?.role !== 'OWNER' && !user?.isPlatformAdmin;
+  const arrivalLocked = isEdit && user?.role !== 'OWNER' && user?.role !== 'ADMIN' && !user?.isPlatformAdmin;
   const start = stay ? dayOf(stay.checkInDate) : walkIn ? todayIso() : initialCheckIn ?? todayIso();
 
   const [roomId, setRoomId] = useState(stay?.roomId ?? initialRoomId ?? '');
@@ -222,7 +222,7 @@ export default function StayFormModal({ rooms, taxRates, stay, initialRoomId, in
               disabled={walkIn || arrivalLocked}
               className="input w-full"
             />
-            {arrivalLocked && <p className="mt-1 text-xs text-slate-500">Seul le propriétaire peut modifier la date d’arrivée.</p>}
+            {arrivalLocked && <p className="mt-1 text-xs text-slate-500">Seuls le propriétaire et l’administrateur peuvent modifier la date d’arrivée.</p>}
             {isCheckedIn && !arrivalLocked && (
               <p className="mt-1 text-xs text-slate-500">Client déjà arrivé : les nuitées et la facture seront recalculées.</p>
             )}
